@@ -32,7 +32,7 @@ function page(body, env, {
   const canonicalUrl = canonical.startsWith("http") ? canonical : ORIGIN + canonical;
   return new Response(`<!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(title)}</title><meta name="description" content="${attr(description)}">
+<title>${esc(title)}</title><meta name="description" content="${attr(description)}">${env.GOOGLE_SITE_VERIFICATION ? `<meta name="google-site-verification" content="${attr(env.GOOGLE_SITE_VERIFICATION)}">` : ""}
 <link rel="canonical" href="${attr(canonicalUrl)}"><meta property="og:title" content="${attr(title)}"><meta property="og:description" content="${attr(description)}"><meta property="og:url" content="${attr(canonicalUrl)}"><meta property="og:type" content="website">
 ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd).replace(/</g,"\\u003c")}</script>` : ""}
 ${analytics(env)}
@@ -60,16 +60,23 @@ async function home(env){
 }
 
 async function searchPage(request,env){
-  const url=new URL(request.url); const q=(url.searchParams.get("q")||"").trim();
+  const url=new URL(request.url);
+  const q=(url.searchParams.get("q")||"").trim();
   let rows=[];
   if(q){
-    const like="%"+q.toLowerCase()+"%";
-    rows=(await env.DB.prepare(`SELECT name,slug,city,country,description,price_estimate_min,price_estimate_max,google_rating,reddit_mention_count
-      FROM hotels WHERE is_published=1 AND (lower(name) LIKE ? OR lower(city) LIKE ? OR lower(country) LIKE ? OR lower(COALESCE(description,'')) LIKE ?)
-      ORDER BY CASE WHEN lower(name)=lower(?) THEN 0 ELSE 1 END, reddit_mention_count DESC, google_rating DESC LIMIT 60`).bind(like,like,like,like,q).all()).results||[];
+    const tokens=[...new Set(q.toLowerCase().split(/\s+/).map(x=>x.replace(/[^a-z0-9'-]/g,"")).filter(Boolean))].slice(0,6);
+    if(tokens.length){
+      const tokenClause=tokens.map(()=>"(lower(name) LIKE ? OR lower(COALESCE(city,'')) LIKE ? OR lower(COALESCE(country,'')) LIKE ? OR lower(COALESCE(description,'')) LIKE ? OR lower(COALESCE(highlights_json,'')) LIKE ? OR lower(COALESCE(best_for_json,'')) LIKE ?)").join(" AND ");
+      const params=tokens.flatMap(t=>Array(6).fill("%"+t+"%"));
+      rows=(await env.DB.prepare(`SELECT name,slug,city,country,description,price_estimate_min,price_estimate_max,google_rating,reddit_mention_count
+        FROM hotels WHERE is_published=1 AND ${tokenClause}
+        ORDER BY CASE WHEN lower(name)=lower(?) THEN 0 WHEN lower(name) LIKE lower(?) THEN 1 ELSE 2 END,
+        reddit_mention_count DESC,google_rating DESC LIMIT 60`)
+        .bind(...params,q,"%"+q+"%").all()).results||[];
+    }
   }
-  return page(shell(`<section class="hero" style="padding-bottom:24px"><div class="eyebrow">Hotel search</div><h1>${q?esc(q):"Find a hotel worth the rate"}</h1><form class="search" action="/search"><input name="q" value="${attr(q)}" placeholder="Hotel, city, country, or style"><button>Search</button></form></section>
-<section><p class="muted">${q ? rows.length+" matches" : "Search by hotel, city, country, or a phrase such as design hotel."}</p><ul class="list">${rows.map(h=>`<li class="hotel-row"><div><a href="/hotel/${encodeURIComponent(h.slug)}"><strong>${esc(h.name)}</strong></a><div class="kicker">${esc([h.city,h.country].filter(Boolean).join(", "))}</div><p>${esc((h.description||"").slice(0,220))}</p></div><div>${money(h.price_estimate_min)}–${money(h.price_estimate_max)}</div></li>`).join("")|| (q?'<li class="muted">No matching hotels yet.</li>':"")}</ul></section>`),env,{title:q?`${q} hotel search | SecretNests`:"Hotel search | SecretNests",canonical:"/search"+(q?"?q="+encodeURIComponent(q):"")});
+  return page(shell(`<section class="hero" style="padding-bottom:24px"><div class="eyebrow">Hotel search</div><h1>${q?esc(q):"Find a hotel worth the rate"}</h1><form class="search" action="/search"><input name="q" value="${attr(q)}" placeholder="Hotel, city, country, or style"><button data-event="search">Search</button></form></section>
+<section><p class="muted">${q ? rows.length+" matches" : "Search by hotel, city, country, or phrases such as quiet design hotel or Maldives food."}</p><ul class="list">${rows.map(h=>`<li class="hotel-row"><div><a href="/hotel/${encodeURIComponent(h.slug)}"><strong>${esc(h.name)}</strong></a><div class="kicker">${esc([h.city,h.country].filter(Boolean).join(", "))}</div><p>${esc((h.description||"").slice(0,220))}</p></div><div>${money(h.price_estimate_min)}–${money(h.price_estimate_max)}</div></li>`).join("")|| (q?'<li class="muted">No matching hotels yet.</li>':"")}</ul></section>`),env,{title:q?`${q} hotel search | SecretNests`:"Hotel search | SecretNests",canonical:"/search"+(q?"?q="+encodeURIComponent(q):"")});
 }
 
 async function destinationsPage(env){
@@ -119,7 +126,41 @@ async function listPage(handle, slug, env){
 }
 
 async function addTripPage(env){
-  return page(shell(`<section class="hero" style="padding-bottom:26px"><div class="eyebrow">Add Your Trip</div><h1>Turn a hotel stay into useful price intelligence.</h1><p>SecretNests is designed to capture what you paid, what you would pay again, room context, and whether you would return.</p></section><div class="notice"><strong>Creator submissions are staged but not open yet.</strong><p>We are intentionally launching public hotel discovery before enabling account creation and stay publishing. This avoids carrying Floot auth into production. The D1 schema already supports verified stays, trip reports, value opinions, lists, and creator earnings.</p></div>`),env,{title:"Add Your Trip | SecretNests",canonical:"/add-your-trip"});
+  const enabled=String(env.SUBMISSIONS_ENABLED||"false").toLowerCase()==="true";
+  const body=enabled
+    ? `<section class="hero" style="padding-bottom:26px"><div class="eyebrow">Add Your Trip</div><h1>Turn a hotel stay into useful price intelligence.</h1><p>Tell us what you paid, what you would pay again, and the room context. Submissions enter a review queue before publication.</p></section>
+<form class="card" method="post" action="/add-your-trip" style="max-width:760px">
+  <div style="display:none"><label>Website<input name="website" tabindex="-1" autocomplete="off"></label></div>
+  <p><label>Hotel name<br><input name="hotel_name" required maxlength="160" style="width:100%;padding:12px"></label></p>
+  <p><label>City / destination<br><input name="city" maxlength="120" style="width:100%;padding:12px"></label></p>
+  <p><label>Stay month<br><input name="stay_month" type="month" style="width:100%;padding:12px"></label></p>
+  <div class="two"><p><label>What you paid per night<br><input name="paid_nightly_rate" type="number" min="0" max="100000" step="0.01" style="width:100%;padding:12px"></label></p><p><label>What you'd happily pay again<br><input name="would_pay_again" type="number" min="0" max="100000" step="0.01" style="width:100%;padding:12px"></label></p></div>
+  <p><label>Room type<br><input name="room_type" maxlength="160" style="width:100%;padding:12px"></label></p>
+  <p><label>Booking channel<br><input name="booking_channel" maxlength="120" placeholder="Direct, Amex FHR, Chase, Booking.com, advisor…" style="width:100%;padding:12px"></label></p>
+  <p><label>Anything travelers should know<br><textarea name="notes" maxlength="3000" rows="6" style="width:100%;padding:12px"></textarea></label></p>
+  <p><label>Email for follow-up (optional)<br><input name="contact_email" type="email" maxlength="254" style="width:100%;padding:12px"></label></p>
+  <button class="btn" type="submit">Submit stay</button>
+</form>`
+    : `<section class="hero" style="padding-bottom:26px"><div class="eyebrow">Add Your Trip</div><h1>Turn a hotel stay into useful price intelligence.</h1><p>SecretNests is designed to capture what you paid, what you would pay again, room context, and whether you would return.</p></section><div class="notice"><strong>Creator submissions are staged but not open yet.</strong><p>The Cloudflare-native submission flow is built and can be enabled with <code>SUBMISSIONS_ENABLED=true</code> after the production database is live. No Floot authentication is required.</p></div>`;
+  return page(shell(body),env,{title:"Add Your Trip | SecretNests",canonical:"/add-your-trip"});
+}
+
+async function submitTrip(request,env){
+  if(String(env.SUBMISSIONS_ENABLED||"false").toLowerCase()!=="true") return json({ok:false,error:"submissions_disabled"},503);
+  const form=await request.formData();
+  if(form.get("website")) return Response.redirect(ORIGIN+"/add-your-trip?submitted=1",303);
+  const clean=(name,max=3000)=>String(form.get(name)||"").trim().slice(0,max);
+  const hotelName=clean("hotel_name",160);
+  if(!hotelName) return json({ok:false,error:"hotel_name_required"},400);
+  const num=(name)=>{const raw=clean(name,32); if(!raw)return null; const v=Number(raw); return Number.isFinite(v)&&v>=0&&v<=100000?v:null};
+  const email=clean("contact_email",254);
+  if(email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ok:false,error:"invalid_email"},400);
+  const id=crypto.randomUUID();
+  await env.DB.prepare(`INSERT INTO trip_submissions
+    (id,contact_email,hotel_name,city,stay_month,paid_nightly_rate,would_pay_again,room_type,booking_channel,notes,status,created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`)
+    .bind(id,email||null,hotelName,clean("city",120)||null,clean("stay_month",20)||null,num("paid_nightly_rate"),num("would_pay_again"),clean("room_type",160)||null,clean("booking_channel",120)||null,clean("notes",3000)||null,"pending",nowIso()).run();
+  return page(shell(`<section class="hero"><div class="eyebrow">Trip received</div><h1>Thanks. Your stay is in the review queue.</h1><p>We’ll use the price and context to improve SecretNests value intelligence after review.</p><p><a class="btn" href="/">Back to SecretNests</a></p></section>`),env,{title:"Trip received | SecretNests",canonical:"/add-your-trip"});
 }
 
 async function aboutPage(env){
@@ -175,6 +216,7 @@ async function route(request,env){
   if(request.method==="GET" && /^\/destination\//.test(url.pathname))return destinationPage(request,env);
   if(request.method==="GET" && url.pathname==="/creators")return creatorsPage(env);
   if(request.method==="GET" && url.pathname==="/add-your-trip")return addTripPage(env);
+  if(request.method==="POST" && url.pathname==="/add-your-trip")return submitTrip(request,env);
   if(request.method==="GET" && url.pathname==="/about")return aboutPage(env);
   if(request.method==="GET" && url.pathname==="/api/hotels")return apiHotels(request,env);
   if(request.method==="POST" && url.pathname==="/api/events")return recordEvent(request,env);
