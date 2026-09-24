@@ -13,8 +13,8 @@ const creator={
   taste:["Boutique","design-heavy","quiet","food matters","value-conscious"]
 };
 const demo=[
-  ["Four Seasons Hotel Baltimore","2026-05",725,475,0],
-  ["Sagamore Pendry Baltimore","2026-04",510,575,1],
+  ["Fairmont Banff Springs","2026-05",725,475,0],
+  ["Taj Lake Palace","2026-04",510,575,1],
   ["Blackberry Farm","2026-03",1150,1250,1],
   ["Canaves Epitome","2025-09",980,1050,1],
   ["Park Hyatt Sydney","2025-07",890,825,1],
