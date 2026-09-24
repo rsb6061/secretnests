@@ -19,3 +19,5 @@ bucket_name = "secretnests-media"
 
 [vars]
 APP_ORIGIN = "https://secretnests.com"
+SUBMISSIONS_ENABLED = "false"
+AUTH_MODE = "disabled"
