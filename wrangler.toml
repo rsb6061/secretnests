@@ -1,0 +1,21 @@
+name = "secretnests"
+main = "src/index.js"
+compatibility_date = "2026-09-24"
+workers_dev = true
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "secretnests"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "secretnests-media"
+
+[vars]
+APP_ORIGIN = "https://secretnests.com"
