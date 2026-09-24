@@ -19,16 +19,21 @@ Use the same Cloudflare account as the domain.
 
 ## First production bootstrap
 
-1. Create D1 database `secretnests`.
-2. Replace `REPLACE_WITH_D1_DATABASE_ID` in `wrangler.toml`.
-3. Create R2 bucket `secretnests-media`.
-4. Add the two GitHub Actions secrets.
-5. Run workflow action `migrate-db`.
-6. Run workflow action `seed-legacy-hotels`.
-7. Run workflow action `deploy`.
-8. Smoke-test `/health`, homepage, and `/api/hotels`.
-9. Attach `secretnests.com` only after parity checks.
-10. Keep Floot intact until the complete content/image/auth parity audit is finished.
+1. Add repository Actions secrets `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`.
+2. Open **Actions → SecretNests Cloudflare → Run workflow**.
+3. Choose action **bootstrap**.
+4. The workflow will:
+   - find or create D1 database `secretnests`;
+   - find or create R2 bucket `secretnests-media`;
+   - apply the D1 migrations;
+   - seed the 1,066-hotel legacy corpus;
+   - seed the structured Reddit evidence;
+   - dry-run and deploy the `secretnests` Worker.
+5. Smoke-test `/health`, homepage, and `/api/hotels`.
+6. Attach `secretnests.com` only after parity checks.
+7. Keep Floot intact until the complete content/image/auth parity audit is finished.
+
+The repository intentionally keeps `REPLACE_WITH_D1_DATABASE_ID` in `wrangler.toml`. GitHub Actions resolves the actual D1 UUID from Cloudflare and patches the checked-out config for each run, so an account-specific UUID does not need to be committed.
 
 ## Legacy corpus
 
