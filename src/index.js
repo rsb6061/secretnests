@@ -87,7 +87,7 @@ async function searchPage(request,env){
 
 async function destinationsPage(env){
   const rows=(await env.DB.prepare("SELECT city,country,COUNT(*) n FROM hotels WHERE is_published=1 AND city IS NOT NULL AND city<>'' GROUP BY city,country ORDER BY n DESC,city LIMIT 250").all()).results||[];
-  return page(shell(\`<section class="hero" style="padding-bottom:24px"><div class="eyebrow">Destinations</div><h1>Where should your hotel budget go?</h1><p>Browse destinations in the current SecretNests hotel corpus.</p></section><div class="grid">\${rows.map(x=>\`<a class="card" href="/destinations/\${encodeURIComponent(slugify(x.country))}/\${encodeURIComponent(slugify(x.city))}"><strong>\${esc(x.city)}</strong><br><span class="muted">\${esc(x.country||"")} · \${x.n} hotels</span></a>\`).join("")}</div>\`),env,{title:"Luxury hotel destinations | SecretNests",canonical:"/destinations"});
+  return page(shell(`<section class="hero" style="padding-bottom:24px"><div class="eyebrow">Destinations</div><h1>Where should your hotel budget go?</h1><p>Browse destinations in the current SecretNests hotel corpus.</p></section><div class="grid">${rows.map(x=>`<a class="card" href="/destinations/${encodeURIComponent(slugify(x.country))}/${encodeURIComponent(slugify(x.city))}"><strong>${esc(x.city)}</strong><br><span class="muted">${esc(x.country||"")} · ${x.n} hotels</span></a>`).join("")}</div>`),env,{title:"Luxury hotel destinations | SecretNests",canonical:"/destinations"});
 }
 
 async function destinationPage(countrySlug,citySlug,env){
@@ -96,7 +96,7 @@ async function destinationPage(countrySlug,citySlug,env){
   if(!place)return new Response("Destination not found",{status:404});
   const rows=(await env.DB.prepare("SELECT name,slug,city,country,description,price_estimate_min,price_estimate_max,google_rating,reddit_mention_count FROM hotels WHERE is_published=1 AND lower(city)=lower(?) AND lower(country)=lower(?) ORDER BY reddit_mention_count DESC,google_rating DESC,name").bind(place.city,place.country).all()).results||[];
   const canonical="/destinations/"+slugify(place.country)+"/"+slugify(place.city);
-  return page(shell(\`<section class="hero" style="padding-bottom:24px"><div class="eyebrow">\${esc(place.country)}</div><h1>Luxury hotels in \${esc(place.city)}</h1><p>Compare price context and traveler value signals before you book.</p></section><div class="grid">\${rows.map(h=>\`<a class="card" href="/hotel/\${encodeURIComponent(h.slug)}"><h3>\${esc(h.name)}</h3><p class="muted">\${money(h.price_estimate_min)}–\${money(h.price_estimate_max)} estimated nightly range</p><p>\${esc((h.description||"").slice(0,180))}</p></a>\`).join("")}</div>\`),env,{title:\`Best-value luxury hotels in \${place.city} | SecretNests\`,description:\`Luxury hotels in \${place.city}, \${place.country}: traveler value context, price ranges, and hotel comparisons.\`,canonical});
+  return page(shell(`<section class="hero" style="padding-bottom:24px"><div class="eyebrow">${esc(place.country)}</div><h1>Luxury hotels in ${esc(place.city)}</h1><p>Compare price context and traveler value signals before you book.</p></section><div class="grid">${rows.map(h=>`<a class="card" href="/hotel/${encodeURIComponent(h.slug)}"><h3>${esc(h.name)}</h3><p class="muted">${money(h.price_estimate_min)}–${money(h.price_estimate_max)} estimated nightly range</p><p>${esc((h.description||"").slice(0,180))}</p></a>`).join("")}</div>`),env,{title:`Best-value luxury hotels in ${place.city} | SecretNests`,description:`Luxury hotels in ${place.city}, ${place.country}: traveler value context, price ranges, and hotel comparisons.`,canonical});
 }
 
 async function legacyDestinationRedirect(request,env){
@@ -218,9 +218,9 @@ async function recordEvent(request,env){
 async function outbound(slug,request,env){
   const h=await env.DB.prepare("SELECT id,booking_url FROM hotels WHERE slug=? AND is_published=1").bind(slug).first();
   if(!h)return new Response("Hotel not found",{status:404});
-  let link=await env.DB.prepare(\`SELECT bl.destination_url,bl.provider_id,p.provider_type,p.config_json
+  let link=await env.DB.prepare(`SELECT bl.destination_url,bl.provider_id,p.provider_type,p.config_json
     FROM hotel_booking_links bl JOIN affiliate_providers p ON p.id=bl.provider_id
-    WHERE bl.hotel_id=? AND bl.enabled=1 AND p.enabled=1 ORDER BY bl.priority,bl.created_at LIMIT 1\`).bind(h.id).first();
+    WHERE bl.hotel_id=? AND bl.enabled=1 AND p.enabled=1 ORDER BY bl.priority,bl.created_at LIMIT 1`).bind(h.id).first();
   if(!link && h.booking_url) link={destination_url:h.booking_url,provider_id:"direct",provider_type:"direct",config_json:"{}"};
   if(!link?.destination_url)return new Response("Booking link unavailable",{status:404});
   const clickId=crypto.randomUUID();
@@ -256,17 +256,17 @@ async function comparisonPage(pair,env){
     if(a&&b)break;
   }
   if(!a||!b)return new Response("Comparison not found",{status:404});
-  const card=x=>\`<div class="card"><div class="eyebrow">\${esc([x.city,x.country].filter(Boolean).join(", "))}</div><h2><a href="/hotel/\${encodeURIComponent(x.slug)}">\${esc(x.name)}</a></h2><p>Estimated rate: <strong>\${money(x.price_estimate_min)}–\${money(x.price_estimate_max)}</strong></p><p>Traveler assessed: <strong>\${x.median_would_pay?money(x.traveler_low)+"–"+money(x.traveler_high):"not enough data"}</strong></p><p class="muted">\${x.sample_size?x.sample_size+" value observations · "+(x.confidence||"")+" confidence":"First-party value sample pending"}</p></div>\`;
-  return page(shell(\`<section class="hero"><div class="eyebrow">Hotel comparison</div><h1>\${esc(a.name)} vs. \${esc(b.name)}</h1><p>Side-by-side price and traveler-value context. SecretNests does not declare a universal winner; the useful question is which property better fits your price and preferences.</p></section><div class="grid">\${card(a)}\${card(b)}</div>\`),env,{title:\`\${a.name} vs. \${b.name}: price & value | SecretNests\`,description:\`Compare \${a.name} and \${b.name} using price context and traveler-assessed value.\`,canonical:"/compare/"+pair});
+  const card=x=>`<div class="card"><div class="eyebrow">${esc([x.city,x.country].filter(Boolean).join(", "))}</div><h2><a href="/hotel/${encodeURIComponent(x.slug)}">${esc(x.name)}</a></h2><p>Estimated rate: <strong>${money(x.price_estimate_min)}–${money(x.price_estimate_max)}</strong></p><p>Traveler assessed: <strong>${x.median_would_pay?money(x.traveler_low)+"–"+money(x.traveler_high):"not enough data"}</strong></p><p class="muted">${x.sample_size?x.sample_size+" value observations · "+(x.confidence||"")+" confidence":"First-party value sample pending"}</p></div>`;
+  return page(shell(`<section class="hero"><div class="eyebrow">Hotel comparison</div><h1>${esc(a.name)} vs. ${esc(b.name)}</h1><p>Side-by-side price and traveler-value context. SecretNests does not declare a universal winner; the useful question is which property better fits your price and preferences.</p></section><div class="grid">${card(a)}${card(b)}</div>`),env,{title:`${a.name} vs. ${b.name}: price & value | SecretNests`,description:`Compare ${a.name} and ${b.name} using price context and traveler-assessed value.`,canonical:"/compare/"+pair});
 }
 
 async function valueHub(env){
-  return page(shell(\`<section class="hero"><div class="eyebrow">Value discovery</div><h1>Where is luxury actually worth the rate?</h1><p>Browse price-sensitive collections built from traveler value opinions where available, with clearly labeled estimated-price fallbacks.</p></section><div class="grid">
+  return page(shell(`<section class="hero"><div class="eyebrow">Value discovery</div><h1>Where is luxury actually worth the rate?</h1><p>Browse price-sensitive collections built from traveler value opinions where available, with clearly labeled estimated-price fallbacks.</p></section><div class="grid">
   <a class="card" href="/value/under-500"><h2>Worth up to $500</h2><p>Hotels with traveler-assessed willingness-to-pay at or below $500.</p></a>
   <a class="card" href="/value/around-1000"><h2>Around $1,000</h2><p>High-end stays travelers assess near the four-figure mark.</p></a>
   <a class="card" href="/value/regrets-over-800"><h2>Regrets over $800</h2><p>First-party stays where the traveler paid $800+ and would not return.</p></a>
   <a class="card" href="/value/where-500-buys-most"><h2>Where $500 buys the most</h2><p>Destinations with the deepest estimated luxury-hotel inventory near this budget.</p></a>
-</div>\`),env,{title:"Luxury hotel value discovery | SecretNests",canonical:"/value"});
+</div>`),env,{title:"Luxury hotel value discovery | SecretNests",canonical:"/value"});
 }
 
 async function valueCollection(kind,env){
@@ -274,50 +274,50 @@ async function valueCollection(kind,env){
   if(kind==="under-500"){
     title="Luxury hotels travelers value at $500 or less";
     description="Traveler-assessed willingness-to-pay, not rack-rate marketing.";
-    rows=(await env.DB.prepare(\`SELECT h.name,h.slug,h.city,h.country,v.median_would_pay,v.traveler_low,v.traveler_high,v.sample_size,v.confidence
+    rows=(await env.DB.prepare(`SELECT h.name,h.slug,h.city,h.country,v.median_would_pay,v.traveler_low,v.traveler_high,v.sample_size,v.confidence
       FROM hotels h JOIN hotel_value_snapshots v ON v.id=(SELECT id FROM hotel_value_snapshots WHERE hotel_id=h.id ORDER BY calculated_at DESC LIMIT 1)
-      WHERE h.is_published=1 AND v.sample_size>0 AND v.median_would_pay<=500 ORDER BY v.sample_size DESC,v.median_would_pay DESC LIMIT 100\`).all()).results||[];
+      WHERE h.is_published=1 AND v.sample_size>0 AND v.median_would_pay<=500 ORDER BY v.sample_size DESC,v.median_would_pay DESC LIMIT 100`).all()).results||[];
   }else if(kind==="around-1000"){
     title="Luxury hotels travelers value around $1,000";
     description="Hotels with traveler-assessed median willingness-to-pay between $800 and $1,200.";
-    rows=(await env.DB.prepare(\`SELECT h.name,h.slug,h.city,h.country,v.median_would_pay,v.traveler_low,v.traveler_high,v.sample_size,v.confidence
+    rows=(await env.DB.prepare(`SELECT h.name,h.slug,h.city,h.country,v.median_would_pay,v.traveler_low,v.traveler_high,v.sample_size,v.confidence
       FROM hotels h JOIN hotel_value_snapshots v ON v.id=(SELECT id FROM hotel_value_snapshots WHERE hotel_id=h.id ORDER BY calculated_at DESC LIMIT 1)
-      WHERE h.is_published=1 AND v.sample_size>0 AND v.median_would_pay BETWEEN 800 AND 1200 ORDER BY v.sample_size DESC,v.median_would_pay DESC LIMIT 100\`).all()).results||[];
+      WHERE h.is_published=1 AND v.sample_size>0 AND v.median_would_pay BETWEEN 800 AND 1200 ORDER BY v.sample_size DESC,v.median_would_pay DESC LIMIT 100`).all()).results||[];
   }else if(kind==="regrets-over-800"){
     title="$800+ hotel stays travelers would not repeat";
     description="First-party stay observations where paid nightly rate was at least $800 and would-return was No.";
-    rows=(await env.DB.prepare(\`SELECT h.name,h.slug,h.city,h.country,s.paid_nightly_rate,vo.would_pay_again,COUNT(*) sample_size
+    rows=(await env.DB.prepare(`SELECT h.name,h.slug,h.city,h.country,s.paid_nightly_rate,vo.would_pay_again,COUNT(*) sample_size
       FROM stays s JOIN hotels h ON h.id=s.hotel_id JOIN trip_reports tr ON tr.stay_id=s.id LEFT JOIN value_opinions vo ON vo.stay_id=s.id
       WHERE h.is_published=1 AND s.paid_nightly_rate>=800 AND tr.would_return=0 AND COALESCE(s.verification_method,'')<>'demo'
-      GROUP BY h.id ORDER BY s.paid_nightly_rate DESC LIMIT 100\`).all()).results||[];
+      GROUP BY h.id ORDER BY s.paid_nightly_rate DESC LIMIT 100`).all()).results||[];
   }else if(kind==="where-500-buys-most"){
     title="Where roughly $500 buys the most luxury-hotel choice";
     description="Destination inventory based on SecretNests estimated price bands; this page is not a traveler fair-value claim.";
-    const places=(await env.DB.prepare(\`SELECT city,country,COUNT(*) sample_size,AVG(COALESCE(price_estimate_max,price_estimate_min)) median_would_pay
-      FROM hotels WHERE is_published=1 AND city IS NOT NULL AND COALESCE(price_estimate_max,999999)<=600 GROUP BY city,country HAVING COUNT(*)>=2 ORDER BY sample_size DESC LIMIT 100\`).all()).results||[];
-    return page(shell(\`<section class="hero"><div class="eyebrow">Value discovery</div><h1>\${esc(title)}</h1><p>\${esc(description)}</p></section><ul class="list">\${places.map(x=>\`<li><a href="/destinations/\${slugify(x.country)}/\${slugify(x.city)}"><strong>\${esc(x.city)}, \${esc(x.country)}</strong></a> · \${x.sample_size} hotels in the estimated ≤$600 band</li>\`).join("")||'<li class="muted">No qualifying destinations yet.</li>'}</ul>\`),env,{title:title+" | SecretNests",canonical:"/value/"+kind});
+    const places=(await env.DB.prepare(`SELECT city,country,COUNT(*) sample_size,AVG(COALESCE(price_estimate_max,price_estimate_min)) median_would_pay
+      FROM hotels WHERE is_published=1 AND city IS NOT NULL AND COALESCE(price_estimate_max,999999)<=600 GROUP BY city,country HAVING COUNT(*)>=2 ORDER BY sample_size DESC LIMIT 100`).all()).results||[];
+    return page(shell(`<section class="hero"><div class="eyebrow">Value discovery</div><h1>${esc(title)}</h1><p>${esc(description)}</p></section><ul class="list">${places.map(x=>`<li><a href="/destinations/${slugify(x.country)}/${slugify(x.city)}"><strong>${esc(x.city)}, ${esc(x.country)}</strong></a> · ${x.sample_size} hotels in the estimated ≤$600 band</li>`).join("")||'<li class="muted">No qualifying destinations yet.</li>'}</ul>`),env,{title:title+" | SecretNests",canonical:"/value/"+kind});
   }else return new Response("Value collection not found",{status:404});
-  return page(shell(\`<section class="hero"><div class="eyebrow">Value discovery</div><h1>\${esc(title)}</h1><p>\${esc(description)}</p></section><ul class="list">\${rows.map(x=>\`<li><a href="/hotel/\${encodeURIComponent(x.slug)}"><strong>\${esc(x.name)}</strong></a> · \${esc([x.city,x.country].filter(Boolean).join(", "))}<br><span class="muted">\${x.median_would_pay?("traveler median "+money(x.median_would_pay)+" · "):""}\${x.paid_nightly_rate?("paid "+money(x.paid_nightly_rate)+" · "):""}\${x.sample_size||0} observation(s)</span></li>\`).join("")||'<li class="muted">Not enough first-party value data yet.</li>'}</ul>\`),env,{title:title+" | SecretNests",canonical:"/value/"+kind});
+  return page(shell(`<section class="hero"><div class="eyebrow">Value discovery</div><h1>${esc(title)}</h1><p>${esc(description)}</p></section><ul class="list">${rows.map(x=>`<li><a href="/hotel/${encodeURIComponent(x.slug)}"><strong>${esc(x.name)}</strong></a> · ${esc([x.city,x.country].filter(Boolean).join(", "))}<br><span class="muted">${x.median_would_pay?("traveler median "+money(x.median_would_pay)+" · "):""}${x.paid_nightly_rate?("paid "+money(x.paid_nightly_rate)+" · "):""}${x.sample_size||0} observation(s)</span></li>`).join("")||'<li class="muted">Not enough first-party value data yet.</li>'}</ul>`),env,{title:title+" | SecretNests",canonical:"/value/"+kind});
 }
 
 async function countryValuePage(countrySlug,env){
   const countries=(await env.DB.prepare("SELECT DISTINCT country FROM hotels WHERE is_published=1 AND country IS NOT NULL").all()).results||[];
   const match=countries.find(x=>slugify(x.country)===countrySlug);
   if(!match)return new Response("Country not found",{status:404});
-  const rows=(await env.DB.prepare(\`SELECT h.name,h.slug,h.city,h.country,v.median_would_pay,v.sample_size,v.value_classification
+  const rows=(await env.DB.prepare(`SELECT h.name,h.slug,h.city,h.country,v.median_would_pay,v.sample_size,v.value_classification
     FROM hotels h LEFT JOIN hotel_value_snapshots v ON v.id=(SELECT id FROM hotel_value_snapshots WHERE hotel_id=h.id ORDER BY calculated_at DESC LIMIT 1)
-    WHERE h.is_published=1 AND lower(h.country)=lower(?) ORDER BY COALESCE(v.sample_size,0) DESC,h.reddit_mention_count DESC,h.google_rating DESC LIMIT 150\`).bind(match.country).all()).results||[];
-  return page(shell(\`<section class="hero"><div class="eyebrow">Country value guide</div><h1>Luxury hotel value in \${esc(match.country)}</h1><p>Traveler-assessed value where first-party data exists, with hotel discovery coverage beneath it.</p></section><ul class="list">\${rows.map(x=>\`<li><a href="/hotel/\${encodeURIComponent(x.slug)}"><strong>\${esc(x.name)}</strong></a> · \${esc(x.city||"")}<br><span class="muted">\${x.median_would_pay?"traveler median "+money(x.median_would_pay)+" · "+esc(x.value_classification||""):"fair-value sample pending"}</span></li>\`).join("")}</ul>\`),env,{title:\`Best-value luxury hotels in \${match.country} | SecretNests\`,canonical:"/value/country/"+countrySlug});
+    WHERE h.is_published=1 AND lower(h.country)=lower(?) ORDER BY COALESCE(v.sample_size,0) DESC,h.reddit_mention_count DESC,h.google_rating DESC LIMIT 150`).bind(match.country).all()).results||[];
+  return page(shell(`<section class="hero"><div class="eyebrow">Country value guide</div><h1>Luxury hotel value in ${esc(match.country)}</h1><p>Traveler-assessed value where first-party data exists, with hotel discovery coverage beneath it.</p></section><ul class="list">${rows.map(x=>`<li><a href="/hotel/${encodeURIComponent(x.slug)}"><strong>${esc(x.name)}</strong></a> · ${esc(x.city||"")}<br><span class="muted">${x.median_would_pay?"traveler median "+money(x.median_would_pay)+" · "+esc(x.value_classification||""):"fair-value sample pending"}</span></li>`).join("")}</ul>`),env,{title:`Best-value luxury hotels in ${match.country} | SecretNests`,canonical:"/value/country/"+countrySlug});
 }
 
 async function legalPage(kind,env){
   const pages={
-    privacy:{title:"Privacy",body:\`<h1>Privacy</h1><p>SecretNests collects the information you submit, limited technical request data needed to operate the service, and pseudonymous product analytics. Contact email on a trip submission is used for follow-up and moderation and is not published with a stay.</p><p>Receipt or folio verification artifacts, when enabled, are stored separately with explicit redaction and review states. SecretNests does not intentionally store raw payment-card data.</p><p>Third-party analytics may include Google Analytics and Microsoft Clarity when configured. Booking links may send you to a third-party provider whose privacy practices apply after you leave SecretNests.</p>\`},
-    terms:{title:"Terms",body:\`<h1>Terms</h1><p>Submit only hotel experiences, text, and media you have the right to share. You grant SecretNests a non-exclusive license to host, format, display, and analyze submitted material for operating and improving the service. You retain ownership of your original material.</p><p>Do not submit false stays, manipulated receipts, unlawful material, or content that infringes another person's rights. SecretNests may label, moderate, reject, or remove submissions to preserve data integrity.</p>\`},
-    disclosures:{title:"Disclosures",body:\`<h1>Affiliate & review disclosures</h1><p>SecretNests may earn a commission when a traveler books through certain links. A creator may also receive a share of attributable booking revenue. Compensation is tied to attributable commercial outcomes, never to whether a hotel review is positive, negative, or favorable to a particular property.</p><p>When a review or recommendation has a material connection, incentive, free stay, discount, creator revenue share, or other relevant relationship, SecretNests policy requires a clear disclosure. Incentives must never be conditioned, expressly or implicitly, on a particular review sentiment.</p><p>Demo profiles and illustrative seed content are explicitly labeled and are not represented as genuine stays.</p>\`}
+    privacy:{title:"Privacy",body:`<h1>Privacy</h1><p>SecretNests collects the information you submit, limited technical request data needed to operate the service, and pseudonymous product analytics. Contact email on a trip submission is used for follow-up and moderation and is not published with a stay.</p><p>Receipt or folio verification artifacts, when enabled, are stored separately with explicit redaction and review states. SecretNests does not intentionally store raw payment-card data.</p><p>Third-party analytics may include Google Analytics and Microsoft Clarity when configured. Booking links may send you to a third-party provider whose privacy practices apply after you leave SecretNests.</p>`},
+    terms:{title:"Terms",body:`<h1>Terms</h1><p>Submit only hotel experiences, text, and media you have the right to share. You grant SecretNests a non-exclusive license to host, format, display, and analyze submitted material for operating and improving the service. You retain ownership of your original material.</p><p>Do not submit false stays, manipulated receipts, unlawful material, or content that infringes another person's rights. SecretNests may label, moderate, reject, or remove submissions to preserve data integrity.</p>`},
+    disclosures:{title:"Disclosures",body:`<h1>Affiliate & review disclosures</h1><p>SecretNests may earn a commission when a traveler books through certain links. A creator may also receive a share of attributable booking revenue. Compensation is tied to attributable commercial outcomes, never to whether a hotel review is positive, negative, or favorable to a particular property.</p><p>When a review or recommendation has a material connection, incentive, free stay, discount, creator revenue share, or other relevant relationship, SecretNests policy requires a clear disclosure. Incentives must never be conditioned, expressly or implicitly, on a particular review sentiment.</p><p>Demo profiles and illustrative seed content are explicitly labeled and are not represented as genuine stays.</p>`}
   };
   const p=pages[kind]; if(!p)return new Response("Not found",{status:404});
-  return page(shell(\`<section class="hero"><div class="eyebrow">SecretNests policy</div>\${p.body}</section>\`),env,{title:p.title+" | SecretNests",canonical:"/"+kind});
+  return page(shell(`<section class="hero"><div class="eyebrow">SecretNests policy</div>${p.body}</section>`),env,{title:p.title+" | SecretNests",canonical:"/"+kind});
 }
 
 async function adminSubmissions(request,env){
@@ -343,12 +343,12 @@ async function adminSubmissions(request,env){
   await env.DB.prepare("INSERT INTO creator_profiles (id,user_id,handle,display_name,bio,taste_profile_json,is_public,is_demo,created_at,updated_at) VALUES (?,?,?,?,?,'[]',0,0,?,?) ON CONFLICT(id) DO NOTHING")
     .bind(creatorId,null,"community-intake","Community intake","Internal moderation identity for approved anonymous trip submissions.",nowIso(),nowIso()).run();
   const stayId="submission-"+submission.id;
-  await env.DB.prepare(\`INSERT INTO stays (id,creator_id,hotel_id,stay_month,room_type,booking_channel,paid_nightly_rate,currency,verified,verification_method,created_at,updated_at)
-    VALUES (?,?,?,?,?,?,?,'USD',0,'community_submission',?,?) ON CONFLICT(id) DO NOTHING\`)
+  await env.DB.prepare(`INSERT INTO stays (id,creator_id,hotel_id,stay_month,room_type,booking_channel,paid_nightly_rate,currency,verified,verification_method,created_at,updated_at)
+    VALUES (?,?,?,?,?,?,?,'USD',0,'community_submission',?,?) ON CONFLICT(id) DO NOTHING`)
     .bind(stayId,creatorId,hotel.id,submission.stay_month,submission.room_type,submission.booking_channel,submission.paid_nightly_rate,nowIso(),nowIso()).run();
   if(submission.would_pay_again!=null){
-    await env.DB.prepare(\`INSERT INTO value_opinions (id,stay_id,creator_id,hotel_id,paid_nightly_rate,would_pay_again,currency,created_at)
-      VALUES (?,?,?,?,?,?,'USD',?) ON CONFLICT(id) DO UPDATE SET would_pay_again=excluded.would_pay_again\`)
+    await env.DB.prepare(`INSERT INTO value_opinions (id,stay_id,creator_id,hotel_id,paid_nightly_rate,would_pay_again,currency,created_at)
+      VALUES (?,?,?,?,?,?,'USD',?) ON CONFLICT(id) DO UPDATE SET would_pay_again=excluded.would_pay_again`)
       .bind("value-"+submission.id,stayId,creatorId,hotel.id,submission.paid_nightly_rate,submission.would_pay_again,nowIso()).run();
   }
   await env.DB.prepare("UPDATE trip_submissions SET status='approved',reviewed_at=? WHERE id=?").bind(nowIso(),submission.id).run();
@@ -373,8 +373,8 @@ async function verificationUpload(request,env){
   if(file.size>8*1024*1024)return json({ok:false,error:"payload_too_large"},413);
   const id=crypto.randomUUID(), key="verification/"+stayId+"/"+id;
   await env.MEDIA.put(key,await file.arrayBuffer(),{httpMetadata:{contentType:file.type}});
-  await env.DB.prepare(\`INSERT INTO stay_verification_artifacts (id,stay_id,r2_key,source_type,status,redaction_status,reviewer_note,created_at)
-    VALUES (?,?,?,'receipt_or_folio','pending','pending',?,?)\`).bind(id,stayId,key,"Uploaded by "+moderator,nowIso()).run();
+  await env.DB.prepare(`INSERT INTO stay_verification_artifacts (id,stay_id,r2_key,source_type,status,redaction_status,reviewer_note,created_at)
+    VALUES (?,?,?,'receipt_or_folio','pending','pending',?,?)`).bind(id,stayId,key,"Uploaded by "+moderator,nowIso()).run();
   return json({ok:true,id,status:"pending",redaction_status:"pending"});
 }
 
