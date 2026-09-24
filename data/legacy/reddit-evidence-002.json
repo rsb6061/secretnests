@@ -1,0 +1,557 @@
+[
+  {
+    "id": "2944abb9-c8c3-45db-af1e-524537ab1a29",
+    "post_id": "1r761d6",
+    "hotel_id": "59a236e8-dfe2-41b0-9dcc-11a767d542bd",
+    "hotel_name_raw": "Secrets Moxche",
+    "sentiment": "positive",
+    "best_for": [
+      "solo travelers",
+      "adults-only/social travelers"
+    ],
+    "avoid_if": [
+      "families"
+    ],
+    "tradeoffs": [
+      "social/adults-only atmosphere vs not secluded"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "solo",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:44:57.102+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r761d6/solo_female_32_looking_for_a_childfree_nonfamily/"
+  },
+  {
+    "id": "2a4cea49-2175-4438-ac6f-16f33baf53ee",
+    "post_id": "1pwk3om",
+    "hotel_id": "ed0f19a2-942b-4cbe-b59a-1285e3353396",
+    "hotel_name_raw": "Four Seasons Hotel Boston",
+    "sentiment": "mixed",
+    "best_for": [
+      "guests seeking classic luxury city hotel"
+    ],
+    "avoid_if": [
+      "expect a guaranteed print newspaper"
+    ],
+    "tradeoffs": [
+      "some traditional amenities (print paper) may be digital-only or inconsistent",
+      "guest experience can vary by staff responsiveness"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": null,
+    "confidence": "high",
+    "created_at": "2026-04-07 13:10:31.688+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1pwk3om/print_newspaper_with_breakfast/"
+  },
+  {
+    "id": "2be5edd3-ea7e-4133-816d-035108dacd82",
+    "post_id": "1r7i1a1",
+    "hotel_id": "f72831b8-d940-480f-8130-b008745c4402",
+    "hotel_name_raw": "Mii Amo",
+    "sentiment": "mixed",
+    "best_for": [
+      "wellness-focused travelers",
+      "yoga and spa retreats"
+    ],
+    "avoid_if": [
+      "wanting a party scene"
+    ],
+    "tradeoffs": [],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "girls spa trip",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:44:57.056+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r7i1a1/girls_spa_trip_centered_around_food_spa_and_yoga/"
+  },
+  {
+    "id": "2cffb391-c4d8-43c9-9059-076c4d7a7376",
+    "post_id": "1qowzvt",
+    "hotel_id": "deb4a79d-ae27-44a4-8280-33487d740fa9",
+    "hotel_name_raw": "Rosewood Baha Mar",
+    "sentiment": "mixed",
+    "best_for": [
+      "easy-access resort complexes",
+      "families wanting a variety of options onsite"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [
+      "different vibe from smaller boutique resorts"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "family with toddler",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:27:18.414+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1qowzvt/caribbeaneastern_mexico_resort_suggestions_for/"
+  },
+  {
+    "id": "2ebaddf6-e797-4912-8f68-e918f30c8993",
+    "post_id": "1pymxnk",
+    "hotel_id": "c2a4b7b1-7fa9-43a9-beeb-99460975636c",
+    "hotel_name_raw": "Waldorf Astoria Los Cabos Pedregal",
+    "sentiment": "mixed",
+    "best_for": [
+      "multi-generational families with adults",
+      "couples (babymoon mentioned)",
+      "golfers (local golfing opportunities)"
+    ],
+    "avoid_if": [
+      "traveling with very young children or toddlers (en-suite plunge pools worry)"
+    ],
+    "tradeoffs": [
+      "Luxurious casitas and privacy vs safety concerns with in-room plunge pools for toddlers",
+      "Excellent resort amenities but some room types may not be kid-friendly"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "multi-gen family trip with toddler",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:30:46.549+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1pymxnk/multigen_family_trip_hawaii_or_cabo/"
+  },
+  {
+    "id": "2eff2281-c8a6-41fc-853e-73b09f64db85",
+    "post_id": "1r94gfe",
+    "hotel_id": "3e5d72fc-c65b-471a-9842-6c8e4ee7d054",
+    "hotel_name_raw": "Kiawah Island Golf Resort",
+    "sentiment": "conditional",
+    "best_for": [
+      "golfers",
+      "short resort getaways"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [
+      "Closer to Charleston (easier to combine with city visit) vs staying entirely on-resort"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "long weekend",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:30:46.497+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r94gfe/kiawah_island_or_sea_island/"
+  },
+  {
+    "id": "2f132a99-ef24-42cd-9aed-d8b7bab95667",
+    "post_id": "1qt6kzq",
+    "hotel_id": "ddf809fb-4414-4ac2-8a9e-90edd57f47a9",
+    "hotel_name_raw": "Jade Mountain",
+    "sentiment": "conditional",
+    "best_for": [
+      "honeymoon",
+      "mountain-view seekers",
+      "design-focused travelers"
+    ],
+    "avoid_if": [
+      "those who don't want to be secluded",
+      "travelers wanting easy access"
+    ],
+    "tradeoffs": [
+      "incredible design and views vs being remote/out of the way"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "30th birthday trip",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:27:18.094+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1qt6kzq/deciding_between_saint_lucia_resorts/"
+  },
+  {
+    "id": "30d27ef0-c4e6-4fc9-9309-1f5151719315",
+    "post_id": "1qnqre1",
+    "hotel_id": "fea6f15f-b3ba-4897-abd2-f460c7128686",
+    "hotel_name_raw": "The St. Regis Punta Mita Resort",
+    "sentiment": "conditional",
+    "best_for": [
+      "families with active teens",
+      "non-motorized water-sports enthusiasts"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [
+      "may require splitting time if combining with another resort (user considering split stay)"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "family trip with an active 16 yo",
+    "confidence": "medium",
+    "created_at": "2026-04-07 13:13:55.972+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1qnqre1/ritz_siari_andor_st_regis_punta_mita/"
+  },
+  {
+    "id": "31cf546c-43b5-4ebc-80d9-7fcf1767fa9a",
+    "post_id": "1q6v9sk",
+    "hotel_id": "a6f8a3db-932d-4765-9658-3473d7ed1fed",
+    "hotel_name_raw": "Tambo del Inca",
+    "sentiment": "positive",
+    "best_for": [
+      "upscale travelers",
+      "those booking as part of a Sacred Valley itinerary"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [
+      "Already booked as a one-night stay (may not meet walkable-to-town requirement)"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "Sacred Valley / Peru",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:01:45.411+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1q6v9sk/sacred_valley_peru_hotel_upscale_walkable_to/"
+  },
+  {
+    "id": "331bcd9a-a1e5-4fe4-b8a1-9f44b6a9b573",
+    "post_id": "1r6rmyp",
+    "hotel_id": "2c59f97e-de32-48bd-9482-1b1b83b85059",
+    "hotel_name_raw": "Zadun",
+    "sentiment": "conditional",
+    "best_for": [
+      "couples in their 20s",
+      "luxury travelers"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "couple getaway",
+    "confidence": "medium",
+    "created_at": "2026-04-07 13:44:57.166+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r6rmyp/help_me_choose_which_cabo_hotel_to_stay_at/"
+  },
+  {
+    "id": "37df1cfe-fff4-4e8d-be61-1d0cc6cb6ec3",
+    "post_id": "1q1czp8",
+    "hotel_id": "29754409-df5b-4dcf-bb12-851d8f02f333",
+    "hotel_name_raw": "Four Seasons Hotel Chicago",
+    "sentiment": "negative",
+    "best_for": [
+      "guests who prioritize pool and gym facilities"
+    ],
+    "avoid_if": [
+      "guests expecting seamless check-in/service",
+      "families wanting generous kids facilities"
+    ],
+    "tradeoffs": [
+      "good pool and gym but poor check-in experience",
+      "comfortable beds but outdated bathrooms and small rooms"
+    ],
+    "regret_signal": true,
+    "price_mentioned": null,
+    "trip_context": "family trip with children",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:12:48.903+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1q1czp8/chicago_four_seasons/"
+  },
+  {
+    "id": "385b16c7-a36e-4fa1-8342-688a738788ca",
+    "post_id": "1r8f553",
+    "hotel_id": "7d1aeb79-fdbc-48eb-9ae9-8d83bae1e646",
+    "hotel_name_raw": "Grand Velas Riviera Maya",
+    "sentiment": "positive",
+    "best_for": [
+      "families",
+      "all-inclusive seekers",
+      "good-food travelers"
+    ],
+    "avoid_if": [
+      "want adult-only dining throughout"
+    ],
+    "tradeoffs": [
+      "large property (may be busy)",
+      "sargassum concerns seasonally"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "family vacation",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:41:22.716+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r8f553/tipssuggestions_for_booking_family_vacation45yo/"
+  },
+  {
+    "id": "387651dc-f553-46a0-9cda-4e26bc436fc3",
+    "post_id": "1q0xkes",
+    "hotel_id": "bbc6a148-41f6-4bdc-929c-13fa3c0520cb",
+    "hotel_name_raw": "Casa Polanco",
+    "sentiment": "positive",
+    "best_for": [
+      "Mexico City luxury stay",
+      "food-focused travelers"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "honeymoon",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:27:18.457+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1q0xkes/3_week_honeymoon_in_mexico_costa_rica/"
+  },
+  {
+    "id": "3a756331-4f0b-4671-b3d6-5ace345e63f7",
+    "post_id": "1r8ujgq",
+    "hotel_id": "663b0232-c924-442e-89e9-dc6224a3128e",
+    "hotel_name_raw": "Four Seasons Resort Maui at Wailea",
+    "sentiment": "conditional",
+    "best_for": [
+      "travelers considering alternatives to 1Hotel Hanalei Bay"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [
+      "potential construction/renovation impact vs staying at established FS property"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "booked trip (April)",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:41:22.62+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r8ujgq/whats_the_latest_on_the_fs_maui_remodel/"
+  },
+  {
+    "id": "3aac6022-e4c0-4ea2-a7f7-6c6cde7b4aa6",
+    "post_id": "1qly709",
+    "hotel_id": "07b4e950-ca57-4ccd-b1a2-671daee00b51",
+    "hotel_name_raw": "Shinta Mani Wild",
+    "sentiment": "negative",
+    "best_for": [
+      "not applicable (used as a comparison example)"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [
+      "wildlife feels controlled/distant (per comparison)"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": null,
+    "confidence": "medium",
+    "created_at": "2026-04-07 13:12:48.856+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1qly709/uga_ulagalla_sri_lanka_cultural_triangle_base/"
+  },
+  {
+    "id": "3ba7e5a5-9a23-4f7f-8bc3-5da89637ba86",
+    "post_id": "1r5sw3l",
+    "hotel_id": "95c6bf80-6e59-4c66-8173-7517848073b3",
+    "hotel_name_raw": "Four Seasons Resort Lanai",
+    "sentiment": "mixed",
+    "best_for": [
+      "island/relaxation travelers",
+      "those who value scenic/unique islands",
+      "fans of high-quality Italian dining on-site"
+    ],
+    "avoid_if": [
+      "expecting top-tier concierge/concierge responsiveness"
+    ],
+    "tradeoffs": [
+      "excellent property and island experience vs inconsistent concierge",
+      "some restaurants outstanding (Italian) but others disappointing (Nobu)"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": null,
+    "confidence": "high",
+    "created_at": "2026-04-07 13:51:35.205+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r5sw3l/review_of_fs_lani/"
+  },
+  {
+    "id": "3c715734-4cf3-446c-bdb1-bc16ba72783f",
+    "post_id": "1r7i1a1",
+    "hotel_id": "eb895592-d2b7-4524-ac43-967c961c3ef8",
+    "hotel_name_raw": "Auberge du Soleil",
+    "sentiment": "mixed",
+    "best_for": [
+      "wellness-minded travelers who also want good food"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [
+      "wellness focus vs desire for non-restrictive dining"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "girls spa trip",
+    "confidence": "medium",
+    "created_at": "2026-04-07 13:44:57.019+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r7i1a1/girls_spa_trip_centered_around_food_spa_and_yoga/"
+  },
+  {
+    "id": "3f004846-cae6-42e0-b426-83da191c92e3",
+    "post_id": "1r795pt",
+    "hotel_id": "2ebab955-b8e5-45f9-9684-631b9d8c3a8c",
+    "hotel_name_raw": "Lido Palace",
+    "sentiment": "mixed",
+    "best_for": [
+      "Lake Garda luxury stays",
+      "travelers wanting a central lakeside hotel"
+    ],
+    "avoid_if": [
+      "travelers looking for an adults-only property (user noted Villa Feltrinelli is no-kids)"
+    ],
+    "tradeoffs": [
+      "choice between family-friendliness and exclusivity"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "family trip with toddler (Lake Garda)",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:44:57.113+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r795pt/chubby_italy_itinerary_help_with_a_toddler/"
+  },
+  {
+    "id": "4293ccc9-2eb9-4e12-bc07-df4ba8c14e6f",
+    "post_id": "1qgjr4h",
+    "hotel_id": "ac221a9c-aab8-465c-9612-e74c9d7a8ba8",
+    "hotel_name_raw": "Eden Roc Cap Cana",
+    "sentiment": "conditional",
+    "best_for": [
+      "beach/pool-focused travelers",
+      "families (considered for baby trip)"
+    ],
+    "avoid_if": [
+      "seeking strictly low-cost options"
+    ],
+    "tradeoffs": [
+      "may require higher spend on room to get desired amenities"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "first trip with baby (considered)",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:10:31.734+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1qgjr4h/last_minute_getaway_from_nyc_with_6m_old_to_beat/"
+  },
+  {
+    "id": "43059dcf-2931-4f5c-bcaf-b655a1c57998",
+    "post_id": "1qgjr4h",
+    "hotel_id": "7e08e7ee-2b49-4e1c-84cd-3d884848f259",
+    "hotel_name_raw": "Four Seasons Resort and Residences Anguilla",
+    "sentiment": "conditional",
+    "best_for": [
+      "luxury beach resort seekers"
+    ],
+    "avoid_if": [
+      "keeping to a strict budget"
+    ],
+    "tradeoffs": [
+      "likely high nightly cost"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "first trip with baby (considered)",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:10:31.756+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1qgjr4h/last_minute_getaway_from_nyc_with_6m_old_to_beat/"
+  },
+  {
+    "id": "45f49add-815b-43f3-bcc4-9a146a778702",
+    "post_id": "1r7jrwq",
+    "hotel_id": "3a246aee-08e7-4cdc-a21e-e9080d5824c5",
+    "hotel_name_raw": "the Ritz",
+    "sentiment": "positive",
+    "best_for": [
+      "birthday",
+      "families",
+      "groups"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "birthday",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:59:51.777+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r7jrwq/sf_chubby_restaurant/"
+  },
+  {
+    "id": "4638acff-6fc3-4292-86a9-757ba3c27ed9",
+    "post_id": "1r7t3n1",
+    "hotel_id": "663b0232-c924-442e-89e9-dc6224a3128e",
+    "hotel_name_raw": "FS Maui",
+    "sentiment": "positive",
+    "best_for": [
+      "wellness/spa travelers",
+      "celebrations",
+      "luxury resort seekers"
+    ],
+    "avoid_if": [
+      "value-conscious"
+    ],
+    "tradeoffs": [
+      "ongoing renovations in parts of the property"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "family (mother's birthday)",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:50:51.83+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r7t3n1/fs_wailea_review/"
+  },
+  {
+    "id": "4a11f91d-b38a-4f4d-b781-4ba3795cce87",
+    "post_id": "1q0xkes",
+    "hotel_id": "8b5360ae-2dae-4db7-8e49-03351461844d",
+    "hotel_name_raw": "Maroma, A Belmond Hotel, Riviera Maya (Belmond Maroma)",
+    "sentiment": "mixed",
+    "best_for": [
+      "luxury splurge",
+      "romantic beach honeymoon"
+    ],
+    "avoid_if": [
+      "value-conscious"
+    ],
+    "tradeoffs": [
+      "More expensive than Chablé or Etéreo"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "honeymoon",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:27:18.546+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1q0xkes/3_week_honeymoon_in_mexico_costa_rica/"
+  },
+  {
+    "id": "4bc6dc78-44b6-4dcd-b4eb-64ff094bc9d8",
+    "post_id": "1r7m66g",
+    "hotel_id": "67042762-b1c9-497a-9fe7-6ca9e4da04d7",
+    "hotel_name_raw": "Hotel de La Loze",
+    "sentiment": "mixed",
+    "best_for": [
+      "skiers wanting convenient Courchevel access",
+      "stylish boutique ski stays"
+    ],
+    "avoid_if": [
+      "require an on-site hot tub"
+    ],
+    "tradeoffs": [
+      "cute / convenient location but lacks hot tub",
+      "some concerns about local food/atmosphere mentioned"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "solo ski trip",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:44:57.091+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r7m66g/should_i_ditch_my_courchevel_plans_and_go_to_lech/"
+  },
+  {
+    "id": "4e35ead9-b002-4004-a370-21d973bb32d2",
+    "post_id": "1r893jt",
+    "hotel_id": "00cba4d4-9093-4a86-ad3a-0907e2296ed5",
+    "hotel_name_raw": "COMO Alpina Dolomites",
+    "sentiment": "positive",
+    "best_for": [
+      "nature and design-focused travelers",
+      "wellness/spa seekers"
+    ],
+    "avoid_if": [
+      "do not like remote mountain properties"
+    ],
+    "tradeoffs": [
+      "repeat visitors may find limited novelty"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "family (2 yr old)",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:43:32.132+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r893jt/adventure_luxe_european_hotels_kid_friendly/"
+  }
+]
