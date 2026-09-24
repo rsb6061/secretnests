@@ -14,11 +14,11 @@ const creator={
 };
 const demo=[
   ["Fairmont Banff Springs","2026-05",725,475,0],
-  ["Taj Lake Palace","2026-04",510,575,1],
-  ["Blackberry Farm","2026-03",1150,1250,1],
+  ["Bawah Reserve","2026-04",510,575,1],
+  ["COMO Alpina Dolomites","2026-03",1150,1250,1],
   ["Canaves Epitome","2025-09",980,1050,1],
   ["Park Hyatt Sydney","2025-07",890,825,1],
-  ["Hotel Luna","2025-05",640,700,1]
+  ["JW Marriott Marco Island Beach Resort","2025-05",640,700,1]
 ].map(([name,month,paid,wouldPay,wouldReturn],i)=>({hotel:find(name),month,paid,wouldPay,wouldReturn,i}));
 
 const lists=[
