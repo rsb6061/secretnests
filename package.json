@@ -7,7 +7,10 @@
     "deploy": "wrangler deploy",
     "db:migrate": "wrangler d1 migrations apply secretnests --remote",
     "db:migrate:local": "wrangler d1 migrations apply secretnests --local",
-    "check": "node --check src/index.js"
+    "seed:hotels": "node scripts/build-legacy-hotel-seed.mjs",
+    "seed:reddit": "node scripts/build-reddit-evidence-seed.mjs",
+    "audit:secrets": "node scripts/audit-no-secrets.mjs",
+    "check": "node --check src/index.js && node --check scripts/build-legacy-hotel-seed.mjs && node --check scripts/build-reddit-evidence-seed.mjs && node --check scripts/audit-no-secrets.mjs && npm run audit:secrets"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"
