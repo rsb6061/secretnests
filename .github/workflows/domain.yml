@@ -1,0 +1,43 @@
+name: SecretNests Domain Cutover
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  configure:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+    steps:
+      - name: Validate credentials
+        run: |
+          set -euo pipefail
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+          test -n "$CLOUDFLARE_API_TOKEN"
+
+      - name: Verify Worker exists
+        run: |
+          set -euo pipefail
+          curl -fsS             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN"             "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/secretnests"             >/dev/null
+
+      - name: Attach apex custom domain
+        run: |
+          set -euo pipefail
+          RESPONSE="$(curl -fsS -X PUT             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN"             -H "Content-Type: application/json"             --data '{"hostname":"secretnests.com","service":"secretnests","zone_name":"secretnests.com"}'             "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/domains")"
+          echo "$RESPONSE" | jq -e '.success == true' >/dev/null
+
+      - name: Attach www custom domain
+        run: |
+          set -euo pipefail
+          RESPONSE="$(curl -fsS -X PUT             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN"             -H "Content-Type: application/json"             --data '{"hostname":"www.secretnests.com","service":"secretnests","zone_name":"secretnests.com"}'             "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/domains")"
+          echo "$RESPONSE" | jq -e '.success == true' >/dev/null
+
+      - name: Verify domains
+        run: |
+          set -euo pipefail
+          curl -fsS             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN"             "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/domains"             | jq -e '[.result[] | select(.service=="secretnests") | .hostname] | (index("secretnests.com") != null and index("www.secretnests.com") != null)'
