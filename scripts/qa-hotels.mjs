@@ -1,0 +1,17 @@
+import fs from "node:fs";
+import path from "node:path";
+const dir=path.resolve("data/legacy");
+const files=fs.readdirSync(dir).filter(n=>/^hotels-core-\d+\.json$/.test(n)).sort();
+const rows=files.flatMap(n=>JSON.parse(fs.readFileSync(path.join(dir,n),"utf8")));
+const contentFiles=fs.readdirSync(dir).filter(n=>/^hotel-content-\d+\.sanitized\.json$/.test(n)).sort();
+const content=contentFiles.flatMap(n=>JSON.parse(fs.readFileSync(path.join(dir,n),"utf8")));
+const contentById=new Map(content.map(r=>[r.id,r]));
+const slugify=v=>String(v||"").normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/&/g," and ").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").replace(/-{2,}/g,"-");
+const dup=(fn)=>[...rows.reduce((m,r)=>{const k=fn(r);m.set(k,(m.get(k)||0)+1);return m},new Map())].filter(([,n])=>n>1);
+const report={generated_at:new Date().toISOString(),total:rows.length,duplicate_names:dup(r=>String(r.name||"").trim().toLowerCase()).length,duplicate_place_ids:dup(r=>String(r.google_place_id||"").trim()).filter(([k])=>k).length,missing_city:rows.filter(r=>!String(r.city||"").trim()).length,missing_country:rows.filter(r=>!String(r.country||"").trim()).length,malformed_place_ids:rows.filter(r=>r.google_place_id&&!/^ChI[A-Za-z0-9_-]{10,}$/.test(r.google_place_id)).length,missing_booking_url:rows.filter(r=>!String(r.booking_url||"").trim()).length,malformed_booking_url:rows.filter(r=>r.booking_url&&!/^https?:\/\//i.test(r.booking_url)).length,reversed_price_range:rows.filter(r=>Number.isFinite(+r.price_estimate_min)&&Number.isFinite(+r.price_estimate_max)&&+r.price_estimate_min>+r.price_estimate_max).length,canonical_slug_changes:rows.filter(r=>slugify(r.name)!==r.slug).length,thin_descriptions:rows.filter(r=>String(contentById.get(r.id)?.description||"").trim().length<80).length,empty_best_for:rows.filter(r=>(contentById.get(r.id)?.best_for||[]).length===0).length,empty_not_ideal_for:rows.filter(r=>(contentById.get(r.id)?.not_ideal_for||[]).length===0).length};
+fs.mkdirSync(".generated",{recursive:true});
+fs.writeFileSync(".generated/hotel-data-qa.json",JSON.stringify(report,null,2));
+const lines=["# Hotel Data QA Report","","Generated: "+report.generated_at,"","| Check | Count |","|---|---:|",...Object.entries(report).filter(([k])=>!["generated_at","total"].includes(k)).map(([k,v])=>"| "+k.replaceAll("_"," ")+" | "+v+" |"),"","Total hotels: **"+report.total+"**.","","Safe automatic fixes applied at seed time:","- trim whitespace from string fields","- generate clean lowercase canonical slugs from hotel names","- preserve old legacy slugs in hotel_slug_aliases for redirects","- keep 0–300 price buckets intact rather than treating $0 as a literal nightly rate","","Manual-review queues:","- missing city values (often remote resorts; do not guess)","- missing booking URLs","- any future dead-link findings from the optional network checker"];
+fs.writeFileSync(".generated/hotel-data-qa.md",lines.join("\n")+"\n");
+if(report.total!==1066||report.duplicate_names||report.duplicate_place_ids||report.malformed_place_ids||report.reversed_price_range) process.exitCode=1;
+console.log(JSON.stringify(report,null,2));
