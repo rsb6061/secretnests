@@ -18,3 +18,49 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npm run check
+
+      - name: Prepare local Wrangler config
+        run: |
+          cp wrangler.toml wrangler.ci.toml
+          sed -i 's/REPLACE_WITH_D1_DATABASE_ID/00000000-0000-0000-0000-000000000000/g' wrangler.ci.toml
+
+      - name: Build local seed files
+        run: |
+          node scripts/build-legacy-hotel-seed.mjs
+          node scripts/build-reddit-evidence-seed.mjs
+
+      - name: Build local D1
+        run: |
+          npx wrangler d1 migrations apply secretnests --local --config wrangler.ci.toml
+          npx wrangler d1 execute secretnests --local --config wrangler.ci.toml --file=.generated/legacy-hotels.sql
+          npx wrangler d1 execute secretnests --local --config wrangler.ci.toml --file=.generated/reddit-evidence.sql
+
+      - name: Smoke-test Cloudflare Worker routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx wrangler dev --local --config wrangler.ci.toml --port 8787 > /tmp/secretnests-worker.log 2>&1 &
+          PID=$!
+          trap 'kill $PID || true; cat /tmp/secretnests-worker.log' EXIT
+
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:8787/health >/dev/null; then break; fi
+            sleep 1
+          done
+
+          curl -fsS http://127.0.0.1:8787/health | jq -e '.ok == true'
+          curl -fsS http://127.0.0.1:8787/ >/dev/null
+          curl -fsS 'http://127.0.0.1:8787/search?q=hotel' >/dev/null
+          curl -fsS http://127.0.0.1:8787/destinations >/dev/null
+          curl -fsS http://127.0.0.1:8787/creators >/dev/null
+          curl -fsS http://127.0.0.1:8787/add-your-trip >/dev/null
+          curl -fsS http://127.0.0.1:8787/sitemap.xml >/dev/null
+          curl -fsS http://127.0.0.1:8787/robots.txt >/dev/null
+          curl -fsS http://127.0.0.1:8787/llms.txt >/dev/null
+
+          SLUG="$(curl -fsS 'http://127.0.0.1:8787/api/hotels?limit=1' | jq -r '.[0].slug')"
+          test -n "$SLUG"
+          test "$SLUG" != "null"
+          curl -fsS "http://127.0.0.1:8787/hotel/$SLUG" >/dev/null
+
+          curl -fsS -X POST http://127.0.0.1:8787/api/events             -H 'content-type: application/json'             --data '{"name":"page_view","path":"/ci"}'             | jq -e '.ok == true'
