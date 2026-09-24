@@ -12,7 +12,7 @@ function headers(extra={}) {
     "x-content-type-options":"nosniff",
     "referrer-policy":"strict-origin-when-cross-origin",
     "permissions-policy":"camera=(), microphone=(), geolocation=()",
-    "content-security-policy":"default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.clarity.ms; connect-src 'self' https://www.google-analytics.com https://*.clarity.ms; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+    "content-security-policy":"default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.clarity.ms; connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://*.clarity.ms; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
     ...extra
   };
 }
