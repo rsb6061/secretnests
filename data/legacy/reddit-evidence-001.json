@@ -1,0 +1,550 @@
+[
+  {
+    "id": "003473b4-95fa-4a83-8da3-efda2205c6d5",
+    "post_id": "1r8ol69",
+    "hotel_id": "0dc0fcdf-b377-4928-9511-2e0adbd697e1",
+    "hotel_name_raw": "Fairmont Mayakoba",
+    "sentiment": "mixed",
+    "best_for": [
+      "value-conscious luxury travelers"
+    ],
+    "avoid_if": [
+      "seeking the most exclusive villa options"
+    ],
+    "tradeoffs": [
+      "lower price vs. fewer ultra-luxury touches"
+    ],
+    "regret_signal": false,
+    "price_mentioned": "1500",
+    "trip_context": "couples",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:41:22.681+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r8ol69/recommendations_for_mayakoba_riviera_maya_for/"
+  },
+  {
+    "id": "003e2a6c-884a-4a93-8dea-18e57355dc54",
+    "post_id": "1r8ujgq",
+    "hotel_id": "62995fb2-6877-4841-8206-b0f7f7e2b8de",
+    "hotel_name_raw": "Four Seasons Resort Oahu at Ko Olina",
+    "sentiment": "conditional",
+    "best_for": [
+      "travelers looking to avoid Maui construction"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [
+      "switching islands vs staying despite construction"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "booked trip (April)",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:41:22.632+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r8ujgq/whats_the_latest_on_the_fs_maui_remodel/"
+  },
+  {
+    "id": "01ceb2cd-a589-4e9f-b4ae-2486aa5f26e7",
+    "post_id": "1r6rmyp",
+    "hotel_id": "cd23820d-2ce8-49f1-9b55-d94178ef77fe",
+    "hotel_name_raw": "Four Seasons",
+    "sentiment": "mixed",
+    "best_for": [
+      "couples",
+      "rooms-focused travelers"
+    ],
+    "avoid_if": [
+      "value-conscious"
+    ],
+    "tradeoffs": [
+      "may have older rooms depending on property",
+      "pool crowding/availability concerns (user priority)"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "couple celebration",
+    "confidence": "medium",
+    "created_at": "2026-04-07 13:44:57.155+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r6rmyp/help_me_choose_which_cabo_hotel_to_stay_at/"
+  },
+  {
+    "id": "043d1e31-9a9c-47ad-bec9-937148c9e648",
+    "post_id": "1r89n5w",
+    "hotel_id": "c10bcd69-c45a-480d-ad35-061f3015f23c",
+    "hotel_name_raw": "Rosewood Hong Kong",
+    "sentiment": "mixed",
+    "best_for": [
+      "city luxury stays",
+      "design and dining focused travelers"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [
+      "busy city environment vs top-tier hotel product"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "possible pre-Amanoi stay",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:41:22.832+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r89n5w/where_to_pair_with_amanoi/"
+  },
+  {
+    "id": "065b8f00-ef7b-4379-9a41-5748ed824384",
+    "post_id": "1r8dpmb",
+    "hotel_id": "812581e0-afb2-4d64-85c0-d29960db473b",
+    "hotel_name_raw": "One&Only Mandarina",
+    "sentiment": "conditional",
+    "best_for": [
+      "wilderness-focused travelers",
+      "beach and nature mix"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [
+      "remote/wilderness setting vs. town access"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "solo trip",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:41:22.46+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r8dpmb/puerta_vallarta_punta_mita_what_are_your_resort/"
+  },
+  {
+    "id": "07438a8e-2492-44ea-89db-13135d15113f",
+    "post_id": "1qly709",
+    "hotel_id": "a940fcd8-85a1-468d-9fdf-80b8a2b17f94",
+    "hotel_name_raw": "Santani",
+    "sentiment": "positive",
+    "best_for": [
+      "guests seeking an immediate 'wow' factor / design-forward stays"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [
+      "mentioned only as a point of contrast (no direct review)"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": null,
+    "confidence": "medium",
+    "created_at": "2026-04-07 13:12:48.89+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1qly709/uga_ulagalla_sri_lanka_cultural_triangle_base/"
+  },
+  {
+    "id": "0cbc2657-6667-45e3-ae5c-bcf51dae8246",
+    "post_id": "1r6kzzl",
+    "hotel_id": "51c8aecd-5400-4057-a096-c39deadce7bb",
+    "hotel_name_raw": "Casona Sforza",
+    "sentiment": "mixed",
+    "best_for": [
+      "relaxing getaway",
+      "romantic"
+    ],
+    "avoid_if": [
+      "beach-seekers"
+    ],
+    "tradeoffs": [
+      "unclear from post"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "quick getaway / romantic",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:49:42.306+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r6kzzl/looking_for_lodging_advice_in_mexico_both_oaxaca/"
+  },
+  {
+    "id": "0faa122a-6829-4dbf-bf3a-158406077c41",
+    "post_id": "1qe6h8q",
+    "hotel_id": "933023ef-80b5-4634-97d1-748af07bd088",
+    "hotel_name_raw": "Four Seasons Resort Hualalai",
+    "sentiment": "conditional",
+    "best_for": [
+      "couples who appreciate luxury hotel experience",
+      "design-focused travelers who like high service"
+    ],
+    "avoid_if": [
+      "you need a real beach (user says crew wants a real beach)"
+    ],
+    "tradeoffs": [
+      "exceptional hotel but may lack the beachfront the group needs"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "family",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:30:46.251+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1qe6h8q/family_trip_to_hawaii_for_16_people/"
+  },
+  {
+    "id": "0fe8e9ca-305f-441c-8936-f1f1367b411d",
+    "post_id": "1qowzvt",
+    "hotel_id": "52fd34bb-077c-44a4-956e-8de02b14ac8d",
+    "hotel_name_raw": "Kimpton Seafire Resort + Spa",
+    "sentiment": "conditional",
+    "best_for": [
+      "families wanting modern beachfront resort"
+    ],
+    "avoid_if": [
+      "value-conscious"
+    ],
+    "tradeoffs": [
+      "user noted it's over budget for their dates"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "family with toddler",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:27:18.392+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1qowzvt/caribbeaneastern_mexico_resort_suggestions_for/"
+  },
+  {
+    "id": "10f4f024-e9fe-44be-b34e-5c4da4fbe04f",
+    "post_id": "1qowzvt",
+    "hotel_id": "933023ef-80b5-4634-97d1-748af07bd088",
+    "hotel_name_raw": "Four Seasons Resort Hualalai",
+    "sentiment": "positive",
+    "best_for": [
+      "families with young children",
+      "beach/pool-focused stays"
+    ],
+    "avoid_if": [
+      "value-conscious"
+    ],
+    "tradeoffs": [
+      "typically higher nightly rates",
+      "may be above budget for some dates"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "family with toddler",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:27:18.228+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1qowzvt/caribbeaneastern_mexico_resort_suggestions_for/"
+  },
+  {
+    "id": "144347a1-7954-45f6-b2b6-911e887704da",
+    "post_id": "1pyo3yu",
+    "hotel_id": "352ce32d-3af6-4dee-87ac-356244ebb8ad",
+    "hotel_name_raw": "Bio- und Wellnesshotel Stanglwirt",
+    "sentiment": "mixed",
+    "best_for": [
+      "families with kids",
+      "active families wanting resort amenities"
+    ],
+    "avoid_if": [
+      "prefer small boutique properties"
+    ],
+    "tradeoffs": [
+      "family-friendly resort features vs more tranquil boutique mountain stays"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "family",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:30:46.376+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1pyo3yu/austria_stanglwirt_or_das_edelweiss/"
+  },
+  {
+    "id": "1577612a-a848-4658-abcb-948d141bd362",
+    "post_id": "1r95zbv",
+    "hotel_id": "1eff594b-d127-4970-934e-7604ff62c275",
+    "hotel_name_raw": "Four Seasons Safari Lodge Serengeti",
+    "sentiment": "positive",
+    "best_for": [
+      "safari/luxury nature travelers"
+    ],
+    "avoid_if": [
+      "sensitive to bugs/natural 'roughness' (contrast with Kilindi)"
+    ],
+    "tradeoffs": [
+      "luxury safari experience vs more 'nature' forward properties"
+    ],
+    "regret_signal": false,
+    "price_mentioned": "2000",
+    "trip_context": "wedding anniversary (4 nights)",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:41:22.597+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r95zbv/st_kitts_or_costa_rica_may_26_4_nights_wedding/"
+  },
+  {
+    "id": "15bf736c-41f1-4d86-950f-8854505d9640",
+    "post_id": "1r613dm",
+    "hotel_id": "352c0b60-fed5-4713-bc46-3863a3de31fd",
+    "hotel_name_raw": "Avant Mar",
+    "sentiment": "positive",
+    "best_for": [
+      "wedding attendees",
+      "couples"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "wedding",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:52:36.708+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r613dm/greece_itinerary_this_summer/"
+  },
+  {
+    "id": "170d12e4-08ca-4be0-85e0-e1c3b578af14",
+    "post_id": "1r8y3os",
+    "hotel_id": "ac221a9c-aab8-465c-9612-e74c9d7a8ba8",
+    "hotel_name_raw": "Eden Roc Cap Cana",
+    "sentiment": "conditional",
+    "best_for": [
+      "anniversary trips",
+      "activity-minded couples"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [
+      "user weighing options vs Tortuga Bay"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "3-night anniversary trip",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:41:22.492+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r8y3os/most_luxurious_resort_in_dr/"
+  },
+  {
+    "id": "1785c1ba-7974-42f0-961c-768c43e3944d",
+    "post_id": "1qt2rsl",
+    "hotel_id": "812581e0-afb2-4d64-85c0-d29960db473b",
+    "hotel_name_raw": "One&Only Mandarina",
+    "sentiment": "conditional",
+    "best_for": [
+      "multigenerational family travel"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [
+      "choosing between One&Only luxury vs Rosewood (unspecified)"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "family (multigenerational)",
+    "confidence": "medium",
+    "created_at": "2026-04-07 13:41:22.574+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1qt2rsl/rosewood_or_oo_mandarina/"
+  },
+  {
+    "id": "1a3ae9a9-834f-40ae-99f2-258fea0d8375",
+    "post_id": "1qowzvt",
+    "hotel_id": "32383f6a-f694-4206-9849-eac36972e73c",
+    "hotel_name_raw": "Round Hill Inn",
+    "sentiment": "positive",
+    "best_for": [
+      "families with young children",
+      "laid-back luxury beach stays"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [
+      "smaller property — limited large-resort amenities"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "family with toddler",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:27:18.37+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1qowzvt/caribbeaneastern_mexico_resort_suggestions_for/"
+  },
+  {
+    "id": "1a587ec9-8fae-405f-b4c9-238bb988973e",
+    "post_id": "1r89n5w",
+    "hotel_id": "ada5b2ac-82b5-4a68-8d24-8ab03a2a3b05",
+    "hotel_name_raw": "Zannier Hotels Bãi San Hô",
+    "sentiment": "mixed",
+    "best_for": [
+      "boutique/beach stays"
+    ],
+    "avoid_if": [
+      "tight flight connections"
+    ],
+    "tradeoffs": [
+      "great property but poor flight routing to Amanoi"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "possible alternative",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:41:22.856+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r89n5w/where_to_pair_with_amanoi/"
+  },
+  {
+    "id": "1d10fbc9-0064-4c76-80f9-fd7625fea7fa",
+    "post_id": "1r7rd19",
+    "hotel_id": "322453fd-8086-4382-b482-3190d5e11239",
+    "hotel_name_raw": "Cliff House Maine",
+    "sentiment": "mixed",
+    "best_for": [
+      "families",
+      "cooler-summer destinations"
+    ],
+    "avoid_if": [
+      "heat-averse"
+    ],
+    "tradeoffs": [
+      "mixed reviews vs desirable Maine location",
+      "may be pricey in August"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "family",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:44:57.187+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r7rd19/luxury_familyfriendly_hotel_august/"
+  },
+  {
+    "id": "20c3015d-825c-4a4d-8a56-1a6c42c630d9",
+    "post_id": "1r857b6",
+    "hotel_id": "ca7fa98b-255b-46c4-b51a-d379ffd0ec3e",
+    "hotel_name_raw": "The Ritz-Carlton, St. Thomas",
+    "sentiment": "negative",
+    "best_for": [
+      "wedding groups (common choice)"
+    ],
+    "avoid_if": [
+      "don't want to risk poor service based on reviews"
+    ],
+    "tradeoffs": [
+      "brand name and location vs reported inconsistent service"
+    ],
+    "regret_signal": true,
+    "price_mentioned": null,
+    "trip_context": "family wedding",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:41:22.758+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r857b6/best_hotel_option_for_stthomas/"
+  },
+  {
+    "id": "20c39462-80c0-431d-8d75-f37526ed8d61",
+    "post_id": "1qowzvt",
+    "hotel_id": "3495a3f1-9dcf-4ca7-88a2-ffd8218f2e91",
+    "hotel_name_raw": "Silversands",
+    "sentiment": "positive",
+    "best_for": [
+      "beach-focused families",
+      "modern resort lovers"
+    ],
+    "avoid_if": [
+      "value-conscious"
+    ],
+    "tradeoffs": [
+      "can be pricey in high season"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "family with toddler",
+    "confidence": "medium",
+    "created_at": "2026-04-07 13:27:18.348+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1qowzvt/caribbeaneastern_mexico_resort_suggestions_for/"
+  },
+  {
+    "id": "21f74ce9-447b-4437-8dbd-00659f641cc3",
+    "post_id": "1qgjr4h",
+    "hotel_id": "693ace99-78c2-45c6-ab93-9a0184644b98",
+    "hotel_name_raw": "Sugar Beach, A Viceroy Resort",
+    "sentiment": "positive",
+    "best_for": [
+      "couples and families seeking warm beach getaways"
+    ],
+    "avoid_if": [
+      "want strict budget options"
+    ],
+    "tradeoffs": [
+      "spent more on room than planned to secure preferred accommodation"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "first trip with baby (booked)",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:10:31.822+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1qgjr4h/last_minute_getaway_from_nyc_with_6m_old_to_beat/"
+  },
+  {
+    "id": "2330714e-6532-4b9e-8f6a-6f7fb24d49ca",
+    "post_id": "1q0xkes",
+    "hotel_id": "31686590-d744-45e0-900b-855bafe3d1e7",
+    "hotel_name_raw": "La Zebra (Mezzanine at La Zebra / Mezzanine by La Zebra)",
+    "sentiment": "positive",
+    "best_for": [
+      "romantic boutique beach stay",
+      "Tulum nature reserve location"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [
+      "Boutique = may require splurge on suite for best experience"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "honeymoon",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:27:18.587+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1q0xkes/3_week_honeymoon_in_mexico_costa_rica/"
+  },
+  {
+    "id": "2447c5de-b022-4a0c-b70d-6144ecbbb6c4",
+    "post_id": "1r94gfe",
+    "hotel_id": "2f96f09d-6f89-49ff-9358-9b9f9ecf96da",
+    "hotel_name_raw": "Sea Island Resort",
+    "sentiment": "conditional",
+    "best_for": [
+      "spa and pool-focused travelers",
+      "couples seeking resort pampering"
+    ],
+    "avoid_if": [
+      "you require close proximity to Charleston"
+    ],
+    "tradeoffs": [
+      "Likely stronger spa/pool offerings vs Kiawah's proximity to Charleston and golf convenience"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "long weekend",
+    "confidence": "medium",
+    "created_at": "2026-04-07 13:30:46.52+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r94gfe/kiawah_island_or_sea_island/"
+  },
+  {
+    "id": "29054b04-7695-4185-8c5a-0685c688f5d8",
+    "post_id": "1r8y3os",
+    "hotel_id": "967554e4-da85-4259-8d09-bb54b16abb46",
+    "hotel_name_raw": "Tortuga Bay",
+    "sentiment": "conditional",
+    "best_for": [
+      "active couples",
+      "golf and outdoor activities"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [
+      "user comparing different DR options"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "3-night anniversary trip",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:43:31.95+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r8y3os/most_luxurious_resort_in_dr/"
+  },
+  {
+    "id": "2932a074-24ad-4a80-a252-ba66c123caba",
+    "post_id": "1r8a8ak",
+    "hotel_id": "35bfb216-c52e-4ac3-a8ef-1548f22d6804",
+    "hotel_name_raw": "SLS Baha Mar",
+    "sentiment": "mixed",
+    "best_for": [
+      "adult groups",
+      "party-focused trips"
+    ],
+    "avoid_if": [
+      "prefer all-inclusive pricing",
+      "value-conscious"
+    ],
+    "tradeoffs": [
+      "likely higher out-of-pocket spend vs all-inclusive alternatives"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "friends group (40 y/o celebration)",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:41:22.746+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r8a8ak/friends_trip_recommendations_group_of_14_40_yo/"
+  }
+]
