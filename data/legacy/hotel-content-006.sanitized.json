@@ -1,275 +1,1841 @@
 [
   {
-    "id": "76bb08cf-eedb-453b-bad4-9dd3aee33bbc",
-    "description": "Perched beneath an Acacia grove in Hwange National Park and just a 45‑minute flight from Victoria Falls, Somalisa Camp pairs elegant, contemporary tented suites — dressed in local Kudhinda textiles, wood-burning fireplaces and copper slipper baths — with a quietly authentic African aesthetic. Days here are shaped by intimate wildlife encounters at the camp’s Elephant Pool, guided game drives and a romantic sleep‑out treehouse, while a solar‑powered, conservation‑minded approach ensures an immersive, serene stay in the heart of the bush.",
+    "id": "54de967b-7d82-443b-ae13-f1a31e03489b",
+    "description": "Housed in a painstakingly restored 17th‑century Mallorcan mansion in the heart of Santanyí, Can Ferrereta marries original stone arches, wooden beams and Santanyí stone with contemporary art and refined modern design across 32 unique rooms and suites set around serene gardens and a heated pool. Days here are spent strolling the town’s markets, exploring nearby coves like Es Trenc, dining on market‑driven Mediterranean cuisine, or unwinding in the spa — an intimate, curated experience that feels both rooted in local tradition and quietly luxurious.",
     "highlights": [
-      "Tented suites beneath an Acacia grove dressed in local Kudhinda textiles",
-      "Copper slipper baths and wood‑burning fireplaces in the tented suites",
-      "Private Elephant Pool for intimate wildlife viewing right at camp",
-      "Romantic sleep‑out treehouse for overnight stargazing",
-      "Solar‑powered, conservation‑minded operations in Hwange National Park (45‑minute flight from Victoria Falls)"
+      "Painstakingly restored 17th‑century Mallorcan mansion with original stone arches, exposed wooden beams and local Santanyí stone",
+      "32 individually designed rooms and suites arranged around serene Mediterranean gardens and a heated central pool",
+      "Contemporary art and refined modern interiors that sit deliberately against traditional architecture",
+      "Intimate, curated spa and easy access to Santanyí’s market life and nearby coves such as Es Trenc"
     ],
     "best_for": [
-      "Couples seeking romantic safari escapes",
-      "Luxury safari travelers who want authentic tented design",
-      "Wildlife and photography enthusiasts (close encounters at camp)",
-      "Conservation‑minded travelers"
+      "Couples weekend",
+      "Design lovers",
+      "Food and market‑focused travelers",
+      "Beach daytrippers (Es Trenc and nearby coves)"
     ],
     "not_ideal_for": [
-      "Families with very young children",
-      "Travelers who need hotel‑style, 24/7 urban conveniences",
-      "Guests requiring reliable high‑speed connectivity"
+      "Families with young children",
+      "Party seekers / nightlife crowd"
     ],
     "source_subreddit": "r/chubbytravel",
-    "source_context": "Mentioned in: Gorilla Trekking Itinerary Advice - Chubby Speed, Open to Mountain or Lowland"
+    "source_context": "Mentioned in: Can Ferrereta Review May 2025 - Ladies Group Trip"
   },
   {
-    "id": "76bf88ef-a309-47a2-90eb-ffaf3ee06391",
-    "description": "Set in the heart of Kansas City, Hotel Kansas City — The Unbound Collection by Hyatt occupies a storied historic landmark that blends city energy with refined, old-world charm. Staying here feels like stepping into a graceful period residence, where elegant architecture and timeless style set a quietly sophisticated tone.",
+    "id": "54f04253-2e12-48b9-94f2-142fdf7823d2",
+    "description": "Perched on a rocky headland between Ogunquit and Cape Neddick, Cliff House Maine pairs contemporary coastal architecture—shingle textures, stone accents and expansive glass—with sweeping Atlantic views. Days here unfold around cliffside pools and a restorative spa, fresh‑sea dining and intimate Maine experiences like lobster shacks, coastal walks and artful local programming, leaving guests feeling quietly refreshed and unmistakably rooted in place.",
     "highlights": [
-      "Housed in a restored historic landmark with original period architecture and ornate interior detailing",
-      "Grand, old-world public spaces — think a stately lobby and refined, museum-like common rooms",
-      "Downtown Kansas City location that puts arts, theaters and fine dining within easy walking distance",
-      "A quietly sophisticated, residential atmosphere that emphasizes classic design over faddish trends"
+      "Perched on a rocky headland with uninterrupted sweeping Atlantic views between Ogunquit and Cape Neddick",
+      "Contemporary coastal architecture featuring shingle cladding, natural stone accents and floor-to-ceiling glass",
+      "Cliffside heated pools and a restorative spa built into the coastal landscape",
+      "Fresh‑sea focused dining and easy access to authentic lobster shacks and guided coastal walks",
+      "Artful local programming—gallery connections, seasonal Maine experiences and intimate on-site events"
     ],
     "best_for": [
-      "Design lovers",
       "Couples weekend",
-      "Cultural travelers (theater, museums, classical concerts)",
-      "Business travelers wanting a refined downtown address"
+      "Romantic anniversaries and proposals",
+      "Design lovers who value modern coastal architecture",
+      "Spa and wellness-focused travelers",
+      "Food-focused travelers seeking fresh New England seafood"
     ],
     "not_ideal_for": [
-      "Families with young kids seeking resort-style amenities",
-      "Travelers wanting ultra-modern, minimalist design"
+      "Families with young children (quiet, intimate atmosphere)",
+      "Large party groups or rowdy celebrations",
+      "Budget travelers"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Cliff House Maine: A stunning seaside retreat that’s chartered for luxury but drifts slightly off course…"
+  },
+  {
+    "id": "5559bc46-19fd-4271-a829-b814ee2fdd7f",
+    "description": "Set in Scottsdale, The Phoenician, a Luxury Collection Resort, Scottsdale embodies refined, contemporary luxury with a timeless sense of elegance. Staying here feels indulgent and serene—a polished urban retreat that invites measured relaxation and confident style.",
+    "highlights": [
+      "Dramatic desert setting with terraced gardens and panoramic views of Camelback Mountain",
+      "Polished, Mediterranean-inspired architecture and elegant public spaces that feel quietly luxurious rather than flashy",
+      "Expansive pool complex with private cabanas and a dedicated spa for serious relaxation",
+      "On-site championship golf and active-programming that make it a full-service resort without leaving the property"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Spa and wellness seekers",
+      "Golf enthusiasts",
+      "Luxury travelers wanting a serene resort base in Scottsdale"
+    ],
+    "not_ideal_for": [
+      "Budget-minded travelers",
+      "Those seeking vibrant downtown/late-night nightlife"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Review of Ambiente in Sedona"
+  },
+  {
+    "id": "558fc409-690a-4378-8b74-98f5ffcead10",
+    "description": "Tucked on Madison Avenue in the Upper East Side, The Carlyle melds refined Art Deco interiors and residential grandeur with a quietly theatrical spirit that has defined New York nights for decades. Guests drift between Bemelmans Bar’s painted murals and nightly jazz, the intimate cabaret of Café Carlyle, and restorative treatments at the Valmont Spa, while suites — culminating in a 26th‑floor Art Deco penthouse with wraparound city views — feel like a private, cultivated pied‑à‑terre.",
+    "highlights": [
+      "Bemelmans Bar — original Ludwig Bemelmans murals and nightly jazz in an intimate, timeless setting",
+      "Café Carlyle — legendary private cabaret with rotating top-tier performers and a candlelit, theatrical vibe",
+      "26th‑floor Art Deco penthouse — wraparound city views and fully realized period interiors for a private pied‑à‑terre experience",
+      "Valmont Spa — restorative, high‑end treatments housed within the hotel's refined, residential-scale footprint",
+      "Perched on Madison Avenue in the Upper East Side — quiet, upscale residential context steps from Museum Mile and designer boutiques"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Jazz and live-music aficionados",
+      "Art & Art Deco design lovers",
+      "Travelers wanting a private, residential luxury experience"
+    ],
+    "not_ideal_for": [
+      "Families with young children",
+      "Budget-conscious travelers",
+      "Guests seeking ultra‑minimal, contemporary design"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: The Carlyle (NYC)—an exemplary hospitality story"
+  },
+  {
+    "id": "56008477-ab18-42d1-a1fb-4913632f9754",
+    "description": "Set in the vibrant heart of Memphis, The Peabody Memphis epitomizes refined Southern luxury with a timeless, elegant atmosphere. Staying here feels like retreating into classic sophistication—where polished style and warm, attentive service frame every moment.",
+    "highlights": [
+      "Daily 'March of the Peabody Ducks' through the hotel's grand lobby fountain — a century-old Memphis tradition",
+      "Historic 1925 Beaux-Arts hotel with a sweeping marble lobby, ornate mezzanine and vintage brass elevators",
+      "Prime downtown location steps from Beale Street, the Orpheum and FedExForum — convenient for music, theater and sports",
+      "Refined Southern interiors and attentive, formal service that emphasize classic, old‑world hospitality"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Music and culture travelers (Beale Street/Orpheum)",
+      "Luxury-seeking business travelers attending downtown events"
+    ],
+    "not_ideal_for": [
+      "Budget travelers",
+      "Fans of ultra‑modern/minimalist design"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Already booked stays worth $60k+ myself for big trip - worth to rebook via TA?"
+  },
+  {
+    "id": "56037fd0-879e-4788-8964-03cdbd1a5440",
+    "description": "Perched in the vibrant heart of Pasay City, Conrad Manila offers a refined luxury retreat that blends contemporary elegance with quiet sophistication. Staying here feels like an urban sanctuary—polished design, attentive hospitality, and effortless access to Manila’s energy while offering a serene place to unwind.",
+    "highlights": [
+      "Glass‑fronted, low‑rise podium and tower that frames panoramic Manila Bay and city skyline sunset views",
+      "Rooms and suites with floor‑to‑ceiling windows and polished stone finishes that read as contemporary, restrained luxury",
+      "Prime location on the Mall of Asia waterfront — steps from SM Mall of Asia, the Seaside Boulevard promenade and the SMX convention center",
+      "Quiet, hotel‑forward feel: urban sanctuary aesthetic with discreet, attentive Conrad service and well‑appointed public spaces"
+    ],
+    "best_for": [
+      "Couples seeking sunset views and a polished urban escape",
+      "Business travelers and conference attendees (SMX/Mall of Asia proximity)",
+      "Design‑minded luxury travelers who prefer contemporary minimalism",
+      "Luxury shoppers and diners wanting immediate access to waterfront retail and restaurants"
+    ],
+    "not_ideal_for": [
+      "Travelers seeking a remote beach or resort‑style getaway",
+      "Budget‑conscious guests",
+      "Families needing extensive kid‑centric facilities and activities"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: 1st Time in the Philippines for my Honeymoon"
+  },
+  {
+    "id": "561d8150-2941-4817-85e2-c5a6f632c95d",
+    "description": "Perched in the heart of Makati City, The Peninsula Manila offers a refined, timeless luxury that complements the Philippines’ premier business and shopping district. Expect a grand, elegant atmosphere that feels both cosmopolitan and distinctly welcoming, making each stay feel polished and effortlessly comfortable.",
+    "highlights": [
+      "Grand, columned façade and sweeping marble lobby that evoke the hotel's long-established, old-world luxury",
+      "Prime Makati location a short drive from Ayala Avenue and Greenbelt — instant access to corporate offices and high-end shopping/dining",
+      "Signature Peninsula service touches: formal lobby tea tradition and discreet chauffeur/concierge arrangements for island or city transfers",
+      "Classic, classically furnished rooms and suites with large windows and city views — polished, timeless interiors rather than trendy minimalism",
+      "Lush outdoor pool and full-service spa tucked into the property, offering a calm oasis amid the downtown bustle"
+    ],
+    "best_for": [
+      "Business travelers who need proximity to Makati's financial district",
+      "Luxury shoppers and diners visiting Greenbelt and nearby high-end malls",
+      "Guests who appreciate classic, service-forward hotels and formal traditions",
+      "Couples celebrating anniversaries or special occasions"
+    ],
+    "not_ideal_for": [
+      "Budget-conscious travelers",
+      "Travelers seeking cutting-edge, ultra-modern boutique design",
+      "Families wanting high-energy kids’ clubs and activities"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: 1st Time in the Philippines for my Honeymoon"
+  },
+  {
+    "id": "5666fddb-be40-41cc-a24d-c83beb660ba9",
+    "description": "Set within a leafy Victorian terrace in Glasgow’s fashionable West End, One Devonshire Gardens by Hotel du Vin pairs period architecture with quietly modern interiors, offering 49 rooms and suites with roll‑top baths, Egyptian cotton linen and thoughtful comforts. Dine in the two‑room bistro, sample single malts in the Whisky Room or unwind with rare cigars in the Cigar Shack — each experience amplifies the intimate, quietly luxurious feel of a refined city escape.",
+    "highlights": [
+      "Set within a leafy Victorian terrace in Glasgow’s West End — genuine period façades and townhouse scale, not a generic hotel block",
+      "Just 49 rooms and suites, many with classic roll-top baths set into quietly modern interiors",
+      "Two-room bistro concept for focused, high-quality dining rather than a sprawling restaurant",
+      "Dedicated Whisky Room showcasing single malts and a private Cigar Shack for rare cigars and intimate evenings",
+      "Attention to tactile luxury — Egyptian cotton linen and considered in-room comforts rather than flashy tech"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Whisky and cigar aficionados",
+      "Food-focused travelers / intimate dining seekers",
+      "Design lovers who appreciate period architecture with modern interiors"
+    ],
+    "not_ideal_for": [
+      "Families with young children (small townhouse layout, limited family facilities)",
+      "Large groups or event buyouts (only 49 rooms; intimate scale)",
+      "Travelers seeking extensive leisure facilities (no mention of big spa or pool)"
     ],
     "source_subreddit": "r/chubbytravel",
     "source_context": "Gap City Seed"
   },
   {
-    "id": "76c44e8b-219d-44c8-9083-70a52589c1bc",
-    "description": "Tucked into the rolling Santa Lucia hills of Carmel Valley, Bernardus Lodge & Spa melds old‑world Mediterranean charm with contemporary Californian refinement, its stone-clad villas and suites opening onto quiet vineyards and wide coastal skies. Days here unfurl slowly — from tasting menus at Lucia and restorative treatments at the intimate spa to fireside evenings and vineyard walks — leaving a sense of private ease and renewed calm.",
+    "id": "5673b66d-7e9b-488d-949e-4490c17f267b",
+    "description": "Perched on Elephantine Island with sweeping views of the Nile, Mövenpick Aswan blends contemporary resort architecture with subtle Egyptian motifs across gardens, pools and palm-lined terraces. Days here unfold over panoramic dining and tailored felucca dinners, spa and wellness moments, and easy access to Aswan’s ancient sites—leaving guests with a quietly elegant, riverside sense of place.",
     "highlights": [
-      "Stone‑clad villas and suites that open directly onto quiet vineyards and rolling Santa Lucia hills",
-      "Lucia tasting‑menu restaurant showcasing Carmel Valley produce and an intimate, reservation‑only dining format",
-      "Small, restorative spa with personalized treatments and private treatment rooms — true emphasis on calm and renewal",
-      "Fireside evenings, curated vineyard walks and wide coastal‑sky views that create a secluded, slow‑paced atmosphere"
+      "Perched on Elephantine Island with uninterrupted, panoramic views of the Nile",
+      "Contemporary resort architecture punctuated by subtle Egyptian motifs across terraces and gardens",
+      "Palm‑lined pools and intimate riverfront terraces designed for quiet relaxation",
+      "Panoramic dining venues and bespoke felucca dinner experiences on the Nile",
+      "On‑site spa and wellness offerings combined with easy access to Aswan’s ancient sites"
+    ],
+    "best_for": [
+      "Couples seeking a tranquil riverside escape",
+      "Cultural travelers using Aswan as a base for temples and archaeological sites",
+      "Wellness seekers who value spa treatments and calm poolside settings",
+      "Design‑minded guests who appreciate contemporary takes on local motifs"
+    ],
+    "not_ideal_for": [
+      "Nightlife seekers — Aswan and the hotel are low on late‑night party energy",
+      "Budget travelers — boutique positioning is geared toward higher nightly rates"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Please critique my 14 day Kenya Safari/Egypt trip"
+  },
+  {
+    "id": "5676647b-c707-4115-ac67-a53522e65c79",
+    "description": "Set on the wooded banks of Castlereagh Lake, Castlereagh Bungalow is a century-old tea planter’s home with a charming pinky-peach facade, elegant parquet floors and open fireplaces that recall colonial-era grace. Guests drift between shaded garden suites, summerhouses and a veranda for sundowners, with direct dock access for boats and kayaks, a secluded heated Jacuzzi and attentive, period-styled hospitality to complete the slow, restorative rhythm of the tea country.",
+    "highlights": [
+      "Century-old tea planter’s home with original parquet floors and open fireplaces",
+      "Pinky-peach colonial facade set on the wooded banks of Castlereagh Lake",
+      "Private dock access for boats and kayaks — direct water activities from the property",
+      "Shaded garden suites, standalone summerhouses and a veranda tailored for sundowners",
+      "Secluded heated outdoor Jacuzzi and period-styled, attentive hospitality"
+    ],
+    "best_for": [
+      "Couples weekend / honeymoon",
+      "Heritage & architecture lovers",
+      "Slow-paced tea-country retreats",
+      "Photographers and landscape lovers"
+    ],
+    "not_ideal_for": [
+      "Families with very young children",
+      "Travelers seeking nightlife or urban amenities",
+      "Guests requiring full modern accessibility"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Sri Lanka Tea Country - How to pick the right hotel"
+  },
+  {
+    "id": "56910349-1aa7-4edb-8a40-8d6b459e453b",
+    "description": "Conrad Los Angeles offers contemporary luxury in the heart of Los Angeles, its sleek design and refined service framing an elegant urban escape. Staying here feels like inhabiting a stylish, modern retreat where polished sophistication meets quietly attentive hospitality.",
+    "highlights": [
+      "Sleek, contemporary design with minimalist lines and polished finishes that read like a modern downtown retreat",
+      "Floor-to-ceiling windows and rooms oriented for panoramic Los Angeles skyline and cityscape views",
+      "Refined, quietly attentive service that emphasizes privacy and bespoke urban hospitality",
+      "Prime Downtown Los Angeles location — easy access to business centers, cultural institutions and nightlife"
+    ],
+    "best_for": [
+      "Business travelers who want modern, well-appointed rooms in the financial/cultural core",
+      "Couples seeking a refined, design-forward urban weekend",
+      "Design lovers who appreciate minimalist interiors and contemporary architecture",
+      "City-focused travelers who plan to explore museums, theaters and downtown dining"
+    ],
+    "not_ideal_for": [
+      "Families with young children (limited family-focused programming and kid amenities)",
+      "Budget travelers looking for value below the luxury nightly range",
+      "Travelers seeking a resort-style property or extensive outdoors amenities"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Conrad Downtown Los Angeles Review"
+  },
+  {
+    "id": "56c20943-12cb-4e1e-853f-a643dbd7876b",
+    "description": "Perched in Hot Springs, The Omni Homestead Resort blends boutique intimacy with timeless Southern charm, offering a refined retreat in the heart of mineral-rich surroundings. Its elegant style evokes a relaxed, storied ambiance where guests unwind amidst historic character and gentle natural beauty.",
+    "highlights": [
+      "Historic resort character — period architectural details, sweeping verandas and a grand, wood‑lined public core that reads as Southern antiquity rather than generic chain decor",
+      "Onsite mineral springs and spa offerings that lean into the Hot Springs setting — thermal baths, dedicated wellness spaces and treatments sourced from local thermal heritage",
+      "Expansive grounds and hillside views — manicured lawns, mature trees and easy access to Hot Springs National Park trails and outdoor activity staging areas",
+      "Refined, intimate boutique feel within a storied property — fewer rooms per wing, quieter public spaces and an emphasis on measured, classic service"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Spa & wellness retreats",
+      "History and architecture lovers",
+      "Outdoor and golf enthusiasts"
+    ],
+    "not_ideal_for": [
+      "Travelers seeking ultra‑modern, minimalist design",
+      "Budget travelers"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: East Coast Trip with 8-12 month old!"
+  },
+  {
+    "id": "577dd233-2e38-4c88-b009-8bfffdecbb86",
+    "description": "Set within a handsome, heritage \"modern manor house\" in Holborn — a short stroll from Covent Garden and Bloomsbury — Rosewood London marries period architecture with quietly contemporary interiors to create a feel of refined domesticity. Signature experiences, from Scarfes Bar’s theatrical cocktails and the Pie Room masterclasses to artful Afternoon Tea and a restorative Rosewood Spa, make every stay a curated London story.",
+    "highlights": [
+      "Set in a restored 'modern manor house' with original period details married to quietly contemporary interiors",
+      "Prime Holborn location — an easy stroll to Covent Garden, Bloomsbury and West End theatres",
+      "Scarfes Bar’s theatrical, artful cocktails and intimate, clubby atmosphere",
+      "Pie Room masterclasses and a highly regarded, artful Afternoon Tea — strong culinary programming",
+      "Rosewood Spa offering restorative treatments in a discreet, residential-feel setting"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Special occasions (birthdays, anniversaries)",
+      "Luxury city stays for culture & theatre",
+      "Food & cocktail enthusiasts"
+    ],
+    "not_ideal_for": [
+      "Budget-conscious travelers (higher nightly rates)",
+      "Families with very young children"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Your top 3 hotels that are under $1k a night (any time of year)?"
+  },
+  {
+    "id": "57c7cddd-4a77-48b6-ab23-0fd7443e1615",
+    "description": "Perched on a private peninsula between Marigot Bay and the Grand Cul-de-Sac, Rosewood Le Guanahani blends French‑Caribbean villa architecture and lush tropical gardens with open-air pavilions and secluded oceanfront suites. Days here are shaped by laid‑back luxury — private pools, Mediterranean‑tinged dining from beach to boat, hands‑on chef and mixology experiences, and a restorative Sense spa that make the island feel both intimate and effortlessly indulgent.",
+    "highlights": [
+      "Perched on a private peninsula between Marigot Bay and the Grand Cul‑de‑Sac — dramatic waterviews on both sides",
+      "French‑Caribbean villa architecture set within lush, terraced tropical gardens and open‑air pavilions",
+      "Secluded oceanfront suites and villas, many with private plunge pools or direct sea access",
+      "Mediterranean‑tinged dining served from beach to boat, plus hands‑on chef and mixology experiences",
+      "Restorative Sense spa offering intimate, wellness‑focused treatments in a quiet island setting"
+    ],
+    "best_for": [
+      "Couples & honeymooners",
+      "Privacy‑seeking luxury travelers",
+      "Food and cocktail enthusiasts (chef/mixology experiences)",
+      "Design and boutique‑hotel aficionados"
+    ],
+    "not_ideal_for": [
+      "Families with very young children",
+      "Party‑seekers/nightlife travelers"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Luxe and kid friendly beach resort in Feb?"
+  },
+  {
+    "id": "57d26a27-e6f1-4faa-b5c7-a4fe827a5f55",
+    "description": "Perched in Newport Beach, The Resort at Pelican Hill is a refined luxury retreat that evokes sunlit Southern California elegance. Expect a serene, polished atmosphere where classic design and coastal calm combine to create an effortless, restorative stay.",
+    "highlights": [
+      "Italian-inspired architecture and Roman-style colonnades framing the property and the signature Coliseum Pool",
+      "Cliff-top location above Newport Beach with wide Pacific and coastline views from villas and public terraces",
+      "Tom Fazio–designed championship golf course and expansive, manicured grounds that feel like a private coastal estate",
+      "Individual villas and bungalows offering private terraces and a residential, resort-villa layout rather than a single tower"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Golf enthusiasts",
+      "Spa and wellness retreats",
+      "Design lovers seeking classic Mediterranean-inspired luxury"
+    ],
+    "not_ideal_for": [
+      "Budget travelers",
+      "Those seeking vibrant city nightlife"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Family Residences in San Diego"
+  },
+  {
+    "id": "581d5041-3fb8-44ff-abb4-9ffdb8db837c",
+    "description": "Set on the sands of Waikiki with unobstructed Pacific and Diamond Head views, Halekulani marries restrained, mid-century elegance and the hotel’s century-long Hawaiian legacy into a quietly refined oceanfront retreat. Guests drift between signature experiences — award-winning dining at La Mer and sunset gatherings at House Without a Key, a restorative SpaHalekulani, curated art and cultural tours, and bespoke Les Clefs d’Or concierge arrangements — leaving with a sense of serene, attentive aloha.",
+    "highlights": [
+      "Prime oceanfront on Waikiki with unobstructed Pacific and Diamond Head views",
+      "Restrained mid‑century architecture and interiors that reference the hotel's century‑long Hawaiian legacy",
+      "Award‑winning fine dining at La Mer plus iconic sunset gatherings at House Without a Key",
+      "Dedicated SpaHalekulani and curated art & cultural tours reflecting local heritage",
+      "Les Clefs d’Or concierge delivering bespoke, high‑touch arrangements"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Luxury dining seekers",
+      "Design and heritage‑minded travelers",
+      "Travelers wanting a serene, concierge‑led oceanfront retreat"
+    ],
+    "not_ideal_for": [
+      "Families with young children (quiet, refined atmosphere)",
+      "Budget travelers",
+      "Party‑seeking or rowdy groups"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Which Hawaii resort(s) to pair with RW Kona Village, family with teens in June"
+  },
+  {
+    "id": "5845bc71-edf4-4cb3-95e3-2bbc5782f5e3",
+    "description": "Perched in the heart of Saigon, Park Hyatt Saigon offers a refined luxury stay that blends classic elegance with contemporary Vietnamese sensibility. The hotel's polished interiors and serene atmosphere create a quietly sophisticated retreat amid the city's vibrant energy. Staying here feels like inhabiting a private, impeccably curated residence in the center of Vietnam's cultural and commercial pulse.",
+    "highlights": [
+      "Prime District 1 address — in the heart of Saigon’s cultural and commercial pulse, walkable to major sights and business hubs",
+      "Interiors that marry classic elegance with contemporary Vietnamese sensibility — feels like a privately curated residence rather than a generic chain hotel",
+      "Polished, low-key design and muted public spaces that prioritize calm and privacy amid a bustling city",
+      "Consistently refined service and attention to detail that underpin a quietly sophisticated stay"
+    ],
+    "best_for": [
+      "Couples seeking a polished, intimate luxury retreat",
+      "Business travelers who want a central, discreet base",
+      "Design-conscious guests who value curated, residence‑like interiors",
+      "Mature travelers wanting calm and understated service"
+    ],
+    "not_ideal_for": [
+      "Families wanting large, kid‑focused facilities or loud, activity-driven hotels",
+      "Budget or value travelers — positioned firmly in the high-end, tranquil luxury segment"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Park Hyatt Saigon Review December 25"
+  },
+  {
+    "id": "584ec4fd-13c8-41a2-9316-f63dc662094b",
+    "description": "Perched on the water’s edge in Columbia, the Merriweather Lakehouse, Autograph Collection blends boutique intimacy with a refined lakeside sensibility. Staying here feels like retreating to a serene, design-forward haven where calm views and carefully curated style set a quietly restorative tone.",
+    "highlights": [
+      "Perched directly on the water’s edge, with many rooms and public spaces oriented for unobstructed lake views",
+      "Boutique scale and design-forward interiors — clean, contemporary architecture with carefully curated local art and materials",
+      "Lakeside terrace and quiet outdoor seating that make the property feel like a private retreat rather than a standard chain",
+      "Intimate public spaces (small lobby bar, focused dining) designed for relaxed, low-key socializing rather than loud nightlife"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Design lovers",
+      "Quiet/lakeside retreats",
+      "Upscale business travelers seeking a low-key base"
+    ],
+    "not_ideal_for": [
+      "Families with young children seeking extensive kids’ programming",
+      "Party-seekers or those wanting a lively resort scene"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Switzerland in August"
+  },
+  {
+    "id": "58670cc4-e570-46c9-bd5c-4e72efc8200c",
+    "description": "The Westin Valencia in València, Spain offers a refined luxury experience where contemporary elegance meets timeless Spanish charm. Staying here feels like a serene, pampered retreat amid the cultural vibrancy of the city.",
+    "highlights": [
+      "Early-20th-century building with a restored, elegant façade that blends classic Valencian proportions with crisp contemporary interiors",
+      "Rooftop terrace and pool offering city views and a calm sunbathing lounge above central València",
+      "Short, pleasant walk to the Jardín del Turia and within easy reach of the historic center (Central Market / La Lonja)",
+      "Full-service spa and Westin’s signature wellness programming (Heavenly Bed, focused fitness spaces) for a pampered stay"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Wellness-focused travelers",
+      "Business travelers seeking quiet luxury",
+      "Design-conscious guests who want refined, contemporary interiors"
+    ],
+    "not_ideal_for": [
+      "Budget travelers / backpackers",
+      "Nightlife-seekers after loud, late-night club scenes"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Gap City Seed"
+  },
+  {
+    "id": "587b10c1-3b48-438b-a0d8-3ffe2c8180aa",
+    "description": "Set in Hanoi’s Old Quarter beside Hoan Kiem Lake, the Sofitel Legend Metropole Hanoi pairs turn-of-the-century French colonial and neoclassical architecture with a revived Heritage Wing and refined Opera Wing, offering rooms that blend period detail with modern comforts. Days unfold between leafy garden soirées, signature French and Vietnamese cuisine, and a serene spa — a quietly storied refuge where polished service and historic charm create a timeless, intimate stay.",
+    "highlights": [
+      "Two distinct wings — a restored Heritage Wing with period French‑colonial interiors and a refined Opera Wing offering updated, quieter rooms",
+      "Prominent neoclassical façade and leafy internal courtyard/garden that stages intimate evening soirées",
+      "Immediate doorstep to Hanoi’s Old Quarter and Hoan Kiem Lake for easy access to walking tours and temples",
+      "House restaurants that pair signature French cuisine with elevated Vietnamese dishes for an authentic, refined dining program",
+      "Serene on‑site spa and polished, discreet service that preserve the hotel’s historic, intimate atmosphere"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "History and architecture lovers",
+      "Food-focused travelers",
+      "Luxury spa seekers",
+      "Cultural explorers wanting a central Old Quarter base"
+    ],
+    "not_ideal_for": [
+      "Budget travelers",
+      "Travelers seeking ultra‑contemporary/minimalist design",
+      "Party/club seekers looking for nightlife in‑hotel"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: 10-day bucket-list trip - Italy road trip or something else? Feeling overwhelmed"
+  },
+  {
+    "id": "58847e3b-fd1b-4c8e-8361-c70b2faefdf2",
+    "description": "Tucked into the enchanting karst landscapes of Guilin, Yangshuo Secret Garden is a boutique hideaway that marries understated elegance with a quietly intimate atmosphere. Staying here feels like stepping into a private refuge where peacefulness and the region’s dramatic scenery take center stage.",
+    "highlights": [
+      "Set directly amid Yangshuo’s signature karst peaks — many rooms and gardens frame uninterrupted limestone-sculpted vistas",
+      "Small-scale boutique layout with private garden courtyards and secluded villas rather than a large hotel block",
+      "Interiors favor restrained, local materials and minimal detailing so attention stays on the surrounding landscape",
+      "Short access to rural walking and cycling routes along rice paddies and river bends for authentic countryside immersion"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Nature photographers",
+      "Travelers seeking quiet and privacy",
+      "Slow-travelers who want countryside access"
+    ],
+    "not_ideal_for": [
+      "Families with young children seeking kid-focused amenities",
+      "Party or nightlife seekers"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: China - itinerary and hotels"
+  },
+  {
+    "id": "58e716ca-6b8e-410d-a929-9642348070c3",
+    "description": "Perched on the rim of Sri Lanka’s castlereagh reservoir amid rolling tea terraces, Camellia Hills is an intimate five‑bedroom tea bungalow where timber floors, private verandas and four‑poster beds evoke a quietly refined colonial sensibility. Days unfold on the terrace and infinity pool with a pot of Ceylon tea, canoe rides with local fishermen and dinners of homegrown produce, while evenings drift into star-filled walks across the valley.",
+    "highlights": [
+      "Intimate five‑bedroom colonial tea bungalow perched on the rim of Castlereagh Reservoir",
+      "Timber floors, private verandas and four‑poster beds that preserve a quietly refined colonial sensibility",
+      "Infinity pool and terrace overlooking rolling tea terraces with direct access to reservoir canoe rides",
+      "Farm-to-table dinners with homegrown produce and daily pots of Ceylon tea served on the veranda",
+      "Star-filled valley walks after dusk — true dark-sky feel away from town lights"
+    ],
+    "best_for": [
+      "Couples weekend / honeymoon",
+      "Small groups or private-house rentals",
+      "Tea-country and landscape photographers",
+      "Foodies seeking farm-to-table experiences",
+      "Adults wanting quiet, slow‑travel retreats"
+    ],
+    "not_ideal_for": [
+      "Large families or travelers needing many rooms",
+      "Guests expecting nightlife or urban conveniences",
+      "Those with limited mobility (heritage bungalow layout, verandas and steps)"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Sri Lanka Tea Country - How to pick the right hotel"
+  },
+  {
+    "id": "5976017a-a4e3-46e2-bd5f-839540f188fa",
+    "description": "Tucked into the rainforest of Arenal Volcano National Park, Nayara Springs pairs intimate, private villas and spring-fed plunge pools with a warm tropical aesthetic that blurs indoor and outdoor living. Days are spent wandering a sloth sanctuary, watching birds and volcano views, then returning to an award-winning spa and focused culinary program that make staying here feel quietly cocooned and distinctly connected to nature.",
+    "highlights": [
+      "Private standalone villas with floor-to-ceiling openings that blur indoor/outdoor living",
+      "Each villa features a spring‑fed plunge pool fed from on‑property springs",
+      "Set within Arenal Volcano National Park with direct rainforest setting and framed volcano views",
+      "Onsite sloth sanctuary and bird-rich trails integrated into the property",
+      "Award‑winning spa and tightly curated culinary program focused on local ingredients"
+    ],
+    "best_for": [
+      "Couples weekend / honeymoon",
+      "Nature lovers & birdwatchers",
+      "Wellness and spa seekers",
+      "Design-conscious travelers seeking privacy"
+    ],
+    "not_ideal_for": [
+      "Budget travelers",
+      "Large groups or party-focused stays"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Chubby travel in Costa Rica"
+  },
+  {
+    "id": "598505e6-e1d8-42fa-a30d-0fac07cb20a5",
+    "description": "Párisi Udvar Hotel Budapest - The Unbound Collection by Hyatt is a boutique hotel in Budapest, Hungary, offering a refined urban retreat. Expect an intimate, stylish stay that channels the cosmopolitan energy of the city while providing quietly luxurious comfort.",
+    "highlights": [
+      "Located in the restored Párisi Udvar arcade — a 19th-century Art Nouveau / Moorish-revival passage with ornate tilework, vaulted ceilings and a dramatic glass-domed atrium",
+      "Central Ferenciek Tere address steps from Váci utca and the banks of the Danube — immediate access to downtown shops, cafés and the historic walking routes",
+      "Boutique-scale, Unbound Collection conversion that preserves original architectural details (mosaics, carved stone, ironwork) while delivering contemporary luxury finishes",
+      "Intimate, design-forward public spaces and discreet service that prioritize a quiet urban retreat over buzzy hotel-club energy"
+    ],
+    "best_for": [
+      "Design and architecture lovers",
+      "Couples weekend",
+      "City-center cultural explorers",
+      "Luxury shoppers who want immediate access to downtown"
+    ],
+    "not_ideal_for": [
+      "Families with young children seeking extensive kids’ facilities",
+      "Travelers wanting a large resort-style property or extensive outdoor grounds"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Anantara Budapest, or other?"
+  },
+  {
+    "id": "5987e129-2827-424b-8344-a821094621f0",
+    "description": "Set in the heart of Kyoto, ROKU KYOTO, LXR Hotels & Resorts blends contemporary luxury with the city's timeless spirit, offering a serene urban retreat framed by Japan’s storied culture. Staying here feels quietly refined—an elegant base from which to explore Kyoto’s temples, teahouses and seasonal beauty.",
+    "highlights": [
+      "Contemporary Kyoto design that marries modern luxury with traditional materials and local artisan details",
+      "Quiet, small-scale urban retreat layout that reads like a serene base amid the city’s temples and teahouses",
+      "Central Kyoto location — easy access to Gion, key temples and seasonal sightseeing on foot or short rides",
+      "Seasonal attention to setting and service (garden views, timber accents, restrained Japanese minimalism)"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Cultural explorers interested in temples, tea houses and seasonal rituals",
+      "Design lovers who value locally informed luxury interiors",
+      "Discerning travelers who want a calm, central base in Kyoto"
+    ],
+    "not_ideal_for": [
+      "Families with young children needing large connecting rooms or lots of kid-focused amenities",
+      "Budget-conscious travelers seeking low-rate options",
+      "Partygoers looking for nightlife hubs and late-night activity"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Travel Wrapped 2025"
+  },
+  {
+    "id": "59a236e8-dfe2-41b0-9dcc-11a767d542bd",
+    "description": "Secrets Moxché Playa del Carmen is a boutique hideaway tucked into the vibrant coastal heart of Playa del Carmen, Mexico. Sleek, contemporary design meets intimate scale, offering a quietly refined retreat from the town’s lively streets. Staying here feels like stepping into a stylish, restful enclave where local energy and serene comfort coexist.",
+    "highlights": [
+      "Adults-only boutique hideaway in the vibrant heart of Playa del Carmen—steps from the beach and a short walk to Quinta Avenida",
+      "Sleek, contemporary design with an intimate scale: small pools, courtyard spaces and a rooftop/social bar rather than a sprawling resort footprint",
+      "True all-inclusive operation focused on beach/pool programming and social atmosphere rather than haute culinary theater",
+      "Close connection to town energy — easy access to local dining and nightlife, traded off against a lack of full seclusion"
+    ],
+    "best_for": [
+      "Solo travelers",
+      "Adults-only/social travelers",
+      "All-inclusive seekers",
+      "Beach/pool-focused stays",
+      "Couples looking for a stylish, central base"
+    ],
+    "not_ideal_for": [
+      "Families with kids",
+      "Massive foodies/culinary pilgrims",
+      "Travelers seeking a secluded, remote retreat"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Solo Female 32 looking for a childfree / non-family friendly vacation"
+  },
+  {
+    "id": "5a114233-7f79-4677-9cdc-bfa1d4952b93",
+    "description": "Tucked along the gentle bends of Brush Creek in Breezewood, this rustic riverside campground offers a simple, family-friendly escape where days are paced by water and wide skies. Rustic tent and RV sites and shaded communal spaces invite leisurely fishing, creekside play, and evenings around a campfire, leaving guests refreshed and quietly connected to nature.",
+    "highlights": [
+      "Riverside tent and RV sites tucked along gentle bends of Brush Creek",
+      "Shaded communal areas with picnic spots and fire rings for evening campfires",
+      "Easy creek access for casual fishing, wading and supervised kids’ play",
+      "Low‑impact, rustic infrastructure — simple walk‑in tent pads and basic RV hookups",
+      "Wide open skies and quiet riverside setting ideal for stargazing and unplugging"
+    ],
+    "best_for": [
+      "Families with kids",
+      "Weekend campers seeking an unplugged, nature‑first stay",
+      "Small groups and road‑trippers wanting easy creek access",
+      "Fishing and outdoor‑play enthusiasts"
+    ],
+    "not_ideal_for": [
+      "Luxury travelers wanting full‑service resort amenities",
+      "Guests requiring extensive modern hookups or high‑speed Wi‑Fi",
+      "Business travelers seeking quiet workspaces or conference facilities"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Montana ranches"
+  },
+  {
+    "id": "5a43d17a-3371-4a37-b16c-3dd60cc9562e",
+    "description": "Perry Lane Hotel, a Luxury Collection Hotel, Savannah is a boutique address in Savannah, United States, presenting refined, intimate accommodations under the Luxury Collection banner. The hotel exudes modern Southern elegance—sleek, polished design and a quietly sophisticated atmosphere that makes lingering in the city feel effortless.",
+    "highlights": [
+      "Rooftop bar/lounge offering skyline and downtown Savannah views — a signature social spot for sunset cocktails",
+      "Sleek, modern-Southern interiors that marry polished contemporary design with local materials and subtle period references",
+      "Situated on Perry Lane in Savannah’s Historic District — immediate access to cobblestone streets, squares and nearby restaurants",
+      "Intimate boutique scale with curated public spaces (lobby lounge/courtyard) that encourage lingering and neighborhood-style living"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Design lovers",
+      "City explorers who want a walkable Historic District base",
+      "Food & cocktail enthusiasts"
+    ],
+    "not_ideal_for": [
+      "Families with young children (limited kid-focused amenities)",
+      "Travelers seeking large resort-style facilities (extensive pools/spa complex)",
+      "Strict budget travelers"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Savannah Hotel Recs for 2 in April"
+  },
+  {
+    "id": "5b25835a-6e90-45a3-a0a2-f9399216d560",
+    "description": "Set on 340 acres in Virginia’s horse and wine country just an hour from Washington, D.C., Salamander Middleburg feels like a refined country estate where gracious, hearthside interiors meet expansive woodland grounds. Guests arrive for the resort’s signature experiences — a Forbes Five‑Star spa, a full equestrian program, treetop zip‑lining and seasonally reimagined outdoor leisure — leaving with the unhurried ease of a weekend at a private country house.",
+    "highlights": [
+      "Set on 340 private acres in Virginia’s horse-and-wine country — sweeping woodland grounds feel like a private country estate",
+      "Forbes Five-Star spa with hearthside treatment rooms and a focus on restorative, seasonally driven therapies",
+      "Full equestrian program (lessons, trail rides) integrated into the property’s paddocks and bridle paths",
+      "Adventure options on-site including treetop zip-lining and curated outdoor leisure programming",
+      "About an hour from Washington, D.C. — rural seclusion with easy access to the capital"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Spa and wellness seekers",
+      "Equestrian enthusiasts",
+      "Wine-country explorers",
+      "Weekend escapes from DC"
+    ],
+    "not_ideal_for": [
+      "Budget travelers",
+      "Travelers seeking nonstop urban nightlife",
+      "Large groups needing conference-style meeting facilities"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Chubby last minute, weekday mini-moon in NC or DMV"
+  },
+  {
+    "id": "5b692090-e4a1-4097-8239-a5b790d639d9",
+    "description": "Le Meurice epitomizes Parisian luxury, marrying timeless French elegance with a refined, palace-like atmosphere. Staying here feels like inhabiting a quietly opulent salon where impeccable style and discreet service create an utterly indulgent escape in the heart of Paris.",
+    "highlights": [
+      "Palace-like, salon-style interiors that evoke classical Parisian elegance with richly detailed period decor",
+      "Located in the heart of Paris with immediate access to the Louvre and the Tuileries (ideal for museum-and-stroll days)",
+      "Discreet, highly attentive service that emphasizes a quietly opulent, private experience",
+      "Grand rooms and public spaces with high ceilings and a refined, museum-worthy design sensibility"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Art & museum lovers",
+      "Luxury-seekers wanting a classic Parisian palace experience",
+      "Style and design aficionados"
+    ],
+    "not_ideal_for": [
+      "Families with young children",
+      "Travelers on a moderate budget",
+      "Those seeking a contemporary, minimalist hotel aesthetic"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Review: Le Meurice - Paris"
+  },
+  {
+    "id": "5bba5217-6e6d-4e85-9dd4-e4c42a830dc3",
+    "description": "Perched on the crescent of Kapalua Bay, Montage Kapalua Bay blends residential-style accommodations and Hawaiian-inspired architecture with sweeping Pacific views and lush tropical gardens. Days here are measured by spa rituals using island botanicals, table-side stories of local ingredients, and outdoor pursuits from whale‑watching to world‑class golf, leaving a quietly refined sense of aloha.",
+    "highlights": [
+      "Perched on the crescent of Kapalua Bay with panoramic Pacific views and direct access to a sheltered, swim-friendly beach",
+      "Residential-style suites and villas with Hawaiian-inspired architecture and private lanais that feel like a seaside home",
+      "On-site spa focused on rituals using local island botanicals and treatments tied to Hawaiian wellness traditions",
+      "Dining program built around local ingredients with table-side storytelling and a focus on Maui-sourced seafood and produce",
+      "Immediate access to outdoor pursuits — whale‑watching from shore/sea, coastal walks, and proximate world-class golf courses"
+    ],
+    "best_for": [
+      "Couples seeking quiet, refined luxury",
+      "Travelers wanting residential-suite accommodations or extended stays",
+      "Spa and wellness-focused guests",
+      "Golfers and outdoor/adventure seekers"
+    ],
+    "not_ideal_for": [
+      "Party-seekers/nightlife-focused travelers",
+      "Budget-conscious travelers looking for low rates"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Montage Kapalua Bay with Kids"
+  },
+  {
+    "id": "5c137738-0676-47cc-8705-b19d75dccd09",
+    "description": "Tucked into central Kyoto on Muromachi‑Sanjo, THE HIRAMATSU Kyoto reimagines a 120‑year‑old machiya under the guidance of master craftsmen, pairing traditional latticework and private sightlines with contemporary comforts and generous 54–104 m² rooms. Dining anchors the stay—an Italian ristorante and a kappo serving seasonal Kyoto flavours framed by a quiet garden—so guests leave feeling quietly immersed in the city’s layered history and refined hospitality.",
+    "highlights": [
+      "Reimagined 120‑year‑old machiya on Muromachi‑Sanjo with restored traditional latticework and handcrafted timber details",
+      "Generous rooms (54–104 m²) offering private sightlines and a calm, residential feel in central Kyoto",
+      "Two destination restaurants: an Italian ristorante and a kappo serving seasonal Kyoto flavours framed by a quiet inner garden",
+      "Design by master craftsmen that blends authentic machiya proportions with modern comfort and refined fittings"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Food‑focused travelers (omakase/kappo and refined Italian dining)",
+      "Design and architecture lovers",
+      "Culture/history seekers who want central Kyoto with a quiet base"
+    ],
+    "not_ideal_for": [
+      "Families with young children (layout and tranquil atmosphere not child‑centric)",
+      "Party or nightlife seekers"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: May Japan Trip"
+  },
+  {
+    "id": "5c2bbc19-c5b0-47e2-80cb-cbb75160301b",
+    "description": "Perched in the sun-drenched desert near Tucson, Miraval Arizona Resort and Spa offers a luxury retreat that blends quiet sophistication with a deep focus on wellness. Staying here feels like stepping into a tranquil, restorative sanctuary where serene design and spa-led programming invite mindful relaxation and renewal.",
+    "highlights": [
+      "Perched in the sun-drenched desert just outside Tucson — a true Sonoran Desert setting",
+      "Spa-led programming is the core: structured wellness classes, workshops and curated treatments",
+      "Serene, minimalist design focused on mindfulness and quiet restoration rather than flashy amenities",
+      "Intimate, retreat-style atmosphere that emphasizes privacy and restorative experiences"
+    ],
+    "best_for": [
+      "Girls spa trip",
+      "Wellness-focused groups",
+      "Spa enthusiasts and mindfulness seekers",
+      "Friends’ restorative weekend"
+    ],
+    "not_ideal_for": [
+      "Families with young children",
+      "Nightlife-seekers",
+      "Business travelers needing large meeting facilities"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Miraval Arizona is AWFUL"
+  },
+  {
+    "id": "5c764b19-0d06-493f-a6ff-10965f8c2f8b",
+    "description": "Perched on a private volcanic island in Fiji’s Lau Group, Laucala blends traditional Fijian thatched architecture with pared-back modern luxury across secluded pool villas and private beaches. Days here are shaped by immersive island experiences — a working organic plantation and kitchen, world-class diving, golf and horseback rides — leaving guests with a sense of effortless privacy and restorative connection to the sea and land.",
+    "highlights": [
+      "Private volcanic island setting in Fiji’s Lau Group — entire resort feels secluded and transport-dependent",
+      "Traditional Fijian thatched architecture paired with pared-back, modern interiors across standalone pool villas",
+      "Villas with private pools and direct beach or ocean access — genuine sense of privacy and space",
+      "On-site working organic plantation and kitchen delivering true farm-to-table dining",
+      "Wide range of curated activities: world-class diving, an 18-hole golf course, and guided horseback rides along the shore"
+    ],
+    "best_for": [
+      "Couples seeking privacy and romance",
+      "Luxury travelers who value design and exclusivity",
+      "Active travelers who prioritize diving, golf and outdoor experiences",
+      "Foodies wanting farm-to-table and provenance-driven dining"
+    ],
+    "not_ideal_for": [
+      "Budget travelers",
+      "Nightlife seekers looking for bars/clubs",
+      "Families with very young children who need lots of on-site childcare/options"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Laucala Islanda ends COMO partnership"
+  },
+  {
+    "id": "5c8b4722-affb-4624-ae10-caec87171f9d",
+    "description": "Perched on Regent Street where St James’s, Mayfair and Soho converge, Hotel Café Royal marries a 150‑year legacy with contemporary comfort in a restored Edwardian setting punctuated by a Grade II‑listed ballroom. Days drift between Michelin‑led dining and private chauffeur excursions, and evenings unfold in Akasha’s spa or intimate drawing rooms — a cultured, urbane sanctuary at the heart of London.",
+    "highlights": [
+      "Prominent Edwardian facade on Regent Street at the junction of St James’s, Mayfair and Soho",
+      "Restored interiors including a Grade II‑listed ballroom — rare historic event space in central London",
+      "Michelin‑led dining options on‑site and curated private chauffeur excursions available",
+      "Akasha spa sanctuary plus intimate, clubby drawing rooms for late‑night drinks and meetings"
+    ],
+    "best_for": [
+      "Couples' weekends",
+      "Luxury shoppers (Mayfair/Regent Street access)",
+      "Culture & design lovers (historic ballroom + restored Edwardian details)",
+      "Spa and wellness seekers"
+    ],
+    "not_ideal_for": [
+      "Families with young children",
+      "Budget or value travelers",
+      "Anyone seeking a nightlife/club scene"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: A Points-based Jaunt Through London with 4yo?"
+  },
+  {
+    "id": "5c9dc1a2-30e1-490b-bfa6-e0ae62e763bc",
+    "description": "Perched on the bend of the Chao Phraya River, Mandarin Oriental, Bangkok marries colonial teak elegance with refined Art Deco touches across its storied riverfront estate. Days here are shaped by languid boat arrivals, Michelin-starred dining and legendary jazz at The Bamboo Bar, while evenings unfold in richly appointed suites and a spa sanctuary that together evoke old-world hospitality with contemporary calm.",
+    "highlights": [
+      "Riverside location on the dramatic bend of the Chao Phraya with private boat arrivals and pier access",
+      "Colonial-era teak architecture blended with refined Art Deco interiors across the riverfront estate",
+      "The Bamboo Bar — iconic live jazz venue with a legendary cocktail program",
+      "Multiple Michelin-recognized restaurants and a fine-dining pedigree on-site",
+      "Deeply appointed suites and an award-winning spa that emphasize old-world hospitality and calm"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Luxury seekers and connoisseurs",
+      "Food & cocktail aficionados",
+      "Jazz and nightlife enthusiasts",
+      "Photographers who want classic riverfront shots"
+    ],
+    "not_ideal_for": [
+      "Families with very young children",
+      "Budget travelers",
+      "Travelers seeking ultra-minimalist/modern design"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: So excited to travel to Bangkok/Pattaya for my BFF's wedding! Want to splurge on a luxury hotel. Recs please?"
+  },
+  {
+    "id": "5ceea62a-bc7f-4d7e-9338-6151e86f501e",
+    "description": "Set amid the dazzling energy of Las Vegas, the Four Seasons Hotel Las Vegas offers a refined counterpoint to the city's theatrics, delivering understated luxury and impeccable style. Staying here feels like retreating to a calm, elegant oasis where polished service and sophisticated design create a quietly glamorous escape.",
+    "highlights": [
+      "Private, non-gaming hotel within the Mandalay Bay complex — separate entrance and lobby that feel like a calm oasis off the Strip",
+      "Occupies the upper floors with sweeping Strip and city views from many rooms and suites",
+      "Understated, residential design and polished service that emphasize privacy and low-key luxury rather than spectacle",
+      "Quiet pool and spa facilities geared toward relaxation (contrast to the adjacent mega-resort pools and nightlife)"
+    ],
+    "best_for": [
+      "Couples seeking a low-key luxury escape",
+      "Business travelers who value privacy and service",
+      "Mature travelers wanting a refined, non-gaming stay",
+      "Design-minded guests who prefer restrained, residential interiors"
+    ],
+    "not_ideal_for": [
+      "Party-seekers looking for on-site nightlife and casino action",
+      "Bargain travelers — pricing targets luxury budget",
+      "Guests wanting the full, nonstop Las Vegas spectacle as their hotel base"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Already booked stays worth $60k+ myself for big trip - worth to rebook via TA?"
+  },
+  {
+    "id": "5d22bc42-dfbe-4f14-82d0-1851257beb06",
+    "description": "Perched beneath the dramatic Dachstein massif in the Salzkammergut, Dachsteinkönig – Familux Resort marries contemporary alpine design with child-centric ingenuity: natural-material suites and chalets sit alongside a 2,000 m² indoor play universe, an adrenaline-tinged waterpark with a 100‑metre slide, and round‑the‑clock kids’ coaching. Days here balance mountain adventure and restorative calm — a generous spa, saunas and quiet retreats for adults ensure parents relax with the same confidence their children are having the time of their lives.",
+    "highlights": [
+      "Sited at the foot of the Dachstein massif with direct mountain views and access to Gosau’s alpine trails",
+      "Contemporary alpine architecture and interiors using natural materials — separate natural‑material suites and standalone chalets",
+      "Massive 2,000 m² indoor play universe and 100‑metre waterpark slide — genuine family‑entertainment infrastructure",
+      "24/7 kids’ coaching and supervised programming that lets parents schedule adult time with confidence",
+      "Dedicated adults’ footprint: generous spa, multiple saunas and quiet retreat zones for restorative privacy"
+    ],
+    "best_for": [
+      "Active families with young children",
+      "Multi‑gen family groups seeking on‑site childcare and entertainment",
+      "Parents who want design‑forward alpine lodging plus wellness",
+      "Guests who value easy access to Dachstein hiking/ski terrain"
+    ],
+    "not_ideal_for": [
+      "Couples seeking a quiet romantic-only escape",
+      "Travelers wanting an ultra‑remote, minimalist boutique experience"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Family Hotels Austria with Ski in and out options"
+  },
+  {
+    "id": "5d250c56-4de9-43a5-9db4-b85d8d70caef",
+    "description": "Perched at the gateway to Waikīkī, The Ritz‑Carlton Residences, Waikiki Beach frames windward mountains and Pacific vistas in a sleek, contemporary tower that balances urban energy with island calm. Its residential-style suites, refreshed pools and spa, along with curated experiences—from omakase at Sushi Sho to private luaus and guided hikes—invite lingering stays that feel both intimate and distinctly of place.",
+    "highlights": [
+      "Sleek contemporary tower sited at Waikīkī’s gateway with direct windward mountain and Pacific ocean sightlines",
+      "Residential-style suites (larger footprints, separate living areas) that read like private city-apartment escapes",
+      "On-site culinary curation including omakase at Sushi Sho and bespoke island experiences (private luaus, guided hikes)",
+      "Refreshed dual-level pools and a calm spa that emphasize intimate, resort-meets-residence relaxation"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Design lovers",
+      "Guests seeking multi-night, linger-style stays",
+      "Food-focused travelers (omakase & curated dining)"
+    ],
+    "not_ideal_for": [
+      "Budget travelers",
+      "Those wanting a high-energy mega-resort/party scene"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Review: Four Seasons Lanai"
+  },
+  {
+    "id": "5d4a5da0-2ffd-41fb-afc7-e6d28dbd1390",
+    "description": "Tucked along the Msuthlu riverbed, Little Bush Camp is a secluded, safari‑chic retreat of six thoughtfully appointed suites where contemporary design meets understated African flair. Days slip by on private game drives and walking safaris, with leisurely afternoons on your wooden sundeck and signature spa baths, while evenings unfold in intimate riverside dining settings. The result is a quietly refined, deeply private escape that feels at once restorative and rooted in the wild.",
+    "highlights": [
+      "Perched along the Msuthlu riverbed with intimate riverside dining and sunset views",
+      "Just six individually styled suites — private wooden sundecks and signature deep spa baths",
+      "Safari‑chic contemporary interiors that blend clean design with understated African materials",
+      "Daily private game drives and guided walking safaris directly from camp",
+      "Extremely secluded, low‑guest footprint for restorative privacy and wildlife immersion"
+    ],
+    "best_for": [
+      "Couples & honeymooners",
+      "Privacy seekers and those after a low‑key luxury safari",
+      "Design‑minded travelers who value contemporary African aesthetics",
+      "Serious wildlife enthusiasts wanting guided game drives and walking safaris"
+    ],
+    "not_ideal_for": [
+      "Families with young children (small camp, intimate atmosphere)",
+      "Budget travelers looking for value under $750/night",
+      "Guests wanting lively resort facilities or active nightlife"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Luxury SA Safari Options"
+  },
+  {
+    "id": "5d4dc1eb-3c3e-4a74-a5c9-82749b29d037",
+    "description": "Perched on 85 acres with a mile of shoreline just minutes from Hewanorra, Coconut Bay pairs breezy Caribbean architecture with a thoughtful two‑world design: Harmony’s oceanfront, adults‑only retreats and Splash’s vivacious family playground anchored by the island’s largest waterpark. Days unfold from oceanview spa therapies and farm‑to‑table dining to paddleboarding, rainforest excursions and poolside revelry, leaving guests refreshed by the sea and soothed by genuine Saint Lucian warmth.",
+    "highlights": [
+      "Two‑world resort layout: Harmony — adults‑only, oceanfront retreats — paired with Splash — a family zone anchored by St. Lucia’s largest waterpark",
+      "85 acres with roughly a mile of shoreline and quick transfer proximity to Hewanorra International Airport",
+      "Breezy Caribbean architecture and oceanview spa pavilions focused on restorative sea‑facing treatments",
+      "Onsite active options (paddleboarding, pool play) plus curated rainforest excursions and farm‑to‑table dining"
+    ],
+    "best_for": [
+      "Families with kids",
+      "Couples seeking an adults‑only escape (Harmony)",
+      "Active beach and water‑sports travelers",
+      "Travelers wanting convenient access to Hewanorra arrivals"
+    ],
+    "not_ideal_for": [
+      "Travelers seeking ultra‑quiet, ultra‑private seclusion",
+      "Guests after small‑scale, ultra‑luxury white‑glove service"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: LIST: Resorts with “Camp style” kids clubs (Caribbean and Mexico)"
+  },
+  {
+    "id": "5d61ff90-fe8d-4786-ac1a-43e5a03b5564",
+    "description": "Perched in the serene village of Kumarakom, Kerala, this boutique retreat offers an intimate base for exploring India’s verdant landscape. Refined and quietly luxurious, a stay here feels tranquil and restorative, with attentive design that favors calm, contemplative moments.",
+    "highlights": [
+      "Backwater-facing rooms and private verandas that open onto calm canals and reed-fringed waterways",
+      "Intimate boutique scale — low-density cottages clustered around quiet courtyards and landscaped gardens",
+      "Design language that favors traditional Keralan woodwork, pitched roofs and shaded verandas for contemplative lounging",
+      "On-site restorative spa and Ayurveda treatments integrated into the property’s serene landscape"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Wellness and Ayurveda seekers",
+      "Nature and birdwatching enthusiasts",
+      "Quiet, restorative getaways"
+    ],
+    "not_ideal_for": [
+      "Party-focused travelers",
+      "Budget travelers",
+      "Families with very young children seeking high-energy kids’ programming"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: India review - Leela Udaipur, Taj Udaipur, Taj Kumarakom (Kerala), Taj Holiday Village Goa"
+  },
+  {
+    "id": "5d87616c-4401-45d5-a174-a87aa736bbd8",
+    "description": "Perched directly on Marienplatz, BEYOND by Geisel marries intimate, design-led interiors with panoramic views of the Neues Rathaus and the Glockenspiel, offering just 19 rooms and suites for a quietly exclusive city stay. Guests enjoy personalised service—private vinothek tastings, tailored arrangements for concerts and fairs, and a library-like calm—that makes the hotel feel more like a gracious urban home than a conventional luxury address.",
+    "highlights": [
+      "Perched directly on Marienplatz with uninterrupted views of the Neues Rathaus and the Glockenspiel",
+      "Just 19 rooms and suites — an intimate, design-led scale that reads more like a private urban residence",
+      "Library-like calm and curated interiors that emphasize quiet, lived-in elegance over flashy opulence",
+      "On-site private vinothek tastings and concierge-curated arrangements for concerts, fairs and city events"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Design lovers seeking boutique scale",
+      "Culture & performance fans (concerts, Rathaus events, city fairs)",
+      "Discerning solo travelers who want a quiet central base"
+    ],
+    "not_ideal_for": [
+      "Families with young children",
+      "Large groups or event parties",
+      "Travelers wanting full-scale resort amenities (spa/gym/pool)"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: A few of my favorite boutique hotels"
+  },
+  {
+    "id": "5db0edf8-d947-40fc-a74d-6b8d0a19d5c5",
+    "description": "Perched in the sun-drenched Wailea‑Makena coastline, Andaz Maui at Wailea Resort, by Hyatt, blends contemporary Hawaiian design with an effortless sense of island luxury. Staying here feels like a serene, stylish retreat—modern, unpretentious and intimately connected to Maui’s relaxed pace and luminous surroundings.",
+    "highlights": [
+      "Perched directly on the Wailea‑Makena coastline with multiple ocean‑facing tiers and easy access to Wailea Beach and coastal trails",
+      "Contemporary Hawaiian architecture and interiors — clean modern lines woven with native woods, woven textures and curated local artwork throughout public spaces",
+      "Open‑air lobby and terraced infinity pools that frame Pacific views, creating indoor‑outdoor flow typical of island modernism",
+      "Guest rooms and suites with private lanais (many with unobstructed ocean vistas) and minimalist, natural-material finishes that feel both modern and rooted in place"
+    ],
+    "best_for": [
+      "Couples weekend / honeymooners",
+      "Design lovers who want contemporary Hawaiian style",
+      "Wellness and relaxation seekers (pools, spa, quiet beachfront access)",
+      "Travelers wanting a polished yet unpretentious luxury escape"
+    ],
+    "not_ideal_for": [
+      "Families wanting extensive kids’ programming or splash parks",
+      "Budget travelers seeking lower nightly rates"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Maui Hotel w/ two teens"
+  },
+  {
+    "id": "5e325240-a739-4eff-b163-e2faaacb251f",
+    "description": "Set on 1,500 acres of Baja’s East Cape where three kilometers of swimmable beachfront meet a full-service marina, Costa Palmas fuses striking contemporary architecture with a raw desert-and-sea landscape. Guests linger between a Robert Trent Jones II seaside golf course, village dining and a Beach & Yacht Club that launches scuba, sportfishing and kitesurfing—an elemental, quietly luxurious retreat that feels both spirited and deeply restful.",
+    "highlights": [
+      "Robert Trent Jones II seaside 18-hole golf course carved into desert-and-sea terrain",
+      "Full-service marina and Beach & Yacht Club with on-site scuba, sportfishing and kitesurfing operations",
+      "Three kilometers of swimmable beachfront set across a 1,500‑acre resort estate",
+      "Contemporary, desert-meets-ocean architecture and a compact 'village' of curated dining options"
+    ],
+    "best_for": [
+      "Golf-focused travelers",
+      "Yacht and water-sport enthusiasts",
+      "Couples seeking a quiet, design-forward retreat",
+      "Adults wanting privacy and spacious grounds"
+    ],
+    "not_ideal_for": [
+      "Budget-conscious travelers",
+      "Those seeking lively nightlife or urban walkability",
+      "Families wanting a dense kids’ activity program"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: 4S Costa Palmas vs. 4S Cabo Del Sol vs. Ritz Zadún"
+  },
+  {
+    "id": "5e4583b9-e35b-4c8c-8e45-802fafa7fb5a",
+    "description": "Set on 500 acres of lakes, wetlands and a working farm just outside Orlando, The Ritz-Carlton Orlando, Grande Lakes blends the gracious lines of Florida’s grand hotel tradition with contemporary comforts and verdant, low‑country landscaping. Guests come for the restorative spa, Audubon‑certified championship golf, farm‑to‑table dining and a new waterpark—returning each evening to polished rooms and balconies that make the resort feel both expansive and intimately appointed.",
+    "highlights": [
+      "500‑acre estate of lakes, wetlands and low‑country landscaping with private balconies overlooking water and preserved habitat",
+      "On‑site working farm that supplies the resort’s farm‑to‑table restaurants and culinary programs",
+      "Audubon‑certified championship golf course set into the property’s natural wetlands",
+      "Full‑service, restorative Ritz‑Carlton spa and a recently added family waterpark for multi‑gen stays",
+      "Grand Florida‑style architecture and polished rooms that combine classic proportions with contemporary finishes"
+    ],
+    "best_for": [
+      "Golf enthusiasts",
+      "Spa and wellness travelers",
+      "Foodies/farm‑to‑table diners",
+      "Families who want resort amenities and a waterpark",
+      "Couples seeking a luxe, restorative getaway outside the city"
+    ],
+    "not_ideal_for": [
+      "Budget travelers",
+      "Travelers wanting a downtown Orlando/nightlife base",
+      "Guests who prefer boutique urban hotels over expansive resort properties"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Ritz Grande Lakes - great for families"
+  },
+  {
+    "id": "5e458b8d-c536-4304-9bd5-53af1393f7c0",
+    "description": "Perched on Vanderbilt Beach with sweeping Gulf of Mexico sunsets, The Ritz‑Carlton, Naples pairs timeless coastal elegance and the modern refinement of the Vanderbilt Tower with spacious ocean‑view suites. Days unfold with ritualized experiences—Afternoon Tea beneath crystal chandeliers, spa rituals using Gulf stones, private cabanas and waterfront dining—leaving a quietly indulgent, effortlessly curated feeling of repose.",
+    "highlights": [
+      "Vanderbilt Tower — modern, refined wing with spacious ocean‑view suites overlooking Vanderbilt Beach",
+      "Afternoon Tea service beneath crystal chandeliers in a formal, coastal‑elegant setting",
+      "Spa rituals incorporating locally sourced Gulf stones and beachfront treatment spaces",
+      "Private cabanas and dedicated waterfront dining positioned for sweeping Gulf of Mexico sunsets"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Sunset & beach photographers",
+      "Spa and wellness seekers",
+      "Luxury family retreats"
+    ],
+    "not_ideal_for": [
+      "Budget travelers",
+      "Nightlife seekers"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Naples Fl lodging"
+  },
+  {
+    "id": "5e68041d-dac0-4ca3-acfd-ef873418a1e4",
+    "description": "Set on the shores of Lake Nahuel Huapi in Villa la Angostura, Las Balsas is an intimate Relais & Châteaux retreat where lake, forest and Andean sky converge into a sanctuary of refined comfort. Thoughtful local gastronomy, bespoke wellness rituals and tailor-made mountain and lake excursions—rooted in artisanal craft and sustainable stewardship—make a stay quietly restorative and vividly connected to Patagonia.",
+    "highlights": [
+      "True lakefront setting on the shores of Lake Nahuel Huapi — rooms and terraces frame forest and Andean-sky views",
+      "Intimate Relais & Châteaux scale with individually considered rooms and public spaces that emphasize local, handcrafted materials",
+      "On-site, season-driven Patagonian gastronomy built around artisanal producers and lake/forest ingredients",
+      "Bespoke wellness rituals and tailor-made mountain and lake excursions organized by the property, focused on low‑impact, sustainable experiences"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Nature and outdoors lovers",
+      "Food- and wellness-focused travelers"
+    ],
+    "not_ideal_for": [
+      "Families with young children",
+      "Budget-minded travelers"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Las Balsas in Villa La Angostura, Argentina"
+  },
+  {
+    "id": "5f2db433-c340-4040-a5e8-a347205ae1ff",
+    "description": "Perched on Place de la Concorde, Hôtel de Crillon occupies an 18th‑century palace where classical French architecture meets contemporary art and design. Staying here is a residentially refined experience—marble‑clad suites, historic salons, a bespoke Sense spa and pioneering dining by chefs like Paul Pairet combine to evoke the calm, ceremonious pulse of Parisian life.",
+    "highlights": [
+      "Direct frontage on Place de la Concorde — rooms and suites with views of Paris’s grandest square and the Champs‑Élysées axis",
+      "18th‑century palace architecture restored with contemporary art‑forward interventions and bespoke interiors",
+      "Marble‑clad, residentially appointed suites and restored historic salons that feel like a private Parisian residence",
+      "On‑site Sense spa and haute‑cuisine led by pioneering chefs (notably Paul Pairet) for a full sensory program of wellness and dining"
+    ],
+    "best_for": [
+      "Couples weekend / special occasions",
+      "Gastronomy-focused travelers",
+      "Design & art aficionados",
+      "Luxury city‑breakers who want a residential Paris base"
+    ],
+    "not_ideal_for": [
+      "Budget travelers",
+      "Families with very young children seeking casual, kid‑centric amenities"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Upcoming travel: what’s on deck?"
+  },
+  {
+    "id": "5f5c69ee-a2c8-49e9-a0fd-c842252350b6",
+    "description": "Singita Milele in Natta, Tanzania embodies refined luxury set against the dramatic sweep of East African landscapes. Sleek, contemporary design and attentive hospitality create a serene, intimate retreat where every moment feels quietly extraordinary.",
+    "highlights": [
+      "Contemporary stone-and-timber suites with floor-to-ceiling glazing and private plunge pools framing sweeping East African plains",
+      "Minimalist, art-driven interiors and clean lines — architecture that balances sleek modernity with local materials",
+      "Intimate lodge scale with personalised, attentive service and tailor-made game drives in the Natta region",
+      "Raised viewing decks and outdoor bathtubs that deliver unhindered sunrise/sunset wildlife viewing from your suite"
+    ],
+    "best_for": [
+      "Couples seeking a private, design-forward safari escape",
+      "Design lovers who appreciate modern architecture rooted in local materials",
+      "Discerning safari-goers who want personalised service and quiet exclusivity",
+      "Photographers wanting unobstructed landscape and golden-hour views from private suites"
+    ],
+    "not_ideal_for": [
+      "Families with young children (intimate scale and adult-focused atmosphere)",
+      "Budget travelers — rates align with high-end, $750+/night luxury positioning",
+      "Party seekers or nightlife-focused groups (quiet, restorative retreat rather than a social scene)"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Singita Milele Review ($36k per night)"
+  },
+  {
+    "id": "5f79ae11-072b-4ecc-b4d6-880cd1849353",
+    "description": "Perched on the shore of Lake Louise within Banff National Park, the Post Hotel & Spa blends vintage alpine-chalet charm with refined, hospitality-driven interiors—think roaring fireplaces, rich woods and an encyclopedic wine cellar housed in a property rooted in 1940s provenance. Guests come for Michelin-recognized dining, the restorative Temple Mountain Spa and easy access to world-class trails and ski slopes, leaving with the quiet, restorative pleasure of a well-lived mountain retreat.",
+    "highlights": [
+      "Lakeside setting on the shore of Lake Louise inside Banff National Park — immediate access to iconic alpine views and trailheads",
+      "Vintage 1940s alpine-chalet architecture with roaring stone fireplaces and rich wood–paneled public rooms",
+      "Extensive, library-style wine cellar housed within the property — serious program for wine-focused dinners",
+      "On-site Michelin-recognized dining and the restorative Temple Mountain Spa under one roof",
+      "Steps from world-class hiking trails and ski slopes — easy in/out for outdoor itineraries"
     ],
     "best_for": [
       "Couples weekend",
       "Food & wine lovers",
-      "Spa and wellness retreats",
-      "Quiet, romantic getaways"
+      "Skiers and hikers",
+      "Luxury spa seekers",
+      "Design and history aficionados"
     ],
     "not_ideal_for": [
       "Families with young children",
-      "Travelers seeking vibrant nightlife or high‑energy scenes"
+      "Budget travelers",
+      "Party-seekers"
     ],
     "source_subreddit": "r/chubbytravel",
-    "source_context": "Mentioned in: Bernardus Lodge Carmel Valley — worth it?"
+    "source_context": "Mentioned in: Charming Comfort in the Canadian Rockies: A Stay at the Post Hotel"
   },
   {
-    "id": "7707b056-7949-4a44-afc0-31c82b1df781",
-    "description": "Housed in a meticulously restored 1914 Belle Époque mansion in Barranco, Hotel B is Lima’s sole Relais & Châteaux property where historic stucco facades meet contemporary Peruvian art across more than 300 works. Guests drift between intimate signature moments—afternoon \"lonche\" in the library, cocktails at the lively ground-floor bar, or quiet meals in the planted central patio and rooftop—while bespoke experiences like cooking classes, gallery tours and bicycle escapes bring the neighborhood to life. Staying here feels like living inside a private art house: vibrant, cultivated and quietly convivial.",
+    "id": "5f8bf918-7d79-4778-a561-b6cbe6dc2974",
+    "description": "Perched in the heart of Boynton Canyon, Enchantment Resort melds Pueblo-inspired architecture and warm Southwestern textiles with private casitas and beehive fireplaces that open onto decks framing the red-rock amphitheater. Days here unfold through guided hikes, mountain biking from the Trail House and access to the renowned Mii amo destination spa, leaving guests quietly restored and deeply connected to Sedona’s landscape.",
     "highlights": [
-      "Meticulously restored 1914 Belle Époque mansion in Barranco — original stucco facades and period details preserved",
-      "Lima’s only Relais & Châteaux property with a rotating collection of 300+ contemporary Peruvian artworks integrated throughout the house",
-      "Intimate signature moments: afternoon 'lonche' in the wood-paneled library and cocktails at a lively ground-floor bar",
-      "Planted central patio and rooftop dining — quiet garden meals above Barranco’s bohemian streets",
-      "Bespoke local programming: chef-led cooking classes, private gallery tours and guided bicycle escapes around the neighborhood"
-    ],
-    "best_for": [
-      "Art & design lovers",
-      "Couples weekend/romantic stays",
-      "Food-focused travelers and culinary experiences",
-      "Culture seekers exploring Barranco’s galleries and music scene",
-      "Boutique luxury travelers who prefer character over chains"
-    ],
-    "not_ideal_for": [
-      "Families with young children (intimate spaces and museum-like setting)",
-      "Travelers seeking corporate/conference facilities or large event spaces",
-      "Budget travelers looking for no-frills, lower-cost options"
-    ],
-    "source_subreddit": "r/chubbytravel",
-    "source_context": "South America Seed List"
-  },
-  {
-    "id": "77196040-39de-4007-bcd4-a5c0c0ef2e27",
-    "description": "Perched on the shores of Lake Fuschl, Rosewood Schloss Fuschl occupies a storybook castle where imperial Austrian architecture meets contemporary comfort. Days here flow from Mozart‑inspired teas and private hot‑air balloon flights to herbal hikes and restorative Asaya spa rituals, imparting a serene, timeless sense of place.",
-    "highlights": [
-      "Storybook lakeside castle setting on the shores of Lake Fuschl — imperial Austrian architecture paired with contemporary interiors",
-      "Panoramic lake-facing rooms and suites that emphasize historic detailing alongside modern comfort",
-      "Asaya spa offering restorative, herb‑inspired treatments rooted in the regional landscape",
-      "Curated local experiences: Mozart‑inspired afternoon teas, private hot‑air balloon flights and guided herbal hikes"
+      "Pueblo-inspired architecture and Southwestern textile interiors that reference local vernacular",
+      "Private casitas featuring beehive (kiva) fireplaces and decks framing the Boynton Canyon red‑rock amphitheater",
+      "Direct access to guided hikes and the Trail House for mountain‑biking from property",
+      "On‑site Mii amo destination spa — full wellness programming and spa suites"
     ],
     "best_for": [
       "Couples weekend",
-      "Wellness seekers",
-      "Luxury cultural travelers",
-      "Photography & landscape lovers"
-    ],
-    "not_ideal_for": [
-      "Travelers seeking a central Salzburg city base",
-      "Budget-conscious travelers"
-    ],
-    "source_subreddit": "r/chubbytravel",
-    "source_context": "Mentioned in: rosewood schloss fuschl: restored lakeside castle retreat in the austrian alps"
-  },
-  {
-    "id": "7737a63c-1a41-4ecf-bfe6-6a2d336497cb",
-    "description": "Perched within the Capo Carbonara Marine Protected Area, Falkensteiner Resort Capo Boi blends Moorish-inspired architecture and lush Mediterranean maquis with a private white-sand beach and crystalline sea. Days unfold between the Acquapura Cocoon.SPA, seafood and Japanese-influenced dishes at Kento Bay, and signature pizzas at Artigiani, creating a refined yet relaxed island retreat for families, couples and friends.",
-    "highlights": [
-      "Moorish‑inspired architecture — whitewashed facades, arches and terraced courtyards that blend into Mediterranean maquis",
-      "Private white‑sand beach and crystalline water inside the Capo Carbonara Marine Protected Area — excellent snorkelling and protected bays",
-      "Acquapura Cocoon.SPA offering Mediterranean‑led treatments and a calm, design‑forward wellness circuit",
-      "On‑site culinary variety: Kento Bay’s seafood with Japanese influence and signature wood‑fired pizzas at Artigiani",
-      "Secluded coastal setting with direct sea access and boat/snorkel excursions from the resort"
-    ],
-    "best_for": [
-      "Couples seeking a refined seaside escape",
-      "Families wanting beach access and kid‑friendly resort facilities",
-      "Sea and snorkel lovers exploring Capo Carbonara",
-      "Wellness/SPA seekers",
-      "Food‑minded travelers who want refined casual dining"
+      "Wellness seekers / spa retreats",
+      "Active outdoors travelers (hiking & mountain biking)",
+      "Design and architecture appreciators"
     ],
     "not_ideal_for": [
       "Budget travelers",
-      "Nightlife/party seekers",
-      "Those wanting a central city location or extensive public‑transport options"
+      "Families with very young children"
     ],
     "source_subreddit": "r/chubbytravel",
-    "source_context": "Mentioned in: Sardinia honeymoon"
+    "source_context": "Mentioned in: Review of Ambiente in Sedona"
   },
   {
-    "id": "77a235ff-c56f-405d-a5af-34984402b3f3",
-    "description": "Set a block from Rodeo Drive in landmark 90210, The Maybourne Beverly Hills blends European charm with California flair across an elegantly modern, mid‑century–inflected interior punctuated by collectible art and sumptuous bathrooms. Suites feel like private sanctuaries — complete with live pianists, in‑room cocktail service and access to BMW i7 explorations — while the ninth‑floor Mediterranean‑toned pool, rooftop dining and intimate piazza terrace cultivate a relaxed, refined SoCal mood.",
+    "id": "60072495-0f11-4113-b3b2-b46de673ee5d",
+    "description": "Set in Oracabessa, Jamaica, GoldenEye embodies refined Caribbean luxury with an intimate, private sensibility. Stylishly relaxed and quietly sophisticated, a stay here feels like slipping into a sunlit, restorative retreat where warm tropical rhythms set the pace.",
     "highlights": [
-      "One block from Rodeo Drive in landmark 90210 — prime Beverly Hills address without the museum-like formality",
-      "Mid‑century–inflected interiors punctuated by collectible art and richly appointed, spa‑caliber bathrooms",
-      "Suites that feel like private sanctuaries — live pianists, in‑room cocktail service and curated BMW i7 explorations",
-      "Ninth‑floor Mediterranean‑toned pool, rooftop dining and an intimate piazza terrace that create a relaxed, refined SoCal mood"
+      "Ian Fleming legacy: original Fleming estate setting — a palpable James Bond history threaded through the property",
+      "Cluster of private beachfront cottages and standalone villas nestled in lush tropical gardens and along a sheltered lagoon",
+      "Intimate, low‑density layout with discreet staff and a calm, restorative pace — feels like a private retreat rather than a resort",
+      "Direct access to a quiet Oracabessa beach and sheltered waters for swimming, snorkeling and small-boat excursions"
+    ],
+    "best_for": [
+      "Couples & honeymooners",
+      "Privacy-seeking travelers",
+      "History & literature enthusiasts",
+      "Wellness/slow‑travel itineraries"
+    ],
+    "not_ideal_for": [
+      "Families with very young children (limited kid‑centric programming)",
+      "Party seekers/clubbers"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Weekend at Goldeneye"
+  },
+  {
+    "id": "60146b4e-b6fd-4f98-b746-b25d681bec62",
+    "description": "Perched in the heart of Santa Barbara, Four Seasons Resort The Biltmore is a boutique expression of refined luxury and timeless elegance. Staying here feels effortlessly relaxed yet impeccably appointed, a calm West Coast retreat where classic style meets warm, understated hospitality.",
+    "highlights": [
+      "Historic Spanish Colonial Revival architecture with terracotta roofs and arched colonnades — a preserved 1920s Biltmore aesthetic",
+      "Direct oceanfront location near Butterfly Beach with palm‑lined lawns and intimate garden courtyards",
+      "Low‑rise, boutique scale offering spacious, classically appointed rooms and suites that emphasize timeless California coastal elegance",
+      "Warm, understated Four Seasons service that leans into relaxed West Coast hospitality rather than flashy pomposity"
     ],
     "best_for": [
       "Couples weekend",
-      "Design & art lovers",
-      "Luxury experiential travelers (concierge‑led drives, in‑room performances)",
-      "Discerning leisure travelers who prioritize location over ostentation"
+      "Romantic getaways",
+      "Design lovers (heritage architecture + classic interiors)",
+      "Quiet luxury seekers"
     ],
     "not_ideal_for": [
-      "Families with young children (property skews intimate and adult‑oriented)",
+      "Families seeking a high‑energy kids’ resort",
+      "Party seekers/nightlife crowd",
       "Budget travelers"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Santa Barbara-Big Sur-Carmel Hotel Recommendations in September/October"
+  },
+  {
+    "id": "60493b99-d3bb-4877-abdc-81347ad85f63",
+    "description": "Tucked in Napa’s Calistoga on 17 tree-lined acres, Indian Springs Calistoga blends Mission Revival architecture with an eclectic collection of historic cottages, bungalows and houses for a quietly luxurious, modern‑bohemian escape. Guests come for the preserved 1910 Olympic mineral pool, thermal waters and mud‑bath spa rituals, farm‑fresh dining at Sam’s, and a relaxed, restorative rhythm that feels rooted in place and time.",
+    "highlights": [
+      "Preserved 1910 Olympic‑length mineral pool fed by on‑site thermal springs",
+      "Mission Revival main buildings framed by 17 tree‑lined acres and mature landscaping",
+      "Eclectic collection of historic cottages, bungalows and standalone houses — each individually furnished",
+      "On‑site mud‑bath and thermal‑water spa rituals rooted in early Calistoga traditions",
+      "Sam’s farm‑fresh, seasonally driven dining anchored in Napa Valley produce and wine culture"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Spa and wellness seekers",
+      "Food & wine lovers",
+      "Design and history aficionados",
+      "Quiet restorative retreats"
+    ],
+    "not_ideal_for": [
+      "Families with young children (limited kids programming)",
+      "Nightlife/party seekers"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Solage vs indian springs Calistoga?"
+  },
+  {
+    "id": "60f72f65-9050-482a-a6c4-cb57eb015fc0",
+    "description": "Perched on Vancouver’s harbour edge opposite the Convention Centre, Fairmont Waterfront pairs contemporary, glass‑fronted architecture with warm West Coast sensibilities—floor‑to‑ceiling windows frame water, mountain and city views while direct access to the seawall invites biking and coastal strolls. Signature experiences — a heated rooftop pool, a lush herb and honeybee garden with rooftop tours, and morning runs or poolside meditation — make stays feel both restorative and intimately connected to the city’s maritime rhythm.",
+    "highlights": [
+      "Glass‑fronted, contemporary architecture with floor‑to‑ceiling windows framing water, mountain and city views",
+      "Perched on the harbour edge directly opposite the Vancouver Convention Centre — literal doorstep to the seawall",
+      "Heated rooftop pool with city/maritime panoramas and regular rooftop tours of the herb & rooftop honeybee garden",
+      "Direct seawall access for biking, coastal strolls and morning runs; strong tie to Vancouver’s maritime rhythm"
+    ],
+    "best_for": [
+      "Business travelers (steps from Convention Centre)",
+      "Active/outdoor travelers (seawall runs, biking)",
+      "Couples looking for a polished West Coast city stay",
+      "Wellness seekers (rooftop pool, rooftop garden & meditation-friendly spaces)"
+    ],
+    "not_ideal_for": [
+      "Budget travelers",
+      "Those seeking a remote, off‑grid nature retreat",
+      "Families with very young children looking for extensive kid‑centric programming"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Vancouver Recs?"
+  },
+  {
+    "id": "61119851-9c31-4f74-baaa-2690a9cd2e89",
+    "description": "Set within a lovingly restored 19th-century Göreme house, Sarnich Cave Suites pairs hand-carved stone chambers, underground cisterns and traditional grape presses with a quiet garden oasis in the heart of Cappadocia. Mornings here mean waking to hot-air balloons over a lunar landscape, then returning to warm, intimate cave rooms and the slow ritual of a Turkish hammam — a stay that feels rooted in local craft and timeless calm.",
+    "highlights": [
+      "Restored 19th-century Göreme house with original hand-carved stone architecture",
+      "Intimate cave chambers integrated with underground cisterns and traditional grape presses",
+      "Quiet walled garden oasis centrally located in Göreme — hot-air balloon views at sunrise",
+      "On-site Turkish hammam and slow, craft-focused service rather than flashy amenities"
+    ],
+    "best_for": [
+      "Couples weekend / honeymoon",
+      "Design and architecture lovers",
+      "Photography-minded travelers chasing balloon-shot sunrises",
+      "Luxury travelers seeking quiet, craft-driven stays"
+    ],
+    "not_ideal_for": [
+      "Families with young children (tight cave rooms, stairs)",
+      "Mobility-impaired guests (uneven stone steps and narrow passages)",
+      "Business travelers needing conference facilities or high-tech workspaces"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: 26 M, with a 2-month RTW trip planned -- How do I make it special?"
+  },
+  {
+    "id": "614f437f-32cc-42dc-a0fd-a1c655ca6e16",
+    "description": "Set on West Regent Street in the heart of Glasgow, Dakota Hotel marries sleek, mid-century-inspired design with a dark, tactile luxury that feels both modern and intimate. Guests drift from polished rooms to The Grill and Jacks Bar for bold, comforting cuisine and cocktails, enjoying curated packages, private dining and a quietly confident hospitality that puts the city’s shopping, galleries and music just beyond the doorstep.",
+    "highlights": [
+      "Mid-century–inspired interiors with dark, tactile materials and moody lighting that create an intimate, design-forward atmosphere",
+      "Prime West Regent Street address — doorstep access to Glasgow’s top shopping, galleries and live-music venues",
+      "On-site destination dining: The Grill for bold comfort food and Jacks Bar for craft cocktails and late-night drinks",
+      "Private dining and curated packages for discreet events or romantic weekend add-ons"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Design lovers",
+      "Food & cocktail aficionados",
+      "City shoppers",
+      "Music-goers"
+    ],
+    "not_ideal_for": [
+      "Families with young children",
+      "Travelers needing large suites or apartment-style rooms",
+      "Budget-conscious travelers"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Gap City Seed"
+  },
+  {
+    "id": "615dff4b-17e3-441d-86a5-d6ad46eec394",
+    "description": "Set within a restored millennial borgo at the heart of Tuscany and surrounded by 1,100 hectares of organic vineyards, olive groves and woodland, Il Borro blends medieval stone architecture with quietly refined country estates. Days are given to cellar tours and tastings, farm‑to‑table dining, riding and artisan workshops, leaving guests with an intimate, sustainably minded experience of authentic Tuscan life.",
+    "highlights": [
+      "Restored millennial borgo: stay in authentic medieval stone buildings and courtyard houses",
+      "Estate of 1,100 hectares of organic vineyards, olive groves and woodland surrounding the property",
+      "On‑site cellar tours and guided tastings of Il Borro wines and estate olive oil",
+      "Farm‑to‑table dining using estate produce and seasonal Tuscan recipes",
+      "Hands‑on artisan workshops and horseback riding across the estate for immersive rural experiences"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Wine lovers / oenophiles",
+      "Slow‑travelers seeking immersive rural Tuscany",
+      "Luxury travelers who value sustainability and provenance"
+    ],
+    "not_ideal_for": [
+      "Nightlife seekers",
+      "Budget travelers",
+      "Families wanting high‑energy children’s programming"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Tuscany Travel with a 15 month old!"
+  },
+  {
+    "id": "616630af-6fca-40ca-84d7-f1f9433e08ed",
+    "description": "Perched above the tranquil Phobjikha Valley, Amankora Gangtey is a quietly elegant lodge whose pared-back timber architecture and eight suite cottages frame sweeping views of the valley floor and the 16th‑century Gangtey Goemba. Days here move at the rhythm of the land—soak in a candlelit hot‑stone bath, join a kitchen‑garden harvest or a monastery meal offering, then return to a suite warmed by a wood‑burning stove and terrazzo bath, feeling both rooted in local tradition and gently restored.",
+    "highlights": [
+      "Eight standalone timber suite cottages with pared-back local architecture",
+      "Panoramic views over Phobjikha Valley and the 16th‑century Gangtey Goemba from each cottage",
+      "Traditional candlelit hot‑stone baths and terrazzo bathrooms in suites",
+      "Hands‑on local experiences: kitchen‑garden harvests and monastery meal offerings",
+      "Wood‑burning stoves that warm suites — authentic, low‑tech comfort"
+    ],
+    "best_for": [
+      "Couples seeking a quiet, romantic retreat",
+      "Cultural travelers and monastery visitors",
+      "Wellness and slow‑travel seekers (spa/baths, restorative pace)",
+      "Nature photographers and birdwatchers (valley and glacial landscapes)"
+    ],
+    "not_ideal_for": [
+      "Party or nightlife seekers",
+      "Travelers who need constant city‑level connectivity or facilities",
+      "Families with very young children (remote, low‑activity lodge layout)"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Bhutan: multi-brand trip report (Aman, Six Senses, Como)"
+  },
+  {
+    "id": "618ffe7b-9e6a-4925-ba26-01a6b252e218",
+    "description": "Perched on a 600‑foot stretch of Miami shoreline, 1 Hotel South Beach pairs airy, nature‑driven design — reclaimed woods, regional coral stone and ocean‑blue palettes — with a quietly luxurious beachfront rhythm. Guests drift between Bamford Wellness treatments, rooftop dining and four pools, explore the city emission‑free in an electric Audi or on beach cruisers, and wake to rooms outfitted with filtered water and sustainably sourced linens. The result is a calm, restorative stay that feels both rooted in place and thoughtfully modern.",
+    "highlights": [
+      "Perched on a 600‑foot private stretch of Miami shoreline — direct beachfront access without the Biscayne clutter",
+      "Nature‑driven design: reclaimed woods, regional coral stone and ocean‑blue palettes integrated throughout public spaces and rooms",
+      "Four distinct pools including a rooftop pool and multiple beachfront options for varied moods",
+      "On‑site Bamford Wellness treatments and holistic spa programming for restorative stays",
+      "Sustainability-forward amenities: filtered in‑room water, sustainably sourced linens and emission‑free guest transport (electric Audi + beach cruisers)"
+    ],
+    "best_for": [
+      "Wellness seekers",
+      "Design lovers",
+      "Couples weekend",
+      "Eco-conscious travelers"
+    ],
+    "not_ideal_for": [
+      "Budget travelers",
+      "Party‑centric groups"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: 1 Hotel South Beach"
+  },
+  {
+    "id": "6196a854-d7e1-4387-9c84-f57a638cfab6",
+    "description": "Tucked on Johns Island, The Dunlin, Auberge Collection offers refined boutique elegance with a quietly sophisticated lowcountry sensibility. Staying here feels intimate and restorative, a peaceful retreat where thoughtful design and calm surroundings invite slow, luxurious moments.",
+    "highlights": [
+      "Lowcountry marshfront setting framed by live oaks and Spanish moss — strong sense of place rather than a city hotel",
+      "Intimate boutique scale with a limited number of rooms and private porches that invite slow, restorative moments",
+      "Thoughtful, restrained interiors using local materials and a muted coastal palette — refined, quietly modern Lowcountry design",
+      "Secluded Johns Island location with easy access to Charleston’s restaurants and historic sites (short drive, not in-town)"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Design lovers",
+      "Quiet, restorative retreats",
+      "Nature & birdwatching enthusiasts"
+    ],
+    "not_ideal_for": [
+      "Families with young children (limited kid-focused facilities)",
+      "Travelers seeking lively nightlife or on-site entertainment"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Kiawah or Dunlin"
+  },
+  {
+    "id": "621940e2-59ef-4df3-a105-eff6d45d4c41",
+    "description": "Designed by Javier Senosiain, Nido de Quetzalcóatl is an intimate, sculptural retreat where organic architecture folds like a living nest around guests, blurring the line between building and landscape. Staying here is a sensorial experience of curving corridors, cocooned chambers and framed views that invite quiet contemplation and a close, tactile relationship with nature.",
+    "highlights": [
+      "Signature work of Javier Senosiain — a living, nest-like concrete shell that blurs architecture and landscape",
+      "Cocooned, curving chambers and narrow, sculptural corridors that create intimate, framed views of the garden",
+      "Tactile organic surfaces and built-in niches/alcoves that invite close physical interaction with the space",
+      "Located in Naucalpan de Juárez on the edge of Mexico City — a secluded retreat with easy access to urban culture"
+    ],
+    "best_for": [
+      "Design lovers",
+      "Couples weekend",
+      "Photographers & architecture students",
+      "Quiet, contemplative retreats"
+    ],
+    "not_ideal_for": [
+      "Families with young children",
+      "Mobility-impaired travelers (uneven/curving circulation)",
+      "Travelers seeking full-service luxury hotel amenities"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Trip report: El Nido de Quetzalcóatl, CDMX"
+  },
+  {
+    "id": "623b0a00-008b-4d54-880a-33fa7f965bbc",
+    "description": "Perched on Main Street beneath the bluffs of the Mississippi in Red Wing, the St. James Hotel (est. 1875) blends Victorian-era architecture and a quietly refined, family-owned spirit that has endured for generations. Guests linger in a sunlit courtyard over river-view meals at Scarlet Kitchen & Bar or descend to The Port for prohibition-style cocktails, while thoughtfully restored rooms and versatile event spaces make weddings and meetings feel intimate and distinctly local.",
+    "highlights": [
+      "1875 Victorian-era façade and original architectural details preserved on Main Street beneath the Mississippi bluffs",
+      "Sunlit courtyard and river-view dining at Scarlet Kitchen & Bar — intimate meals with a local focus",
+      "Prohibition-style cocktails in The Port, a cozy downstairs bar with period-appropriate atmosphere",
+      "Family-owned, thoughtfully restored guest rooms that blend historic character with modern comforts",
+      "Versatile, intimate event spaces popular for weddings and small meetings with a distinctly local feel"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "History & architecture enthusiasts",
+      "Wedding parties / small events",
+      "Food and cocktail seekers",
+      "Boutique hotel travelers who prefer character over cookie-cutter luxury"
+    ],
+    "not_ideal_for": [
+      "Travelers needing full modern-resort amenities (spa, large fitness complex)",
+      "Families with young children looking for extensive kid-focused facilities",
+      "Guests requiring comprehensive ADA-style accessibility throughout a modern property"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Girlfriend’s first time to Paris: Relais Christine or Saint James?"
+  },
+  {
+    "id": "623bbd6f-8974-4827-8c6b-e6afe91e7c86",
+    "description": "Tucked into Kyoto’s serene streets, Kanamean Nishitomiya is a compact ryokan of eight sukiya-style guest rooms where tea‑culture aesthetics meet contemporary design. Guests linger over seasonal kaiseki and a modern Kaname tasting experience, retreating to individually finished rooms with tsuboniwa and crafted joinery that make each stay quietly ritualistic and restorative.",
+    "highlights": [
+      "Eight-room sukiya-style ryokan — intimate scale that emphasizes artisanal joinery and bespoke finishes in each room",
+      "Rooms feature private tsuboniwa (small courtyard gardens) and individualized woodwork, so no two accommodations feel the same",
+      "Seasonal kaiseki dinners and a curated modern 'Kaname' tasting experience focused on tea-culture aesthetics",
+      "Set on Kyoto's quieter streets — a restorative, ritualistic atmosphere rather than a bustling downtown location"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Design lovers and architecture/woodwork aficionados",
+      "Food and tea-culture enthusiasts",
+      "Travelers seeking an intimate, restorative ryokan experience"
+    ],
+    "not_ideal_for": [
+      "Families with young children",
+      "Travelers who need large suites or extensive hotel facilities",
+      "Those wanting lively nightlife on-site"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Kanamean Nishitomiya Review: a truly special Kyoto stay"
+  },
+  {
+    "id": "624da695-2143-4188-86be-0e13a0851723",
+    "description": "Housed in a restored 1920s banking hall in the heart of the City of London, The Ned blends historic Art Deco grandeur with a lively members' club spirit. Guests drift between a constellation of restaurants and bars, a rooftop terrace overlooking the skyline, and refined rooms that feel both intimate and convivial. Staying here is less about solitude and more about joining a cultivated, social London scene rooted in elegant design and hospitality.",
+    "highlights": [
+      "Restored 1920s banking hall: dramatic Art Deco banking hall and original architectural details central to the property",
+      "Members' club energy: lively, convivial public spaces that encourage mingling rather than solitude",
+      "Constellation of restaurants and bars under one roof, offering varied dining without leaving the hotel",
+      "Rooftop terrace with skyline views over the City of London — rare for a boutique property in this neighborhood",
+      "Refined, intimate rooms that emphasize convivial design over anonymous luxury-hotel minimalism"
+    ],
+    "best_for": [
+      "Design lovers",
+      "Food & drink–centric travelers",
+      "Social city-breaks / groups",
+      "Stylish business travelers who value after-hours scene"
+    ],
+    "not_ideal_for": [
+      "Travelers seeking quiet, solitary retreats",
+      "Families with young children",
+      "Budget-minded guests"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Gap City Seed"
+  },
+  {
+    "id": "62995fb2-6877-4841-8206-b0f7f7e2b8de",
+    "description": "Perched on Oahu’s Ko Olina in Kapolei, Four Seasons Resort Oahu at Ko Olina blends contemporary luxury with a refined island sensibility. Staying here feels like a polished, sunlit retreat—quietly elegant, warmly hospitable, and serenely restorative.",
+    "highlights": [],
+    "best_for": [],
+    "not_ideal_for": [],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Aulani vs Four Season Ko Olina"
+  },
+  {
+    "id": "62b02082-d728-46dd-a874-07cc84fe840c",
+    "description": "Set among the sun-drenched vineyards and rolling hills of Calistoga in Napa Valley, Four Seasons Resort and Residences offers a quietly opulent retreat that feels both private and refined. The property's polished, contemporary elegance and attentive service create a relaxed, indulgent atmosphere that invites lingering days and memorable evenings in wine country.",
+    "highlights": [
+      "Set directly among sun-drenched vineyards and rolling Calistoga hills — immediate access to Napa Valley views and vineyard sunsets",
+      "Polished, contemporary architecture and design that leans quiet and refined rather than ornate or themed",
+      "On-property private residences and suite offerings that extend the resort’s sense of seclusion and long-stay comfort",
+      "Service that prioritizes low-key, attentive personalization — crafted for lingering days and unhurried evenings in wine country"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Wine-focused travelers",
+      "Luxury seekers who value privacy",
+      "Celebration stays (anniversaries, milestone meals)"
+    ],
+    "not_ideal_for": [
+      "Budget-minded travelers",
+      "Those seeking bustling nightlife or party hotels"
     ],
     "source_subreddit": "r/chubbytravel",
     "source_context": "Mentioned in: Advice for California/Hawaii Trip"
   },
   {
-    "id": "77c524ff-3b19-4aa7-b0e0-97154d932b7a",
-    "description": "ADLER Lodge RITTEN in Soprabolzano is a boutique retreat that marries alpine warmth with contemporary Italian refinement. Staying here feels like a serene, intimate escape — quietly luxurious and attuned to the rhythms of the surrounding uplands.",
+    "id": "62c0389c-f18b-4f3d-846f-17c043ba050d",
+    "description": "Perched in the heart of Bangkok, Capella Bangkok is a contemporary luxury retreat that blends refined design with quietly confident Thai hospitality. Its elegant interiors and serene atmosphere make each stay feel like an intimate sanctuary amid the city's vibrant rhythm, inviting guests to unwind in polished comfort.",
     "highlights": [
-      "Alpine-meets-Italian design: warm timber and stone architecture pared with contemporary Italian refinement",
-      "Perched on the Ritten plateau with immediate access to upland trails and broad Dolomites vistas",
-      "Small, boutique scale focused on quiet, restorative stays rather than big-hotel bustle",
-      "Intimate sense of place — interiors and public spaces calibrated to the rhythm of the surrounding landscape"
+      "Contemporary, design-forward interiors that reference refined Thai craft without feeling overtly thematic",
+      "Quiet, intimate atmosphere that reads like a private sanctuary despite being in the heart of Bangkok",
+      "Polished, restrained public spaces and guest rooms focused on calm, high-touch service",
+      "Seamless blend of modern architecture and subdued local hospitality for a discreet luxury experience"
     ],
     "best_for": [
       "Couples weekend",
       "Design lovers",
-      "Wellness and relaxation seekers",
-      "Hikers and nature-minded travelers"
+      "Urban retreat seekers",
+      "Discerning travelers who prioritize privacy and service"
     ],
     "not_ideal_for": [
       "Families with young children",
-      "Party-seekers"
+      "Budget-conscious travelers",
+      "Party-seekers looking for nightlife-driven hotels"
     ],
     "source_subreddit": "r/chubbytravel",
-    "source_context": "Mentioned in: Dolomites Adler Ritten or Miramonti?"
+    "source_context": "Mentioned in: Best city hotel in the world?"
   },
   {
-    "id": "78028958-4469-4da8-974f-e84b66a1552d",
-    "description": "Perched on Ocean City’s historic boardwalk, the Majestic Hotel marries classic seaside charm with apartment-style versatility — from studios to multi-bedroom beach houses — and direct beach access. Guests relax on the broad front porch in rocking chairs, take a dip in the heated pool or lounge on the sun deck, then drift into the boardwalk’s shops and amusements for a relaxed, nostalgic beachfront escape.",
+    "id": "630d2eb3-d18a-4aaa-b94e-66ace8ecde11",
+    "description": "Set amid the palm-dotted hills of Desert Hot Springs, Two Bunch Palms occupies a historic mineral‑spring enclave whose low‑slung bungalows and sun‑washed courtyards nod to its early 20th‑century roots. Guests linger for the restorative thermal waters, personalized spa therapies and immersive wellness classes—days that unfold with quiet ritual and a relaxed, restorative rhythm.",
     "highlights": [
-      "Direct access to the sand from the hotel — steps down to Ocean City’s historic boardwalk and beach",
-      "Apartment-style accommodations: studios through multi-bedroom beach houses with kitchenettes/living areas",
-      "Broad, rocking-chair front porch that evokes classic seaside architecture and people-watching",
-      "Heated outdoor pool and elevated sun deck for lounging with boardwalk views",
-      "Located on the historic boardwalk — immediate access to shops, arcades and nostalgic beachfront amusements"
-    ],
-    "best_for": [
-      "Families and multi-gen groups who need multi-bedroom, kitchen-equipped units",
-      "Beach-first travelers who want immediate boardwalk/beach access",
-      "Longer stays and repeat visitors who prefer apartment convenience over a standard hotel room"
-    ],
-    "not_ideal_for": [
-      "Travelers seeking full-service luxury (on-site spa, Michelin dining, 24/7 concierge)",
-      "Light sleepers who need absolute quiet — boardwalk noise can carry into rooms"
-    ],
-    "source_subreddit": "r/chubbytravel",
-    "source_context": "Mentioned in: SOF Hotel Help"
-  },
-  {
-    "id": "7852b1bc-4ba7-4da9-8d2d-b98ff61d6472",
-    "description": "Perched in the evergreen foothills of the Volcán de Colima, Hacienda de San Antonio is a gracious Mexican hacienda where pale-pink walls, shaded courtyards and private terraces frame river, garden and volcano views. Its 5,000‑acre Rancho Jabali, farm‑to‑table dining and an array of outdoor pursuits—from hot‑air ballooning to horseback rides—combine with quietly polished, homely interiors to make each stay both restorative and vividly rooted in place.",
-    "highlights": [
-      "Pale-pink hacienda architecture with shaded courtyards and private terraces framing river, garden and direct views of Volcán de Colima",
-      "5,000‑acre Rancho Jabali on-site — working ranch that supplies ingredients and guides farm‑to‑table dining experiences",
-      "Range of curated outdoor pursuits: hot‑air ballooning at sunrise, guided horseback rides across the foothills, and river-side walks",
-      "Quietly polished, homely interiors that blend traditional Mexican decorative details with intimate luxury for a restorative stay"
+      "Historic mineral‑spring enclave with original low‑slung bungalows and sun‑washed courtyards",
+      "Multiple thermal plunge pools fed by on‑site mineral waters for restorative soaking",
+      "Intimate, personalized spa therapies and tailored wellness classes (yoga, breathwork, guided rituals)",
+      "Secluded palm‑dotted hills setting minutes from Palm Springs but feeling quietly removed"
     ],
     "best_for": [
       "Couples weekend",
-      "Active nature travelers (ballooning, horseback riding, hiking)",
-      "Foodies seeking farm‑to‑table provenance",
-      "Photographers and volcano-view seekers"
+      "Wellness retreats & spa resets",
+      "Solo restorative getaways",
+      "Quiet nature and design appreciators"
     ],
     "not_ideal_for": [
-      "Travelers wanting a big-city nightlife scene",
-      "Families seeking extensive kids’ programming"
+      "Families with young children",
+      "Nightlife/party seekers",
+      "Travelers needing full‑service urban business amenities"
     ],
     "source_subreddit": "r/chubbytravel",
-    "source_context": "Mentioned in: October 2026 beach honeymoon recommendations"
+    "source_context": "Mentioned in: Resort like Two Bunch Palms?"
   },
   {
-    "id": "78717c87-d43a-40fa-9c50-2ccc70d7ef61",
-    "description": "Perched in the heart of Miraflores, Casa Andina Premium Miraflores offers an intimate, boutique retreat that puts you steps from Lima’s coastal energy and vibrant cultural scene. Its refined, contemporary style and warm Peruvian sensibility create a calm, polished base for exploring the city.",
+    "id": "63240378-65f7-4a32-b809-ec2b56674571",
+    "description": "Set within a reimagined Palace of Justice on Amsterdam’s UNESCO-listed Canal District, Rosewood Amsterdam melds stately Beaux-Arts architecture with a restrained, contemporary interiors language by Studio Piet Boon to create a residentially elegant hideaway. Days here are measured in restorative Asaya spa rituals, canal-salon boat cruises and seasonal Dutch cuisine—each experience curated to reveal the city’s creative pulse while you unwind in quietly refined comfort.",
     "highlights": [
-      "Right in the heart of Miraflores — an easy stroll to the Malecón (coastal boardwalk) and Larcomar shopping/sea cliff views",
-      "Refined, contemporary interiors threaded with Peruvian textiles and local art for an understated, authentic sense of place",
-      "Boutique scale and polished service that feels like a calm urban residence rather than a large city hotel",
-      "Excellent base for Lima’s cultural circuit — galleries, craft shops, and Parque Kennedy are all within walking distance"
+      "Housed in a reimagined Palace of Justice — striking Beaux-Arts façade with grand public spaces preserved",
+      "Interiors by Studio Piet Boon: restrained, residentially elegant design and bespoke finishes throughout",
+      "Onsite Asaya spa offering restorative rituals in a calm, high-end wellness setting",
+      "Direct access to curated canal-salon boat cruises from the hotel and location in Amsterdam’s UNESCO-listed Canal District",
+      "Seasonal Dutch cuisine focused on local produce and thoughtfully staged dining experiences"
     ],
     "best_for": [
       "Couples weekend",
       "Design lovers",
-      "City explorers who want a central, walkable base",
-      "Business travelers seeking quiet, polished accommodations"
+      "Wellness seekers",
+      "Culture and canal explorers",
+      "Luxury leisure travelers"
     ],
     "not_ideal_for": [
-      "Families with young children (limited family-oriented facilities)",
-      "Budget travelers looking for low nightly rates"
+      "Families with young children (limited kid-focused programming)",
+      "Budget travelers",
+      "Party seekers/club-goers looking for nightlife within the hotel"
     ],
     "source_subreddit": "r/chubbytravel",
-    "source_context": "Mentioned in: Sacred Valley (Peru) hotel – upscale &amp; walkable to restaurants"
+    "source_context": "Mentioned in: Rosewood Amsterdam Review"
   },
   {
-    "id": "7899a222-5127-4317-85b3-2f6c8c7ce0f7",
-    "description": "Set in Arlington, the Renaissance Arlington Capital View Hotel is a boutique refuge that blends contemporary refinement with a quietly urbane sensibility. Staying here feels like enjoying a polished, intimate base from which to soak up the energy and gravitas of the capital corridor.",
+    "id": "6386679d-a953-4a61-90e6-e35b87cb70f6",
+    "description": "Perched on the edge of Torres del Paine, Awasi Patagonia pairs understated stone-and-wood villas with wide windows that frame glaciers, lenga forests and wind-swept steppe. Each guest has a private guide and 4x4 for bespoke outings—boat trips to Grey Glacier, puma tracking on the lodge’s private reserve and seasonal hikes—so stays feel intimate, unfussy and deeply connected to the raw rhythms of Patagonia.",
     "highlights": [
-      "Boutique scale and polished, personalized service — feels more like an intimate urban refuge than a chain hotel",
-      "Contemporary, quietly urbane interiors that emphasize refinement over flash",
-      "Prime Arlington location with immediate access to the Washington capital corridor — short ride to D.C. monuments, government offices and Reagan National Airport",
-      "Upper-floor rooms and common spaces that act as a calm, skyline-facing base for exploring the capital"
+      "Standalone stone-and-lenga-wood villas with minimalist interiors and floor-to-ceiling windows framing Grey Glacier, lenga forest and wind-swept Patagonian steppe",
+      "Private guide and dedicated 4x4 for every guest, enabling bespoke outings rather than fixed group departures",
+      "Access to the lodge’s private reserve for guided puma-tracking and close-up wildlife viewing",
+      "Boat excursions to Grey Glacier and seasonally tailored hikes that start from the villa doorstep"
     ],
     "best_for": [
-      "Business travelers to Washington, D.C.",
-      "Couples weekend",
-      "Design-conscious travelers who prefer understated luxury",
-      "Culture and museum visitors using Arlington as a base"
+      "Luxury adventure travelers",
+      "Couples seeking privacy and immersive nature",
+      "Wildlife photographers and serious naturalists",
+      "Experienced hikers who want concierge-led routes"
     ],
     "not_ideal_for": [
-      "Families with young children looking for extensive kid-focused amenities",
-      "Travelers seeking resort-style facilities (large pool, sprawling grounds)",
-      "Budget-conscious guests"
+      "Families with young children",
+      "Travelers seeking urban nightlife or resort-style entertainment",
+      "Budget travelers"
     ],
     "source_subreddit": "r/chubbytravel",
-    "source_context": "Mentioned in: Switzerland in August"
+    "source_context": "Mentioned in: Awasi Patagonia review: SO much fun, incredible views, and killer service"
+  },
+  {
+    "id": "63bb80f8-66c7-4a70-bc90-d4ae6b4ece6b",
+    "description": "Tucked in Gion at the foot of Higashiyama, The Celestine Hotel Gion marries contemporary Japanese restraint with machiya-inspired warmth, offering tranquil, private rooms that feel like a refined second home. Bespoke concierge tours, in‑room dining showcasing Kyoto flavors (including offerings from Yasaka Endo) and curated local experiences immerse guests in the city’s seasonal rhythms and understated elegance.",
+    "highlights": [
+      "Located in Gion at the foot of Higashiyama — short walk to Yasaka Shrine and traditional hanamachi streets",
+      "Machiya-inspired design cues (timber accents, restrained Japanese minimalism) that make rooms feel like a refined second home",
+      "Bespoke concierge tours and curated local experiences focused on seasonal Kyoto traditions",
+      "In-room dining collaborations showcasing Kyoto flavors, including offerings from Yasaka Endo"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Design lovers seeking refined Japanese minimalism",
+      "Cultural explorers who want easy access to Gion/Higashiyama",
+      "Food-focused travelers interested in authentic Kyoto cuisine",
+      "Repeat visitors to Kyoto who favor quiet, residential stays"
+    ],
+    "not_ideal_for": [
+      "Families with young children (limited family-room amenities)",
+      "Party-goers or late-night nightlife seekers"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: May Japan Trip"
+  },
+  {
+    "id": "63e64e99-1be7-4e97-9fb0-25d55734b62d",
+    "description": "Perched above the Spanish Steps with sweeping terraces that frame Rome’s terracotta rooftops and landmark domes, the Hassler blends classical Italian architecture, antique interiors and refined marble finishes with discreet modern comforts. Days unfold over Michelin-starred dining at Imàgo, private concierge-led visits to the Vatican and ancient piazzas, and lingering aperitivi on sun-drenched terraces — an intimate, timeless stay that feels quietly Venetian and utterly Roman.",
+    "highlights": [
+      "Perched directly above the Spanish Steps with private terraces offering sweeping views of Rome’s terracotta rooftops and landmark domes",
+      "Historic, classically Italian architecture and antique-filled interiors punctuated by refined marble finishes",
+      "Imàgo — Michelin-starred rooftop dining with panoramic terrace service",
+      "Concierge-curated private access to the Vatican and guided visits to ancient piazzas; discreet modern comforts throughout"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Luxury food & wine travelers",
+      "Culture & history seekers",
+      "Romantic anniversaries/honeymoons"
+    ],
+    "not_ideal_for": [
+      "Families with young children",
+      "Travelers seeking ultra-modern/minimalist design",
+      "Budget-conscious travelers"
+    ],
+    "source_subreddit": null,
+    "source_context": null
+  },
+  {
+    "id": "63f87536-d74d-4d2d-8c6f-2525bd395c5a",
+    "description": "Perché sur la Corniche Kennedy face aux îles du Frioul, Les Bords de Mer mêle élégance Art déco et douceur méditerranéenne avec 19 chambres tournées vers l’horizon azur. Entre restaurant presque posé sur l’eau, rooftop suspendu et spa minéral avec couloir de nage extérieur, le séjour y respire la brise marine et une intimité lumineuse propice à la détente et à la découverte de Marseille.",
+    "highlights": [
+      "Perched on Corniche Kennedy with direct, unobstructed views of the Îles du Frioul and the azure horizon",
+      "Intimate Art Deco–inspired property: just 19 sea-facing rooms designed to prioritise light and views",
+      "Restaurant built almost on the waterline — dining that feels suspended between sea and shore",
+      "Rooftop terrace with panoramic sea vistas and a sculptural, suspended feel",
+      "Mineral spa featuring a calm indoor treatment space plus an outdoor swim lane facing the Mediterranean"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Romantic getaways",
+      "Design and architecture lovers",
+      "Sea‑view seekers",
+      "Food and wine enthusiasts"
+    ],
+    "not_ideal_for": [
+      "Families with young children (limited rooms and intimate scale)",
+      "Travelers wanting central Old Port nightlife or extensive city‑center walking access",
+      "Business travelers needing large meeting facilities"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Gap City Seed"
+  },
+  {
+    "id": "6413238b-6ac8-4fae-b061-202fb898fdc2",
+    "description": "Set along an eight-block stretch of Collins Avenue, Faena Hotel Miami Beach pairs oceanfront light with decadent, theatrical design—rooms feel like a gilded dreamscape that blurs fantasy and comfort. Its program of immersive arts, nightly performances at the Faena Theater, a Tierra Santa healing house and celebrated restaurants (including Francis Mallmann’s Los Fuegos) makes each stay a carefully curated cultural escape.",
+    "highlights": [
+      "Eight-block oceanfront frontage on Collins Avenue — direct beach access with exceptional natural light",
+      "Rooms and suites styled as a gilded, theatrical ‘dreamscape’ that blends opulent finishes with unexpected artful details",
+      "Faena Theater nightly performances and a year-round program of immersive arts on property",
+      "Tierra Santa Healing House spa offering ritual-driven treatments and a signature wellness program",
+      "Multiple celebrated restaurants on-site, including Francis Mallmann’s Los Fuegos for high-end, open-fire dining"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Design and art lovers",
+      "Foodies/celebrity-chef dining",
+      "Guests seeking immersive cultural experiences"
+    ],
+    "not_ideal_for": [
+      "Families with young children",
+      "Travelers seeking a quiet, minimalist stay",
+      "Budget-conscious travelers"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Baby Moon Miami"
+  },
+  {
+    "id": "641f0fbb-8f7a-4752-b126-a2f2ef1e97ae",
+    "description": "Set in the heart of the Green Mountains and overlooking Woodstock’s storied main street, the Inn marries Rockefeller-era preservation with classic New England architecture and thoughtfully crafted rooms that echo the region’s natural beauty. Days here move from farm-to-table dinners harvested at Kelly Way Gardens to Orvis-endorsed fly-fishing, skiing and a LEED-certified spa, leaving guests with a quietly restorative, authentic Vermont experience.",
+    "highlights": [
+      "Rockefeller-era preservation meets classic New England architecture — original details thoughtfully restored",
+      "Rooms and suites curated to reflect the Green Mountains — natural materials, muted palettes, and local art",
+      "Direct overlook of Woodstock’s historic Main Street — walkable village access to shops and galleries",
+      "On-site farm-to-table dining sourced from Kelly Way Gardens — seasonal, hyper-local menus",
+      "Orvis-endorsed fly-fishing access, nearby ski areas and a LEED-certified spa — active outdoors + sustainable wellness"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Outdoor-active travelers (fly-fishing, skiing, hiking)",
+      "Food-focused travelers / farm-to-table diners",
+      "Design & history lovers seeking authentic Vermont character"
+    ],
+    "not_ideal_for": [
+      "Party-seekers/nightlife hunters",
+      "Families with very young children (limited kids programming)",
+      "Budget travelers"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: New England spa getaway for mom's birthday - hotel recs"
+  },
+  {
+    "id": "64409e82-52cd-4506-891b-9b49385d25f7",
+    "description": "Perched in the heart of Makati, Fairmont Makati pairs contemporary glass-and-stone architecture and floor-to-ceiling windows with panoramic skyline views, offering a calm urban sanctuary steps from Manila’s financial and cultural pulse. Signature experiences — from Fairmont Gold’s personalised service and award-winning restaurants to a tranquil spa and rooftop pool — create a refined, warmly tailored stay that blends business-ready facilities with leisurely comfort.",
+    "highlights": [
+      "Contemporary glass-and-stone tower with floor-to-ceiling windows offering sweeping Makati skyline panoramas",
+      "Fairmont Gold level — dedicated concierge, private lounge and highly personalised service",
+      "Rooftop pool and sun terrace with city-view relaxation above the financial district",
+      "On-site award-winning restaurants and a tranquil spa that cater to both business and leisure guests"
+    ],
+    "best_for": [
+      "Business travelers needing central Makati location and meeting-ready facilities",
+      "Couples seeking a refined urban stay with skyline views",
+      "Luxury travelers who value personalised service (Fairmont Gold) and top dining/spa options",
+      "Design-minded guests who appreciate contemporary architecture and floor-to-ceiling glazing"
+    ],
+    "not_ideal_for": [
+      "Budget travelers",
+      "Those seeking a lively party/club scene (property skews calm and refined)",
+      "Families looking for resort-style kids’ programming"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: 1st Time in the Philippines for my Honeymoon"
+  },
+  {
+    "id": "648a518c-63b9-4f82-9b87-ad6d6979311b",
+    "description": "Perched in the timeless hilltop village of Monticchiello, L'Olmo is a boutique retreat that channels the quiet elegance of rural Tuscany. Steeped in local character, its understated style invites a slow, sensory stay—where days unfold with languid light, rustic charm, and an intimate sense of place.",
+    "highlights": [
+      "Perched in the medieval hilltop village of Monticchiello with unobstructed Val d'Orcia panoramas from the terrace",
+      "Restored stone architecture and original details — exposed beams, terracotta floors and low arched doorways — that feel authentically Tuscan, not staged",
+      "Intimate scale (very few rooms) with a quiet courtyard garden shaded by an elm (L'Olmo) and candlelit communal dinners on select evenings",
+      "Short drives to Pienza, Montalcino and local wineries — ideal base for slow food-and-wine excursions without the bustle of larger towns"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Slow-travelers craving authentic village life",
+      "Food & wine explorers wanting countryside access",
+      "Photographers and design lovers who prefer understated, historic interiors"
+    ],
+    "not_ideal_for": [
+      "Families with young children (limited kid facilities, small rooms)",
+      "Nightlife seekers (very quiet village evenings)",
+      "Travelers with serious mobility issues (steep cobbles and steps, limited accessibility)"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: Italian honeymoon - Tuscany &amp; Taormina - Good idea?"
+  },
+  {
+    "id": "649502e3-cad5-4f25-a92c-6c9952e51edf",
+    "description": "Set in 12 acres of private gardens within a larger indigenous forest on the edge of Nairobi, Giraffe Manor is a restored 1930s manor whose stately façade and elegant interiors evoke the romance of an East African hunting lodge. Its signature experience—Nubian giraffes reaching through dining-room windows at breakfast—blends intimate wildlife encounters with a long-standing conservation programme, creating a quietly whimsical, restorative stay that feels both private and deeply rooted in place.",
+    "highlights": [
+      "1930s restored manor house with stately façade and period interiors evoking an East African hunting lodge",
+      "Set on 12 acres of private gardens ringing indigenous forest on the edge of Nairobi — feels secluded yet minutes from the city",
+      "Signature breakfast experience: Nubian giraffes reach through dining-room windows for treats",
+      "Hands-on conservation programme integrated into the guest experience (giraffe encounters are part of ongoing protection and care)",
+      "Intimate property scale — small number of rooms creates a private, residential atmosphere"
+    ],
+    "best_for": [
+      "Couples weekend",
+      "Wildlife enthusiasts after close, ethical encounters",
+      "Luxury travelers wanting a unique, story-driven stay in Nairobi",
+      "Photography-focused travelers seeking iconic, up-close moments"
+    ],
+    "not_ideal_for": [
+      "Travelers wanting modern minimalism or contemporary design hotels",
+      "Guests seeking large resort-style facilities and many onsite activities"
+    ],
+    "source_subreddit": "r/chubbytravel",
+    "source_context": "Mentioned in: AndBeyond Safari Review (Kenya/Tanzania)"
   }
 ]
