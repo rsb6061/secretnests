@@ -16,6 +16,10 @@ function headers(extra={}) {
     "x-content-type-options":"nosniff",
     "referrer-policy":"strict-origin-when-cross-origin",
     "permissions-policy":"camera=(), microphone=(), geolocation=()",
+    "strict-transport-security":"max-age=31536000; includeSubDomains",
+    "x-frame-options":"DENY",
+    "cross-origin-opener-policy":"same-origin",
+    "cross-origin-resource-policy":"same-origin",
     "content-security-policy":"default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.clarity.ms; connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://*.clarity.ms; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
     ...extra
   };
@@ -44,7 +48,7 @@ ${analytics(env)}
 <style>
 :root{font-family:Inter,ui-sans-serif,system-ui,sans-serif;color:#111;background:#fff}*{box-sizing:border-box}body{margin:0;background:#fff;color:#111}a{color:inherit}.wrap{max-width:1160px;margin:auto;padding:24px}header{display:flex;justify-content:space-between;gap:20px;align-items:center;border-bottom:1px solid #ececec}.brand{font-family:Georgia,serif;font-size:25px;font-weight:700;text-decoration:none}nav{display:flex;gap:16px;align-items:center;flex-wrap:wrap}nav a{text-decoration:none}.hero{padding:70px 0 42px}.hero h1,h1,h2,h3{font-family:Georgia,serif}.hero h1{font-size:clamp(42px,7vw,76px);line-height:1;max-width:900px;margin:0 0 20px}.hero p{font-size:20px;line-height:1.55;max-width:790px;color:#444}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}.card{border:1px solid #ddd;border-radius:14px;padding:20px;text-decoration:none}.card:hover{border-color:#999}.eyebrow{text-transform:uppercase;font-size:12px;letter-spacing:.12em;color:#666}.metric{font-size:28px;font-weight:700}.quote{border-left:3px solid #111;padding-left:20px;margin:26px 0}.muted{color:#666}.pill{display:inline-block;padding:7px 11px;border:1px solid #ccc;border-radius:999px;margin:4px 4px 4px 0}.stats{display:flex;gap:28px;flex-wrap:wrap;margin:24px 0}.stat strong{display:block;font-size:24px}.list{padding:0;list-style:none}.list li{padding:14px 0;border-bottom:1px solid #eee}.value{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.value>div{border:1px solid #ddd;border-radius:12px;padding:16px}.search{display:flex;gap:10px;max-width:760px}.search input,.search select,.search textarea{width:100%;padding:14px 15px;border:1px solid #bbb;border-radius:10px;font:inherit}.search button,.btn{border:0;background:#111;color:#fff;padding:14px 18px;border-radius:10px;font:inherit;text-decoration:none;display:inline-block;cursor:pointer}.filters{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.section{padding:42px 0}.hotel-row{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:start}.kicker{font-size:14px;color:#666}.notice{border:1px solid #ddd;background:#fafafa;border-radius:12px;padding:16px}.error{border-color:#d99;background:#fff7f7}.footer{margin-top:70px;border-top:1px solid #eee;padding:30px 24px;color:#666}.hero-media{width:100%;max-height:620px;object-fit:cover;border-radius:16px;margin:18px 0 8px;background:#f4f4f4}.two{display:grid;grid-template-columns:1.5fr 1fr;gap:26px}@media(max-width:760px){.value{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}.search{flex-direction:column}.hotel-row{grid-template-columns:1fr}}
 </style></head><body>${body}<footer class="footer wrap">SecretNests · Luxury hotel value, according to people who actually stayed.</footer>
-<script>(function(){var k='sn_session_id',sid=sessionStorage.getItem(k);if(!sid){sid=crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random().toString(36).slice(2);sessionStorage.setItem(k,sid)}function send(p){p.session_id=sid;p.path=location.pathname;fetch('/api/events',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(p),keepalive:true}).catch(function(){})}send({name:'page_view'});document.addEventListener('click',function(e){var a=e.target.closest('[data-event]');if(!a)return;send({name:a.dataset.event,hotel_id:a.dataset.hotelId||null,creator_id:a.dataset.creatorId||null,list_id:a.dataset.listId||null})})})();</script>
+<script>(function(){var k='sn_session_id',sid=sessionStorage.getItem(k);if(!sid){sid=crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random().toString(36).slice(2);sessionStorage.setItem(k,sid)}function send(p){p.session_id=sid;p.path=location.pathname;fetch('/api/events',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(p),keepalive:true}).catch(function(){})}send({name:'page_view'});document.querySelectorAll('[data-autoevent]').forEach(function(a){send({name:a.dataset.autoevent,hotel_id:a.dataset.hotelId||null,creator_id:a.dataset.creatorId||null,list_id:a.dataset.listId||null})});document.addEventListener('click',function(e){var a=e.target.closest('[data-event]');if(!a)return;send({name:a.dataset.event,hotel_id:a.dataset.hotelId||null,creator_id:a.dataset.creatorId||null,list_id:a.dataset.listId||null})})})();</script>
 </body></html>`,{headers:headers()});
 }
 
@@ -116,7 +120,7 @@ async function creatorPage(handle, env){
   const lists=(await env.DB.prepare("SELECT id,slug,title,description FROM lists WHERE creator_id=? AND is_public=1 ORDER BY created_at DESC LIMIT 30").bind(creator.id).all()).results||[];
   const stays=(await env.DB.prepare(`SELECT s.stay_month,s.paid_nightly_rate,h.name,h.slug,h.city,h.country,vo.would_pay_again,tr.would_return FROM stays s JOIN hotels h ON h.id=s.hotel_id LEFT JOIN value_opinions vo ON vo.stay_id=s.id LEFT JOIN trip_reports tr ON tr.stay_id=s.id WHERE s.creator_id=? ORDER BY s.stay_month DESC,s.created_at DESC LIMIT 40`).bind(creator.id).all()).results||[];
   const tastes=safeJson(creator.taste_profile_json,[]);
-  return page(shell(`<section class="hero" style="padding-bottom:20px"><div class="eyebrow">@${esc(creator.handle)}${creator.is_demo?" · Demo profile":""}</div><h1>${esc(creator.display_name)}</h1><p>${esc(creator.bio||"")}</p>${creator.is_demo?'<div class="notice"><strong>Illustrative demo data.</strong> This profile demonstrates the product and does not claim these are real stays.</div>':""}</section><div class="stats"><div class="stat"><strong>${creator.stay_count||0}</strong><span>stays</span></div><div class="stat"><strong>${creator.report_count||0}</strong><span>trip reports</span></div><div class="stat"><strong>${creator.list_count||0}</strong><span>public lists</span></div><div class="stat"><strong>${creator.booking_count||0}</strong><span>bookings generated</span></div><div class="stat"><strong>${money(creator.earnings||0)}</strong><span>earned</span></div></div><h2>Taste profile</h2><div>${tastes.map(t=>`<span class="pill">${esc(t)}</span>`).join("")||'<span class="muted">Taste profile not added yet.</span>'}</div><section class="section"><h2>Recent stays</h2><ul class="list">${stays.map(s=>`<li><a href="/hotel/${encodeURIComponent(s.slug)}"><strong>${esc(s.name)}</strong></a> · ${esc([s.city,s.country].filter(Boolean).join(", "))}<br><span class="muted">Stayed ${esc(s.stay_month||"—")} · paid ${money(s.paid_nightly_rate)} · would pay again ${money(s.would_pay_again)} · would return ${s.would_return==null?"—":s.would_return?"Yes":"No"}</span></li>`).join("")||'<li class="muted">No public stays yet.</li>'}</ul></section><section><h2>Lists</h2><ul class="list">${lists.map(l=>`<li><a href="/@${encodeURIComponent(creator.handle)}/lists/${encodeURIComponent(l.slug)}"><strong>${esc(l.title)}</strong></a><br><span class="muted">${esc(l.description||"")}</span></li>`).join("")||'<li class="muted">No public lists yet.</li>'}</ul></section>`),env,{title:`${creator.display_name} (@${creator.handle}) | SecretNests`,canonical:"/@"+encodeURIComponent(creator.handle),robots:creator.is_demo?"noindex,follow":"index,follow"});
+  return page(shell(`<section class="hero" data-autoevent="creator_view" data-creator-id="${attr(creator.id)}" style="padding-bottom:20px"><div class="eyebrow">@${esc(creator.handle)}${creator.is_demo?" · Demo profile":""}</div><h1>${esc(creator.display_name)}</h1><p>${esc(creator.bio||"")}</p>${creator.is_demo?'<div class="notice"><strong>Illustrative demo data.</strong> This profile demonstrates the product and does not claim these are real stays.</div>':""}</section><div class="stats"><div class="stat"><strong>${creator.stay_count||0}</strong><span>stays</span></div><div class="stat"><strong>${creator.report_count||0}</strong><span>trip reports</span></div><div class="stat"><strong>${creator.list_count||0}</strong><span>public lists</span></div><div class="stat"><strong>${creator.booking_count||0}</strong><span>bookings generated</span></div><div class="stat"><strong>${money(creator.earnings||0)}</strong><span>earned</span></div></div><h2>Taste profile</h2><div>${tastes.map(t=>`<span class="pill">${esc(t)}</span>`).join("")||'<span class="muted">Taste profile not added yet.</span>'}</div><section class="section"><h2>Recent stays</h2><ul class="list">${stays.map(s=>`<li><a href="/hotel/${encodeURIComponent(s.slug)}"><strong>${esc(s.name)}</strong></a> · ${esc([s.city,s.country].filter(Boolean).join(", "))}<br><span class="muted">Stayed ${esc(s.stay_month||"—")} · paid ${money(s.paid_nightly_rate)} · would pay again ${money(s.would_pay_again)} · would return ${s.would_return==null?"—":s.would_return?"Yes":"No"}</span></li>`).join("")||'<li class="muted">No public stays yet.</li>'}</ul></section><section><h2>Lists</h2><ul class="list">${lists.map(l=>`<li><a href="/@${encodeURIComponent(creator.handle)}/lists/${encodeURIComponent(l.slug)}"><strong>${esc(l.title)}</strong></a><br><span class="muted">${esc(l.description||"")}</span></li>`).join("")||'<li class="muted">No public lists yet.</li>'}</ul></section>`),env,{title:`${creator.display_name} (@${creator.handle}) | SecretNests`,canonical:"/@"+encodeURIComponent(creator.handle),robots:creator.is_demo?"noindex,follow":"index,follow"});
 }
 
 async function hotelPage(slug, env){
@@ -138,7 +142,7 @@ async function hotelPage(slug, env){
   const location=[h.city,h.country].filter(Boolean).join(", ");
   const valueBlock=v?`<section><h2>What travelers think it's worth</h2><div class="value"><div><div class="eyebrow">Traveler range</div><strong>${money(v.traveler_low)}–${money(v.traveler_high)}</strong></div><div><div class="eyebrow">Median would pay</div><strong>${money(v.median_would_pay)}</strong></div><div><div class="eyebrow">Current price</div><strong>${money(v.current_price)}</strong></div><div><div class="eyebrow">Sample</div><strong>${esc(v.sample_size)}</strong> stays</div></div><p><strong>Value:</strong> ${esc(v.value_classification||"insufficient data")} · <span class="muted">${esc(v.confidence||"insufficient")} confidence · ${esc(v.methodology_version||"legacy")}</span></p></section>`:`<section><h2>What travelers think it's worth</h2><p class="muted">Not enough first-party stay data yet. Add your stay to help establish the fair-value range.</p></section>`;
   const jsonLd={"@context":"https://schema.org","@type":"Hotel","name":h.name,"description":h.description||undefined,"url":ORIGIN+"/hotel/"+h.slug,"image":mediaUrl?(mediaUrl.startsWith("http")?mediaUrl:ORIGIN+mediaUrl):undefined,"address":h.formatted_address||h.address||undefined,"telephone":h.phone||undefined,"sameAs":h.website?[h.website]:undefined,"aggregateRating":h.google_rating?{"@type":"AggregateRating","ratingValue":h.google_rating,"reviewCount":h.google_review_count||undefined}:undefined};
-  return page(shell(`<section class="hero" style="padding-bottom:28px"><div class="eyebrow">${esc(location)}</div><h1>${esc(h.name)}</h1>${mediaUrl?`<img class="hero-media" src="${attr(mediaUrl)}" alt="${attr(h.name)}">${media.attribution_text?`<div class="kicker">${esc(media.attribution_text)}</div>`:""}`:""}<p>${esc(h.description||"")}</p><div class="filters">${highlights.slice(0,5).map(x=>`<span class="pill">${esc(x)}</span>`).join("")}</div></section><div class="two"><div>${valueBlock}<section class="section"><h2>Price context</h2><p>Existing estimated range: <strong>${money(h.price_estimate_min)}–${money(h.price_estimate_max)}</strong> per night.</p>${h.booking_url?`<a class="btn" data-event="outbound_booking_click" data-hotel-id="${attr(h.id)}" href="/out/${encodeURIComponent(h.slug)}" rel="nofollow sponsored">Check booking options</a>`:""}</section><section><h2>Traveler evidence</h2><ul class="list">${evidence.map(e=>`<li>${e.price_mentioned?`<strong>${money(e.price_mentioned)}</strong> · `:""}${esc(e.trip_context||e.sentiment||"Traveler mention")} ${e.source_url?`<a href="${attr(e.source_url)}" rel="nofollow noopener">source</a>`:""}</li>`).join("")||'<li class="muted">No structured traveler evidence yet.</li>'}</ul></section></div><aside><div class="card"><h3>Best for</h3><div>${bestFor.map(x=>`<span class="pill">${esc(x)}</span>`).join("")||'<span class="muted">Not classified yet.</span>'}</div><h3>Not ideal for</h3><div>${notIdeal.map(x=>`<span class="pill">${esc(x)}</span>`).join("")||'<span class="muted">Not classified yet.</span>'}</div></div></aside></div><section class="section"><h2>Nearby / comparable alternatives</h2><div class="grid">${comps.map(c=>`<a class="card" href="/hotel/${encodeURIComponent(c.slug)}"><strong>${esc(c.name)}</strong><br><span class="muted">${esc([c.city,c.country].filter(Boolean).join(", "))} · ${money(c.price_estimate_min)}–${money(c.price_estimate_max)}</span></a>`).join("")}</div></section>`),env,{title:`${h.name}: price, value & traveler evidence | SecretNests`,description:h.description||`${h.name} in ${location}: traveler price context and value.`,canonical:"/hotel/"+encodeURIComponent(h.slug),jsonLd});
+  return page(shell(`<section class="hero" data-autoevent="hotel_view" data-hotel-id="${attr(h.id)}" style="padding-bottom:28px"><div class="eyebrow">${esc(location)}</div><h1>${esc(h.name)}</h1>${mediaUrl?`<img class="hero-media" src="${attr(mediaUrl)}" alt="${attr(h.name)}">${media.attribution_text?`<div class="kicker">${esc(media.attribution_text)}</div>`:""}`:""}<p>${esc(h.description||"")}</p><div class="filters">${highlights.slice(0,5).map(x=>`<span class="pill">${esc(x)}</span>`).join("")}</div></section><div class="two"><div>${valueBlock}<section class="section"><h2>Price context</h2><p>Existing estimated range: <strong>${money(h.price_estimate_min)}–${money(h.price_estimate_max)}</strong> per night.</p>${h.booking_url?`<a class="btn" data-event="outbound_booking_click" data-hotel-id="${attr(h.id)}" href="/out/${encodeURIComponent(h.slug)}" rel="nofollow sponsored">Check booking options</a>`:""}</section><section><h2>Traveler evidence</h2><ul class="list">${evidence.map(e=>`<li>${e.price_mentioned?`<strong>${money(e.price_mentioned)}</strong> · `:""}${esc(e.trip_context||e.sentiment||"Traveler mention")} ${e.source_url?`<a href="${attr(e.source_url)}" rel="nofollow noopener">source</a>`:""}</li>`).join("")||'<li class="muted">No structured traveler evidence yet.</li>'}</ul></section></div><aside><div class="card"><h3>Best for</h3><div>${bestFor.map(x=>`<span class="pill">${esc(x)}</span>`).join("")||'<span class="muted">Not classified yet.</span>'}</div><h3>Not ideal for</h3><div>${notIdeal.map(x=>`<span class="pill">${esc(x)}</span>`).join("")||'<span class="muted">Not classified yet.</span>'}</div></div></aside></div><section class="section"><h2>Nearby / comparable alternatives</h2><div class="grid">${comps.map(c=>`<a class="card" href="/hotel/${encodeURIComponent(c.slug)}"><strong>${esc(c.name)}</strong><br><span class="muted">${esc([c.city,c.country].filter(Boolean).join(", "))} · ${money(c.price_estimate_min)}–${money(c.price_estimate_max)}</span></a>`).join("")}</div></section>`),env,{title:`${h.name}: price, value & traveler evidence | SecretNests`,description:h.description||`${h.name} in ${location}: traveler price context and value.`,canonical:"/hotel/"+encodeURIComponent(h.slug),jsonLd});
 }
 
 async function listPage(handle, slug, env){
@@ -378,6 +382,74 @@ async function verificationUpload(request,env){
   return json({ok:true,id,status:"pending",redaction_status:"pending"});
 }
 
+
+async function verificationReview(request,env){
+  const moderator=adminEmail(request,env);
+  if(!moderator)return new Response("Not found",{status:404});
+  if(bodyTooLarge(request,16384))return json({ok:false,error:"payload_too_large"},413);
+  let body={};try{body=await request.json()}catch{return json({ok:false,error:"invalid_json"},400)}
+  const allowedStatus=new Set(["pending","verified","rejected"]);
+  const allowedRedaction=new Set(["pending","redacted","not_required","rejected"]);
+  if(!body.id||!allowedStatus.has(body.status)||!allowedRedaction.has(body.redaction_status))return json({ok:false,error:"invalid_state"},400);
+  const row=await env.DB.prepare("SELECT id,stay_id FROM stay_verification_artifacts WHERE id=?").bind(body.id).first();
+  if(!row)return json({ok:false,error:"not_found"},404);
+  await env.DB.prepare("UPDATE stay_verification_artifacts SET status=?,redaction_status=?,reviewer_note=?,reviewed_at=? WHERE id=?")
+    .bind(body.status,body.redaction_status,String(body.note||"").slice(0,1000),nowIso(),body.id).run();
+  if(body.status==="verified"&&body.redaction_status!=="pending"&&body.redaction_status!=="rejected"){
+    await env.DB.prepare("UPDATE stays SET verified=1,verification_method='receipt_or_folio',updated_at=? WHERE id=?").bind(nowIso(),row.stay_id).run();
+  }
+  return json({ok:true});
+}
+
+async function adminMedia(request,env){
+  const moderator=adminEmail(request,env);
+  if(!moderator)return new Response("Not found",{status:404});
+  if(request.method==="GET"){
+    const rows=(await env.DB.prepare("SELECT * FROM media_ingest_requests WHERE status='pending' ORDER BY created_at LIMIT 200").all()).results||[];
+    return json({ok:true,requests:rows});
+  }
+  if(bodyTooLarge(request,32768))return json({ok:false,error:"payload_too_large"},413);
+  let body={};try{body=await request.json()}catch{return json({ok:false,error:"invalid_json"},400)}
+  const req=await env.DB.prepare("SELECT * FROM media_ingest_requests WHERE id=?").bind(body.id).first();
+  if(!req)return json({ok:false,error:"not_found"},404);
+  if(body.action==="reject"){
+    await env.DB.prepare("UPDATE media_ingest_requests SET status='rejected',reviewed_at=? WHERE id=?").bind(nowIso(),req.id).run();
+    return json({ok:true,status:"rejected"});
+  }
+  const allowed=new Set(["owned_user_upload","hotel_authorized","licensed_api","licensed_public","remote_display_only","blocked"]);
+  if(body.action!=="approve"||!allowed.has(body.rights_status))return json({ok:false,error:"invalid_action"},400);
+  const assetId=crypto.randomUUID();
+  if(body.rights_status!=="blocked"){
+    await env.DB.prepare(`INSERT INTO media_assets
+      (id,hotel_id,creator_id,source_type,source_url,source_provider,license_code,license_url,attribution_text,rights_status,permission_reference,original_url,r2_key,width,height,mime_type,created_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+      .bind(assetId,req.hotel_id,req.creator_id,req.source_type,req.source_url,req.source_provider,
+        body.license_code||null,body.license_url||null,body.attribution_text||req.attribution_text||null,
+        body.rights_status,body.permission_reference||req.permission_reference||null,req.source_url||null,
+        body.r2_key||null,body.width||null,body.height||null,body.mime_type||null,nowIso()).run();
+    await env.DB.prepare("INSERT INTO media_rights_reviews (id,media_asset_id,previous_status,new_status,reviewer_email,note,created_at) VALUES (?,?,?,?,?,?,?)")
+      .bind(crypto.randomUUID(),assetId,"needs_review",body.rights_status,moderator,String(body.note||"").slice(0,1000),nowIso()).run();
+  }
+  await env.DB.prepare("UPDATE media_ingest_requests SET status='approved',reviewed_at=? WHERE id=?").bind(nowIso(),req.id).run();
+  return json({ok:true,status:"approved",media_asset_id:body.rights_status==="blocked"?null:assetId});
+}
+
+async function createMediaIngest(request,env){
+  const moderator=adminEmail(request,env);
+  if(!moderator)return new Response("Not found",{status:404});
+  if(bodyTooLarge(request,32768))return json({ok:false,error:"payload_too_large"},413);
+  let body={};try{body=await request.json()}catch{return json({ok:false,error:"invalid_json"},400)}
+  if(!body.source_type||(!body.source_url&&!body.hotel_id))return json({ok:false,error:"source_required"},400);
+  const id=crypto.randomUUID();
+  await env.DB.prepare(`INSERT INTO media_ingest_requests
+    (id,hotel_id,creator_id,source_type,source_url,source_provider,proposed_rights_status,permission_reference,attribution_text,status,created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,'pending',?)`)
+    .bind(id,body.hotel_id||null,body.creator_id||null,String(body.source_type).slice(0,80),body.source_url||null,
+      body.source_provider||null,body.proposed_rights_status||"needs_review",body.permission_reference||null,
+      body.attribution_text||null,nowIso()).run();
+  return json({ok:true,id,status:"pending"});
+}
+
 async function recomputeValues(request,env){
   const moderator=adminEmail(request,env);
   if(!moderator)return new Response("Not found",{status:404});
@@ -430,6 +502,9 @@ async function route(request,env){
   if(request.method==="POST" && url.pathname==="/api/events")return recordEvent(request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/api/admin/submissions")return adminSubmissions(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/verification-upload")return verificationUpload(request,env);
+  if(request.method==="POST" && url.pathname==="/api/admin/verification-review")return verificationReview(request,env);
+  if((request.method==="GET"||request.method==="POST") && url.pathname==="/api/admin/media")return adminMedia(request,env);
+  if(request.method==="POST" && url.pathname==="/api/admin/media-ingest")return createMediaIngest(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/recompute-values")return recomputeValues(request,env);
   if(request.method==="GET" && url.pathname==="/health")return json({ok:true,service:"secretnests",runtime:"cloudflare-worker"});
   if(request.method==="GET" && url.pathname==="/sitemap.xml")return sitemap(env);
