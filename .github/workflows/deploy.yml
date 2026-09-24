@@ -13,6 +13,7 @@ on:
           - migrate-db
           - seed-legacy-hotels
           - seed-reddit-evidence
+          - seed-demo
 
 permissions:
   contents: read
@@ -102,6 +103,14 @@ jobs:
       - name: Seed Reddit evidence
         if: inputs.action == 'bootstrap' || inputs.action == 'seed-reddit-evidence'
         run: npx wrangler d1 execute secretnests --remote --file=.generated/reddit-evidence.sql --yes
+
+      - name: Build demo creator seed
+        if: inputs.action == 'bootstrap' || inputs.action == 'seed-demo'
+        run: node scripts/build-demo-seed.mjs
+
+      - name: Seed demo creator
+        if: inputs.action == 'bootstrap' || inputs.action == 'seed-demo'
+        run: npx wrangler d1 execute secretnests --remote --file=.generated/demo.sql --yes
 
       - name: Dry-run Worker
         if: inputs.action == 'bootstrap' || inputs.action == 'deploy'
