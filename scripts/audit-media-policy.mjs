@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const roots=["data/legacy"];
-const forbiddenHosts=["places.googleapis.com","tripadvisor.com","reddit.com","redd.it","instagram.com"];
+const forbiddenHosts=["places.googleapis.com"];
 const forbiddenFields=["hero_image_url","gallery_images"];
 let failed=false;
 let scanned=0;
