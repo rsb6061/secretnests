@@ -92,3 +92,10 @@ CREATE TABLE IF NOT EXISTS zero_result_searches (
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_zero_search_created ON zero_result_searches(created_at);
+
+
+INSERT OR IGNORE INTO affiliate_providers (id,name,provider_type,enabled,config_json)
+VALUES
+  ('direct','Direct hotel','direct',1,'{}'),
+  ('travelpayouts','Travelpayouts','affiliate',0,'{}'),
+  ('advisor','Travel advisor referral','referral',0,'{}');
