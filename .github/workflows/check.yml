@@ -76,9 +76,8 @@ jobs:
           echo "$HOTEL_HTML" | grep -q '<link rel="canonical"'
           curl -fsS http://127.0.0.1:8787/compare/fairmont-banff-springs-vs-bawah-reserve >/dev/null
 
-          DEST="$(curl -fsS http://127.0.0.1:8787/destinations | grep -m1 -o '/destinations/[^"]*')"
-          test -n "$DEST"
-          curl -fsS "http://127.0.0.1:8787$DEST" >/dev/null
+          curl -fsS http://127.0.0.1:8787/destinations/canada/banff >/dev/null
+          test "$(curl -sS -o /dev/null -w '%{http_code}' 'http://127.0.0.1:8787/destination/legacy?city=Banff&country=Canada')" = "301"
 
           curl -fsS -X POST http://127.0.0.1:8787/api/events             -H 'content-type: application/json'             --data '{"name":"page_view","path":"/ci"}'             | jq -e '.ok == true'
 
