@@ -71,9 +71,12 @@ jobs:
           SLUG="$(curl -fsS 'http://127.0.0.1:8787/api/hotels?limit=1' | jq -r '.[0].slug')"
           test -n "$SLUG"
           test "$SLUG" != "null"
-          curl -fsS "http://127.0.0.1:8787/hotel/$SLUG" >/dev/null
+          HOTEL_HTML="$(curl -fsS "http://127.0.0.1:8787/hotel/$SLUG")"
+          echo "$HOTEL_HTML" | grep -q '"@type":"Hotel"'
+          echo "$HOTEL_HTML" | grep -q '<link rel="canonical"'
+          curl -fsS http://127.0.0.1:8787/compare/fairmont-banff-springs-vs-bawah-reserve >/dev/null
 
-          DEST="$(curl -fsS http://127.0.0.1:8787/destinations | grep -o '/destinations/[^"]*' | head -n1)"
+          DEST="$(curl -fsS http://127.0.0.1:8787/destinations | grep -m1 -o '/destinations/[^"]*')"
           test -n "$DEST"
           curl -fsS "http://127.0.0.1:8787$DEST" >/dev/null
 
