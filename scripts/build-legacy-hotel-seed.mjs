@@ -13,6 +13,18 @@ const q = (v) => v == null ? "NULL" : "'" + String(v).replaceAll("'", "''") + "'
 const n = (v) => v == null || v === "" ? "NULL" : Number(v);
 const b = (v) => v ? 1 : 0;
 const j = (v) => q(JSON.stringify(v ?? []));
+const clean = (v) => v == null ? null : String(v).trim() || null;
+const slugify = (v) => String(v || "")
+  .normalize("NFKD").replace(/[\u0300-\u036f]/g,"")
+  .toLowerCase().replace(/&/g," and ").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").replace(/-{2,}/g,"-");
+
+const canonicalSlugs = new Map();
+for (const r of rows) {
+  const base = slugify(r.name) || ("hotel-" + String(r.id).slice(0,8));
+  let slug = base, i = 2;
+  while ([...canonicalSlugs.values()].includes(slug)) slug = base + "-" + i++;
+  canonicalSlugs.set(r.id, slug);
+}
 
 const statements = [
   "BEGIN TRANSACTION;",
@@ -25,8 +37,8 @@ const statements = [
       highlights_json,best_for_json,not_ideal_for_json,
       price_estimate_min,price_estimate_max,created_at,updated_at
     ) VALUES (
-      ${q(r.id)},${q(r.name)},${q(r.slug)},${q(r.google_place_id)},${q(c.description)},
-      ${q(r.country)},${q(r.city)},${q(r.region)},${n(r.lat)},${n(r.lng)},${q(r.website)},${q(r.phone)},
+      ${q(r.id)},${q(clean(r.name))},${q(canonicalSlugs.get(r.id))},${q(clean(r.google_place_id))},${q(clean(c.description))},
+      ${q(clean(r.country))},${q(clean(r.city))},${q(clean(r.region))},${n(r.lat)},${n(r.lng)},${q(clean(r.website))},${q(clean(r.phone))},
       ${n(r.google_rating)},${n(r.google_review_count)},${n(r.google_price_level)},${q(r.hotel_category)},
       ${n(r.reddit_mention_count) ?? 0},${b(r.is_published)},${q(r.published_at)},${q(r.booking_url)},
       ${j(c.highlights)},${j(c.best_for)},${j(c.not_ideal_for)},
@@ -46,6 +58,10 @@ const statements = [
       price_estimate_min=excluded.price_estimate_min, price_estimate_max=excluded.price_estimate_max,
       updated_at=excluded.updated_at;`;
   }),
+  ...rows.filter(r => clean(r.slug) && clean(r.slug) !== canonicalSlugs.get(r.id)).map(r =>
+    `INSERT INTO hotel_slug_aliases (alias_slug,hotel_id) VALUES (${q(clean(r.slug))},${q(r.id)})
+     ON CONFLICT(alias_slug) DO UPDATE SET hotel_id=excluded.hotel_id;`
+  ),
   "COMMIT;"
 ];
 
