@@ -15,7 +15,7 @@ migrations_dir = "migrations"
 
 [[r2_buckets]]
 binding = "MEDIA"
-bucket_name = "secretnests-media"
+bucket_name = "secretnests-assets"
 
 [vars]
 APP_ORIGIN = "https://secretnests.com"
