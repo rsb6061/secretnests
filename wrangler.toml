@@ -10,7 +10,7 @@ binding = "ASSETS"
 [[d1_databases]]
 binding = "DB"
 database_name = "secretnests"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "5dd51f5f-d969-4563-a893-963e3d3a6962"
 migrations_dir = "migrations"
 
 [[r2_buckets]]
@@ -22,3 +22,6 @@ APP_ORIGIN = "https://secretnests.com"
 SUBMISSIONS_ENABLED = "false"
 AUTH_MODE = "disabled"
 VERIFICATION_UPLOADS_ENABLED = "false"
+
+[observability]
+enabled = true
