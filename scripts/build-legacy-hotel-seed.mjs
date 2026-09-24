@@ -62,6 +62,11 @@ const statements = [
     `INSERT INTO hotel_slug_aliases (alias_slug,hotel_id) VALUES (${q(clean(r.slug))},${q(r.id)})
      ON CONFLICT(alias_slug) DO UPDATE SET hotel_id=excluded.hotel_id;`
   ),
+  ...rows.filter(r => clean(r.booking_url)).map(r =>
+    `INSERT INTO hotel_booking_links (id,hotel_id,provider_id,destination_url,priority,enabled,metadata_json)
+     VALUES (${q("legacy-direct-"+r.id)},${q(r.id)},'direct',${q(clean(r.booking_url))},10,1,'{"source":"legacy"}')
+     ON CONFLICT(id) DO UPDATE SET destination_url=excluded.destination_url,enabled=1;`
+  ),
   "COMMIT;"
 ];
 
