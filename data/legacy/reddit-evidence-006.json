@@ -1,0 +1,395 @@
+[
+  {
+    "id": "de6dec91-6c9b-42cf-b956-48ff67ee970d",
+    "post_id": "1r7opsi",
+    "hotel_id": "aa9d3937-28c7-4b0b-84fd-7540d8e49d97",
+    "hotel_name_raw": "Four Seasons Hotel Kyoto",
+    "sentiment": "positive",
+    "best_for": [
+      "tea/ceremony lovers",
+      "luxury Kyoto experiences"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": null,
+    "confidence": "medium",
+    "created_at": "2026-04-07 13:44:56.981+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r7opsi/luxury_items_experiences_in_kyoto_osaka/"
+  },
+  {
+    "id": "dea0ea23-5743-4d9b-bd39-f4f398099ffb",
+    "post_id": "1quy3i0",
+    "hotel_id": "812581e0-afb2-4d64-85c0-d29960db473b",
+    "hotel_name_raw": "O&O Mandarina",
+    "sentiment": "mixed",
+    "best_for": [
+      "those who have stayed before / repeat guests"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [
+      "likely remote / limited immediate access to varied activities (implied)"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "35th birthday",
+    "confidence": "medium",
+    "created_at": "2026-04-07 13:16:15.777+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1quy3i0/last_minute_35th_birthday_trip_guatemala_recs/"
+  },
+  {
+    "id": "e0d41538-bef5-4761-a450-b81182e13935",
+    "post_id": "1r7i1a1",
+    "hotel_id": "53c89b1b-d702-4204-9c2b-2cc3d66bbba9",
+    "hotel_name_raw": "Wildflower Farms",
+    "sentiment": "mixed",
+    "best_for": [
+      "small groups looking for a countryside wellness stay"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "girls spa trip",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:44:57.043+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r7i1a1/girls_spa_trip_centered_around_food_spa_and_yoga/"
+  },
+  {
+    "id": "e9a53172-0597-4e36-977d-562e6d521531",
+    "post_id": "1r8ol69",
+    "hotel_id": "9fa6c753-e65d-4f68-a658-93ef08e9182a",
+    "hotel_name_raw": "The Riviera Maya EDITION at Kanai",
+    "sentiment": "conditional",
+    "best_for": [
+      "design-focused travelers",
+      "younger couples seeking social scene"
+    ],
+    "avoid_if": [
+      "budget-focused travelers"
+    ],
+    "tradeoffs": [
+      "modern social atmosphere vs. price"
+    ],
+    "regret_signal": false,
+    "price_mentioned": "1500",
+    "trip_context": "couples",
+    "confidence": "medium",
+    "created_at": "2026-04-07 13:41:22.667+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r8ol69/recommendations_for_mayakoba_riviera_maya_for/"
+  },
+  {
+    "id": "e9faa5b0-292e-4c83-83ad-f8e35e1a9b86",
+    "post_id": "1qhe53z",
+    "hotel_id": "44d44e8b-3e6b-43f7-b023-e24320b0b627",
+    "hotel_name_raw": "Grand Hotel Tremezzo",
+    "sentiment": "negative",
+    "best_for": [
+      "travelers who don't mind busier, classic large hotels"
+    ],
+    "avoid_if": [
+      "want quieter, more exclusive experience"
+    ],
+    "tradeoffs": [
+      "more lively/busier atmosphere vs Passalacqua's quieter classic feel"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "babymoon",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:30:46.3+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1qhe53z/alternative_to_passalacqua_in_como/"
+  },
+  {
+    "id": "ea42aefb-85f8-4310-8532-0f47e947d3a6",
+    "post_id": "1r87es1",
+    "hotel_id": "921aabfc-6fea-4918-8df4-7f6648d6e017",
+    "hotel_name_raw": "Hyatt Regency Maui Resort and Spa",
+    "sentiment": "mixed",
+    "best_for": [
+      "budget-conscious Hyatt members"
+    ],
+    "avoid_if": [
+      "seeking top-tier luxury"
+    ],
+    "tradeoffs": [
+      "lower price vs. fewer high-end amenities"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "family",
+    "confidence": "medium",
+    "created_at": "2026-04-07 13:41:22.562+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r87es1/maui_hotel_w_two_teens/"
+  },
+  {
+    "id": "ea6fe8d9-ad51-4d8f-8de2-40adf732953d",
+    "post_id": "1r6kzzl",
+    "hotel_id": "3592a9c5-eb42-4f19-ac1d-f9599f5efbbd",
+    "hotel_name_raw": "hotel Escondido puerto Escondido",
+    "sentiment": "mixed",
+    "best_for": [
+      "relaxing getaway",
+      "romantic"
+    ],
+    "avoid_if": [
+      "beach-seekers"
+    ],
+    "tradeoffs": [
+      "unclear from post"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "quick getaway / romantic",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:49:42.285+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r6kzzl/looking_for_lodging_advice_in_mexico_both_oaxaca/"
+  },
+  {
+    "id": "ecdd33e7-66ad-481d-ad37-2056c0f16329",
+    "post_id": "1r7kqnz",
+    "hotel_id": "162d8030-02d1-46a4-b000-0678bbbf6b96",
+    "hotel_name_raw": "Taj Lake Palace Udaipur",
+    "sentiment": "positive",
+    "best_for": [
+      "photography",
+      "heritage/luxury experiences",
+      "short special-occasion visits"
+    ],
+    "avoid_if": [
+      "wanting a larger resort to stay several days"
+    ],
+    "tradeoffs": [
+      "stunning, historic small property — may feel too compact for a long stay",
+      "guest-only access rules that require concierge arrangements"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "romantic (day visit during Udaipur stay)",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:12:48.918+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r7kqnz/india_review_leela_udaipur_taj_udaipur_taj/"
+  },
+  {
+    "id": "ee1bb824-841b-4f2c-a465-238e1721bcd1",
+    "post_id": "1r5sw3l",
+    "hotel_id": "62995fb2-6877-4841-8206-b0f7f7e2b8de",
+    "hotel_name_raw": "FS Ko Olina",
+    "sentiment": "positive",
+    "best_for": [
+      "service-focused travelers",
+      "guests who appreciate attentive, detail-oriented staff"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [
+      "strong service compared to other Four Seasons properties"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": null,
+    "confidence": "medium",
+    "created_at": "2026-04-07 13:51:35.229+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r5sw3l/review_of_fs_lani/"
+  },
+  {
+    "id": "eead1a10-0ca4-4960-b81c-bcee42a3cd5e",
+    "post_id": "1qowzvt",
+    "hotel_id": "0dafd464-a566-4f99-858e-630052debf55",
+    "hotel_name_raw": "Cap Juluca, A Belmond Hotel, Anguilla",
+    "sentiment": "positive",
+    "best_for": [
+      "beachfront family stays",
+      "romantic getaways"
+    ],
+    "avoid_if": [
+      "travelers on tight budget"
+    ],
+    "tradeoffs": [
+      "iconic property — can be pricey"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "family with toddler",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:27:18.327+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1qowzvt/caribbeaneastern_mexico_resort_suggestions_for/"
+  },
+  {
+    "id": "ef859d8b-31d8-44cf-adae-7f17680d0c91",
+    "post_id": "1pyo3yu",
+    "hotel_id": "2db0740c-00d8-4368-8055-25cfb1503177",
+    "hotel_name_raw": "DAS EDELWEISS Salzburg Mountain Resort",
+    "sentiment": "mixed",
+    "best_for": [
+      "families with children",
+      "travelers seeking mountain resort amenities"
+    ],
+    "avoid_if": [
+      "those wanting minimal resort programming"
+    ],
+    "tradeoffs": [
+      "resort-style activities and amenities vs quieter small-hotel experience"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "family",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:30:46.401+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1pyo3yu/austria_stanglwirt_or_das_edelweiss/"
+  },
+  {
+    "id": "f2a3b295-39a4-4917-aef9-7638c2bcf151",
+    "post_id": "1qfu6ax",
+    "hotel_id": "1dc024f5-7ac2-44aa-a98e-1bc1486f9f12",
+    "hotel_name_raw": "7pines",
+    "sentiment": "conditional",
+    "best_for": [
+      "beach/party-forward travelers",
+      "design-focused travelers"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [
+      "may not be in the same region user is asking about (Ibiza vs Sardinia)"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": null,
+    "confidence": "high",
+    "created_at": "2026-04-07 13:27:18.141+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1qfu6ax/luxury_sardinia_stay_on_the_beach/"
+  },
+  {
+    "id": "f497a3b1-a48f-4db3-b9bd-f26997a66493",
+    "post_id": "1r8ol69",
+    "hotel_id": "cf737489-ddce-4ef3-8f29-60d2e7840d46",
+    "hotel_name_raw": "The St. Regis Kanai Resort, Riviera Maya",
+    "sentiment": "conditional",
+    "best_for": [
+      "families and multi-generational groups",
+      "travelers wanting St. Regis service"
+    ],
+    "avoid_if": [
+      "seeking a more social/modern scene"
+    ],
+    "tradeoffs": [
+      "classic luxury and service vs. vibe preference"
+    ],
+    "regret_signal": false,
+    "price_mentioned": "1500",
+    "trip_context": "couples",
+    "confidence": "medium",
+    "created_at": "2026-04-07 13:41:22.655+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r8ol69/recommendations_for_mayakoba_riviera_maya_for/"
+  },
+  {
+    "id": "f71d1e15-9319-43d9-8d3c-a15d463edde0",
+    "post_id": "1q0xkes",
+    "hotel_id": "b04e5e2d-c629-4838-9d80-e9bea9d81675",
+    "hotel_name_raw": "The St. Regis (St. Regis)",
+    "sentiment": "positive",
+    "best_for": [
+      "FAT luxury (big-brand) stay",
+      "classic luxury seekers"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "honeymoon",
+    "confidence": "medium",
+    "created_at": "2026-04-07 13:27:18.479+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1q0xkes/3_week_honeymoon_in_mexico_costa_rica/"
+  },
+  {
+    "id": "f9567984-66ee-4839-aa4e-7206978a220b",
+    "post_id": "1r6o2uw",
+    "hotel_id": "040add64-fbef-41a3-b121-bce789569dcd",
+    "hotel_name_raw": "Naturhotel Forsthofgut",
+    "sentiment": "positive",
+    "best_for": [
+      "spa-focused travelers",
+      "quiet/adult retreats",
+      "scenic day-hikes nearby"
+    ],
+    "avoid_if": [
+      "looking for party scene",
+      "families seeking child-focused activities"
+    ],
+    "tradeoffs": [
+      "may be more remote / require transport",
+      "focused on relaxation rather than nightlife"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "alpine retreat",
+    "confidence": "high",
+    "created_at": "2026-04-07 13:47:29.045+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r6o2uw/switzerland_or_austria_for_5day_alpine_retreat/"
+  },
+  {
+    "id": "fef5e637-69cc-4779-98d3-cf71f9c437d0",
+    "post_id": "1r8ujgq",
+    "hotel_id": "391acb3d-3726-4411-bbc8-47f19db7ab97",
+    "hotel_name_raw": "1 Hotel Hanalei Bay",
+    "sentiment": "negative",
+    "best_for": [
+      "those who like 1 Hotels brand design"
+    ],
+    "avoid_if": [
+      "wanting a reliably well-reviewed property"
+    ],
+    "tradeoffs": [
+      "brand aesthetic vs. reportedly poor reviews"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": null,
+    "confidence": "high",
+    "created_at": "2026-04-07 13:41:22.609+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r8ujgq/whats_the_latest_on_the_fs_maui_remodel/"
+  },
+  {
+    "id": "ffab2376-d7d6-4af9-8500-29e82d76bde4",
+    "post_id": "1r8eul7",
+    "hotel_id": "354bd5f8-94ef-4296-85a4-4a46e5c72b12",
+    "hotel_name_raw": "Six Senses Yao Noi",
+    "sentiment": "mixed",
+    "best_for": [
+      "nature and luxury travelers"
+    ],
+    "avoid_if": [
+      "expecting secluded, uncrowded islands in high season"
+    ],
+    "tradeoffs": [
+      "beautiful setting vs. potential overtourism on excursions"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": null,
+    "confidence": "high",
+    "created_at": "2026-04-07 13:41:22.517+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r8eul7/six_senses_yao_noi_phang_nga_overtourism/"
+  },
+  {
+    "id": "fffa7cd9-1a9a-41cf-8e25-8bde8353aaa6",
+    "post_id": "1r89n5w",
+    "hotel_id": "87e910af-1d3d-4c1f-bccb-ecf2509220ec",
+    "hotel_name_raw": "Aman Nai Lert Bangkok",
+    "sentiment": "mixed",
+    "best_for": [
+      "city-luxury stops",
+      "design-focused travelers"
+    ],
+    "avoid_if": [],
+    "tradeoffs": [
+      "urban transit time vs luxury city stay"
+    ],
+    "regret_signal": false,
+    "price_mentioned": null,
+    "trip_context": "possible pre-Amanoi stay",
+    "confidence": "medium",
+    "created_at": "2026-04-07 13:41:22.821+00",
+    "source_url": "https://www.reddit.com/r/chubbytravel/comments/1r89n5w/where_to_pair_with_amanoi/"
+  }
+]
