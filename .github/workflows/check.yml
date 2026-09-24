@@ -28,12 +28,14 @@ jobs:
         run: |
           node scripts/build-legacy-hotel-seed.mjs
           node scripts/build-reddit-evidence-seed.mjs
+          node scripts/build-demo-seed.mjs
 
       - name: Build local D1
         run: |
           npx wrangler d1 migrations apply secretnests --local --config wrangler.ci.toml
           npx wrangler d1 execute secretnests --local --config wrangler.ci.toml --file=.generated/legacy-hotels.sql
           npx wrangler d1 execute secretnests --local --config wrangler.ci.toml --file=.generated/reddit-evidence.sql
+          npx wrangler d1 execute secretnests --local --config wrangler.ci.toml --file=.generated/demo.sql
 
       - name: Smoke-test Cloudflare Worker routes
         shell: bash
@@ -51,9 +53,17 @@ jobs:
           curl -fsS http://127.0.0.1:8787/health | jq -e '.ok == true'
           curl -fsS http://127.0.0.1:8787/ >/dev/null
           curl -fsS 'http://127.0.0.1:8787/search?q=hotel' >/dev/null
+          curl -fsS 'http://127.0.0.1:8787/search?q=%27%20OR%201%3D1--' >/dev/null
           curl -fsS http://127.0.0.1:8787/destinations >/dev/null
           curl -fsS http://127.0.0.1:8787/creators >/dev/null
+          curl -fsS http://127.0.0.1:8787/@rebecca >/dev/null
+          curl -fsS http://127.0.0.1:8787/@rebecca/lists/hotels-id-pay-500-for-again >/dev/null
+          curl -fsS http://127.0.0.1:8787/value >/dev/null
+          curl -fsS http://127.0.0.1:8787/value/under-500 >/dev/null
           curl -fsS http://127.0.0.1:8787/add-your-trip >/dev/null
+          curl -fsS http://127.0.0.1:8787/privacy >/dev/null
+          curl -fsS http://127.0.0.1:8787/terms >/dev/null
+          curl -fsS http://127.0.0.1:8787/disclosures >/dev/null
           curl -fsS http://127.0.0.1:8787/sitemap.xml >/dev/null
           curl -fsS http://127.0.0.1:8787/robots.txt >/dev/null
           curl -fsS http://127.0.0.1:8787/llms.txt >/dev/null
@@ -63,4 +73,11 @@ jobs:
           test "$SLUG" != "null"
           curl -fsS "http://127.0.0.1:8787/hotel/$SLUG" >/dev/null
 
+          DEST="$(curl -fsS http://127.0.0.1:8787/destinations | grep -o '/destinations/[^"]*' | head -n1)"
+          test -n "$DEST"
+          curl -fsS "http://127.0.0.1:8787$DEST" >/dev/null
+
           curl -fsS -X POST http://127.0.0.1:8787/api/events             -H 'content-type: application/json'             --data '{"name":"page_view","path":"/ci"}'             | jq -e '.ok == true'
+
+          test "$(curl -sS -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8787/add-your-trip -d 'hotel_name=Test')" = "503"
+          test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:8787/api/admin/submissions)" = "404"
