@@ -1,4 +1,4 @@
-const num = (v) => Number.isFinite(Number(v)) ? Number(v) : null;
+const num = (v) => v == null || v === "" ? null : (Number.isFinite(Number(v)) ? Number(v) : null);
 
 export function percentile(sorted, p) {
   if (!sorted.length) return null;
