@@ -351,18 +351,34 @@ export async function promoteTrustedNuiteeMetadata(env,{limit=200}={}){
     if(!existingAmenities.length&&providerAmenities.length)add("amenities_json",JSON.stringify(providerAmenities));
 
     if(!row.external_review_summary&&row.review_summary){
-      add("external_review_summary",String(row.review_summary).slice(0,1200));
+      const reviewSummary=String(row.review_summary).slice(0,1200);
+      updates.push("external_review_summary=?");values.push(reviewSummary);
       updates.push("external_review_sentiment=?");values.push(row.review_sentiment||null);
       updates.push("external_review_confidence=?");values.push(row.review_confidence||null);
       updates.push("external_review_source=?");values.push(row.review_provider||null);
       updates.push("external_review_updated_at=?");values.push(nowIso());
       provenance.push({
-        field:"external_review_summary",value:String(row.review_summary).slice(0,1200),
+        field:"external_review_summary",value:reviewSummary,
         sourceType:row.review_provider||"nuitee_reviews",url:row.review_source_url||detailsUrl,
         confidence:row.review_confidence||"medium"
       });
       reviewSignals++;
     }
+
+    const sameText=(a,b)=>String(a||"").trim().toLowerCase()===String(b||"").trim().toLowerCase();
+    const confirmations=[
+      ["city",row.city,row.provider_city],["country",row.country,row.provider_country],
+      ["address",row.address,row.provider_address],["formatted_address",row.formatted_address,row.provider_address]
+    ];
+    for(const [field,current,providerValue] of confirmations){
+      if(current&&providerValue&&sameText(current,providerValue)){
+        provenance.push({field,value:current,sourceType,url:detailsUrl,confidence:"high"});
+      }
+    }
+    if(row.lat!=null&&row.provider_lat!=null&&Math.abs(Number(row.lat)-Number(row.provider_lat))<=0.01)
+      provenance.push({field:"lat",value:row.lat,sourceType,url:detailsUrl,confidence:"high"});
+    if(row.lng!=null&&row.provider_lng!=null&&Math.abs(Number(row.lng)-Number(row.provider_lng))<=0.01)
+      provenance.push({field:"lng",value:row.lng,sourceType,url:detailsUrl,confidence:"high"});
 
     if(updates.length){
       values.push(nowIso(),row.id);
