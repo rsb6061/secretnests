@@ -27,3 +27,6 @@ VERIFICATION_UPLOADS_ENABLED = "false"
 enabled = true
 
 
+
+[triggers]
+crons = ["17 * * * *"]
