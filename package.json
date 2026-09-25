@@ -17,7 +17,8 @@
     "audit:seo": "node scripts/audit-seo.mjs",
     "check:booking-links": "node scripts/check-booking-links.mjs",
     "seed:demo": "node scripts/build-demo-seed.mjs",
-    "test": "node --test tests/*.test.mjs"
+    "test": "node --test tests/*.test.mjs",
+    "cf:deploy": "bash scripts/cloudflare-production-deploy.sh"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"
