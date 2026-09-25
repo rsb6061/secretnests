@@ -443,10 +443,11 @@ async function comparisonPage(pair,env){
   let a=null,b=null;
   for(const pos of positions){
     const as=pair.slice(0,pos), bs=pair.slice(pos+4);
-    const rows=(await env.DB.prepare("SELECT h.*,v.median_would_pay,v.traveler_low,v.traveler_high,v.sample_size,v.confidence,
+    const rows=(await env.DB.prepare(`SELECT h.*,v.median_would_pay,v.traveler_low,v.traveler_high,v.sample_size,v.confidence,
       (SELECT nightly_rate FROM hotel_rate_observations ro WHERE ro.hotel_id=h.id ORDER BY observed_at DESC LIMIT 1) current_observed_rate,
       (SELECT observed_at FROM hotel_rate_observations ro WHERE ro.hotel_id=h.id ORDER BY observed_at DESC LIMIT 1) rate_observed_at
-      FROM hotels h LEFT JOIN hotel_value_snapshots v ON v.id=(SELECT id FROM hotel_value_snapshots WHERE hotel_id=h.id ORDER BY calculated_at DESC LIMIT 1) WHERE h.is_published=1 AND h.slug IN (?,?)").bind(as,bs).all()).results||[];
+      FROM hotels h LEFT JOIN hotel_value_snapshots v ON v.id=(SELECT id FROM hotel_value_snapshots WHERE hotel_id=h.id ORDER BY calculated_at DESC LIMIT 1)
+      WHERE h.is_published=1 AND h.slug IN (?,?)`).bind(as,bs).all()).results||[];
     a=rows.find(x=>x.slug===as); b=rows.find(x=>x.slug===bs);
     if(a&&b)break;
   }
