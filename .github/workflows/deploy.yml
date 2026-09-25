@@ -75,10 +75,8 @@ jobs:
       - name: Dry-run Worker
         run: npx wrangler deploy --dry-run --outdir .wrangler-dry
 
-      - name: Deploy Worker
-        run: npx wrangler deploy
-
-      - name: Sync optional market-intelligence secrets
+      - name: Prepare atomic deployment secrets
+        id: pilot
         shell: bash
         env:
           NUITEE_API_KEY: ${{ secrets.NUITEE_API_KEY }}
@@ -88,49 +86,41 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           set -euo pipefail
-          configured=0
-          if [ -n "$NUITEE_API_KEY" ]; then
-            printf '%s' "$NUITEE_API_KEY" | npx wrangler secret put NUITEE_API_KEY
-            configured=$((configured+1))
-          else
-            echo "::notice::NUITEE_API_KEY is not configured in GitHub Actions."
-          fi
-          if [ -n "$SERPAPI_API_KEY" ]; then
-            printf '%s' "$SERPAPI_API_KEY" | npx wrangler secret put SERPAPI_API_KEY
-            configured=$((configured+1))
-          else
-            echo "::notice::SERPAPI_API_KEY is not configured in GitHub Actions."
-          fi
-          if [ -n "$BOOKING_DEMAND_API_TOKEN" ]; then
-            printf '%s' "$BOOKING_DEMAND_API_TOKEN" | npx wrangler secret put BOOKING_DEMAND_API_TOKEN
-            configured=$((configured+1))
-          else
-            echo "::notice::BOOKING_DEMAND_API_TOKEN is not configured in GitHub Actions."
-          fi
-          if [ -n "$BOOKING_DEMAND_AFFILIATE_ID" ]; then
-            printf '%s' "$BOOKING_DEMAND_AFFILIATE_ID" | npx wrangler secret put BOOKING_DEMAND_AFFILIATE_ID
-            configured=$((configured+1))
-          else
-            echo "::notice::BOOKING_DEMAND_AFFILIATE_ID is not configured in GitHub Actions."
-          fi
-          if [ -n "$OPENAI_API_KEY" ]; then
-            printf '%s' "$OPENAI_API_KEY" | npx wrangler secret put OPENAI_API_KEY
-            configured=$((configured+1))
-          else
-            echo "::notice::OPENAI_API_KEY is not configured in GitHub Actions."
-          fi
-          echo "Synced $configured of 5 optional market-intelligence secrets."
-          npx wrangler secret list || true
-
-      - name: Create one-time pilot activation token
-        id: pilot
-        shell: bash
-        run: |
-          set -euo pipefail
           TOKEN="$(openssl rand -hex 32)"
           echo "::add-mask::$TOKEN"
-          printf '%s' "$TOKEN" | npx wrangler secret put PRODUCTION_ACTIVATION_TOKEN
           echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+          jq -n \
+            --arg activation "$TOKEN" \
+            --arg nuitee "$NUITEE_API_KEY" \
+            --arg serpapi "$SERPAPI_API_KEY" \
+            --arg booking_token "$BOOKING_DEMAND_API_TOKEN" \
+            --arg booking_affiliate "$BOOKING_DEMAND_AFFILIATE_ID" \
+            --arg openai "$OPENAI_API_KEY" \
+            '{
+              PRODUCTION_ACTIVATION_TOKEN: $activation
+            }
+            + (if $nuitee != "" then {NUITEE_API_KEY:$nuitee} else {} end)
+            + (if $serpapi != "" then {SERPAPI_API_KEY:$serpapi} else {} end)
+            + (if $booking_token != "" then {BOOKING_DEMAND_API_TOKEN:$booking_token} else {} end)
+            + (if $booking_affiliate != "" then {BOOKING_DEMAND_AFFILIATE_ID:$booking_affiliate} else {} end)
+            + (if $openai != "" then {OPENAI_API_KEY:$openai} else {} end)' \
+            > /tmp/secretnests-secrets.json
+          chmod 600 /tmp/secretnests-secrets.json
+
+          configured=0
+          [ -n "$NUITEE_API_KEY" ] && configured=$((configured+1)) || true
+          [ -n "$SERPAPI_API_KEY" ] && configured=$((configured+1)) || true
+          [ -n "$BOOKING_DEMAND_API_TOKEN" ] && configured=$((configured+1)) || true
+          [ -n "$BOOKING_DEMAND_AFFILIATE_ID" ] && configured=$((configured+1)) || true
+          [ -n "$OPENAI_API_KEY" ] && configured=$((configured+1)) || true
+          echo "Prepared activation token plus $configured configured optional provider secret(s) for one atomic deploy."
+
+      - name: Deploy Worker with secrets
+        run: npx wrangler deploy --secrets-file /tmp/secretnests-secrets.json
+
+      - name: Verify deployed secret names
+        run: npx wrangler secret list || true
 
       - name: Production smoke test
         shell: bash
