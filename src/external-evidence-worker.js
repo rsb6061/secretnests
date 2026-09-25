@@ -98,7 +98,7 @@ Rules:
       headers:{"authorization":"Bearer "+key,"content-type":"application/json"},
       body:JSON.stringify({
         model,
-        tools:[{type:"web_search",search_context_size:"low",filters:{blocked_domains:[...new Set(blocked)]}}],
+        tools:[{type:"web_search",search_context_size:"low"}],
         include:["web_search_call.action.sources"],
         input:prompt,
         text:{format:{type:"json_schema",name:"hotel_external_evidence",strict:true,schema:schema()}},
@@ -112,7 +112,7 @@ Rules:
     const cited=citationUrls(data),signals=[];
     for(const s of Array.isArray(parsed?.signals)?parsed.signals.slice(0,4):[]){
       const normalized=normalizeUrl(s.source_url);
-      if(!normalized||!cited.has(normalized))continue;
+      if(!normalized||!cited.has(normalized)||blockedSource(normalized,[...new Set(blocked)]))continue;
       signals.push({...s,source_url:normalized});
     }
     return {ok:true,signals,response_id:data.id||null,model};
@@ -121,12 +121,13 @@ Rules:
   }finally{clearTimeout(timer)}
 }
 
-async function claimTasks(db,limit){
+async function claimTasks(db,limit,mode="pilot"){
+  const pilot=String(mode||"pilot").toLowerCase()!=="full";
   const rows=(await db.prepare(`SELECT q.id queue_id,q.status queue_status,q.attempts,q.priority,h.id hotel_id,h.name,h.city,h.country,h.website
     FROM hotel_enrichment_queue q
     JOIN hotels h ON h.id=q.hotel_id
     JOIN hotel_enrichment_profiles p ON p.hotel_id=h.id AND p.cohort='priority_250'
-    WHERE q.task_type='external_evidence' AND (
+    WHERE q.task_type='external_evidence' ${pilot?"AND p.priority_rank<=10":""} AND (
       q.status='queued'
       OR (q.status='failed' AND q.attempts<3 AND q.updated_at<=datetime('now','-7 days'))
     )
@@ -174,7 +175,8 @@ export async function drainExternalEvidenceQueue(env,{limit=2}={}){
   if(!String(env.OPENAI_API_KEY||"").trim())return {ok:false,skipped:true,reason:"openai_not_configured"};
   const runId=crypto.randomUUID(),started=nowIso();
   await env.DB.prepare("INSERT INTO hotel_evidence_sync_runs (id,provider,status,started_at) VALUES (?,'openai_web_search','running',?)").bind(runId,started).run();
-  const tasks=await claimTasks(env.DB,limit);
+  const mode=String(env.MARKET_INTELLIGENCE_MODE||"pilot").toLowerCase()==="full"?"full":"pilot";
+  const tasks=await claimTasks(env.DB,limit,mode);
   let written=0,failures=0;
   try{
     for(const t of tasks){
@@ -192,7 +194,7 @@ export async function drainExternalEvidenceQueue(env,{limit=2}={}){
     await refreshHotelEnrichment(env.DB);
     await env.DB.prepare("UPDATE hotel_evidence_sync_runs SET status='success',hotels_claimed=?,evidence_written=?,failures=?,finished_at=? WHERE id=?")
       .bind(tasks.length,written,failures,nowIso(),runId).run();
-    return {ok:true,claimed:tasks.length,evidence_written:written,failures};
+    return {ok:true,mode,claimed:tasks.length,evidence_written:written,failures};
   }catch(e){
     await env.DB.prepare("UPDATE hotel_evidence_sync_runs SET status='failed',hotels_claimed=?,evidence_written=?,failures=?,note=?,finished_at=? WHERE id=?")
       .bind(tasks.length,written,failures,String(e?.message||e).slice(0,1000),nowIso(),runId).run();
