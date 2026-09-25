@@ -877,6 +877,19 @@ async function recomputeValues(request,env){
   return json({ok:true,recomputed:out.length});
 }
 
+async function runTravelpayoutsAutomation(env){
+  const cfg=travelpayoutsConfig(env);
+  if(!cfg.token||!cfg.partnerId||!cfg.projectId)return {ok:false,skipped:true,reason:"travelpayouts_not_configured"};
+  const links=await seedTravelpayoutsLinks(env,200);
+  let stats={ok:true,skipped:true,reason:"campaign_id_not_configured"};
+  const campaignId=String(env.TRAVELPAYOUTS_CAMPAIGN_ID||"").trim();
+  if(campaignId){
+    const from=new Date(Date.now()-35*86400000).toISOString().slice(0,10);
+    stats=await syncTravelpayoutsStats(env,campaignId,from);
+  }
+  return {ok:Boolean(links.ok&&stats.ok),links,stats};
+}
+
 async function sitemap(env){
   const urls=[ORIGIN+"/",ORIGIN+"/destinations",ORIGIN+"/creators",ORIGIN+"/about",ORIGIN+"/value",ORIGIN+"/compare",ORIGIN+"/add-your-trip",ORIGIN+"/privacy",ORIGIN+"/terms",ORIGIN+"/disclosures"];
   try{
@@ -943,6 +956,9 @@ async function route(request,env){
 }
 
 export default {
+  async scheduled(controller,env,ctx){
+    ctx.waitUntil(runTravelpayoutsAutomation(env).then(result=>console.log(JSON.stringify({type:"travelpayouts_automation",...result}))).catch(e=>console.error(JSON.stringify({type:"travelpayouts_automation_error",message:safeLogError(e)}))));
+  },
   async fetch(request,env,ctx){
     const requestId=crypto.randomUUID();
     const started=Date.now();
