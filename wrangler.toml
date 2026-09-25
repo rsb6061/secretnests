@@ -32,11 +32,3 @@ custom_domain = true
 
 [triggers]
 crons = ["* * * * *"]
-
-[[routes]]
-pattern = "secretnests.com"
-custom_domain = true
-
-[[routes]]
-pattern = "www.secretnests.com"
-custom_domain = true
