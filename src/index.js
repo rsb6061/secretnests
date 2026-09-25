@@ -1051,6 +1051,14 @@ async function runTravelpayoutsAutomation(env){
   return {ok:Boolean(links.ok&&stats.ok),links,stats};
 }
 
+async function internalMarketPilot(request,env){
+  const expected=String(env.PRODUCTION_ACTIVATION_TOKEN||"");
+  const auth=String(request.headers.get("authorization")||"");
+  if(!expected||auth!=="Bearer "+expected)return new Response("Not found",{status:404});
+  const rates=await drainCurrentRateQueue(env,{limit:5});
+  const evidence=await drainExternalEvidenceQueue(env,{limit:2});
+  return json({ok:true,mode:String(env.MARKET_INTELLIGENCE_MODE||"pilot"),rates,evidence});
+}
 async function sitemap(env){
   const urls=[ORIGIN+"/",ORIGIN+"/destinations",ORIGIN+"/creators",ORIGIN+"/about",ORIGIN+"/value",ORIGIN+"/compare",ORIGIN+"/add-your-trip",ORIGIN+"/privacy",ORIGIN+"/terms",ORIGIN+"/disclosures"];
   try{
@@ -1093,6 +1101,7 @@ async function route(request,env){
   if(request.method==="GET" && url.pathname==="/api/hotel-suggest")return hotelSuggest(request,env);
   if(request.method==="GET" && url.pathname==="/api/hotels")return apiHotels(request,env);
   if(request.method==="POST" && url.pathname==="/api/events")return recordEvent(request,env);
+  if(request.method==="POST" && url.pathname==="/api/internal/market-intelligence/pilot")return internalMarketPilot(request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/admin/submissions")return adminSubmissionsPage(request,env);
   const verificationFile=url.pathname.match(/^\/admin\/submission-verification\/([^/]+)$/); if(request.method==="GET"&&verificationFile)return submissionVerificationFile(decodeURIComponent(verificationFile[1]),request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/api/admin/submissions")return adminSubmissions(request,env);

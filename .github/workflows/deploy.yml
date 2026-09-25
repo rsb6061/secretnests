@@ -1,19 +1,9 @@
-name: SecretNests Cloudflare
+name: SecretNests Cloudflare Release
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
-    inputs:
-      action:
-        description: What to run
-        required: true
-        type: choice
-        options:
-          - bootstrap
-          - deploy
-          - migrate-db
-          - seed-legacy-hotels
-          - seed-reddit-evidence
-          - seed-demo
 
 permissions:
   contents: read
@@ -23,8 +13,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  run:
+  release:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -44,87 +35,108 @@ jobs:
           test -n "$CLOUDFLARE_ACCOUNT_ID"
           test -n "$CLOUDFLARE_API_TOKEN"
 
-      - name: Find or create D1 database
+      - name: Resolve D1 database
         id: d1
         shell: bash
         run: |
           set -euo pipefail
-
-          LIST="$(curl -fsS             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN"             "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/d1/database")"
-
+          LIST="$(curl --connect-timeout 5 --max-time 30 -fsS \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/d1/database")"
           DB_ID="$(echo "$LIST" | jq -r '.result[] | select(.name=="secretnests") | .uuid' | head -n1)"
-
-          if [ -z "$DB_ID" ] || [ "$DB_ID" = "null" ]; then
-            echo "Creating D1 database secretnests..."
-            CREATED="$(curl -fsS -X POST               -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN"               -H "Content-Type: application/json"               --data '{"name":"secretnests"}'               "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/d1/database")"
-
-            echo "$CREATED" | jq -e '.success == true' >/dev/null
-            DB_ID="$(echo "$CREATED" | jq -r '.result.uuid')"
-          else
-            echo "D1 database already exists."
-          fi
-
           test -n "$DB_ID"
           test "$DB_ID" != "null"
           echo "database_id=$DB_ID" >> "$GITHUB_OUTPUT"
-
-          # Never commit an environment-specific UUID. Patch the checked-out
-          # config only for this Actions run.
-          sed -i "s/REPLACE_WITH_D1_DATABASE_ID/$DB_ID/g" wrangler.toml
-
-      - name: Find or create R2 bucket
-        if: inputs.action == 'bootstrap'
-        shell: bash
-        run: |
-          set -euo pipefail
-          if npx wrangler r2 bucket list | grep -q "secretnests-media"; then
-            echo "R2 bucket secretnests-media already exists."
-          else
-            echo "Creating R2 bucket secretnests-media..."
-            npx wrangler r2 bucket create secretnests-media
-          fi
+          sed -i -E 's/database_id = "[^"]+"/database_id = "'"$DB_ID"'"/' wrangler.toml
 
       - name: Apply D1 migrations
-        if: inputs.action == 'bootstrap' || inputs.action == 'migrate-db'
         run: npx wrangler d1 migrations apply secretnests --remote --yes
 
-      - name: Build legacy hotel seed
-        if: inputs.action == 'bootstrap' || inputs.action == 'seed-legacy-hotels'
-        run: node scripts/build-legacy-hotel-seed.mjs
-
-      - name: Seed legacy hotels
-        if: inputs.action == 'bootstrap' || inputs.action == 'seed-legacy-hotels'
-        run: npx wrangler d1 execute secretnests --remote --file=.generated/legacy-hotels.sql --yes
-
-      - name: Build Reddit evidence seed
-        if: inputs.action == 'bootstrap' || inputs.action == 'seed-reddit-evidence'
-        run: node scripts/build-reddit-evidence-seed.mjs
-
-      - name: Seed Reddit evidence
-        if: inputs.action == 'bootstrap' || inputs.action == 'seed-reddit-evidence'
-        run: npx wrangler d1 execute secretnests --remote --file=.generated/reddit-evidence.sql --yes
-
-      - name: Build demo creator seed
-        if: inputs.action == 'bootstrap' || inputs.action == 'seed-demo'
-        run: node scripts/build-demo-seed.mjs
-
-      - name: Seed demo creator
-        if: inputs.action == 'bootstrap' || inputs.action == 'seed-demo'
-        run: npx wrangler d1 execute secretnests --remote --file=.generated/demo.sql --yes
+      - name: Verify market-intelligence schema
+        run: |
+          npx wrangler d1 execute secretnests --remote --command="SELECT COUNT(*) AS mappings FROM hotel_provider_mappings; SELECT COUNT(*) AS evidence FROM hotel_external_evidence; SELECT COUNT(*) AS rate_runs FROM hotel_rate_sync_runs; SELECT COUNT(*) AS evidence_runs FROM hotel_evidence_sync_runs;" --yes
 
       - name: Dry-run Worker
-        if: inputs.action == 'bootstrap' || inputs.action == 'deploy'
         run: npx wrangler deploy --dry-run --outdir .wrangler-dry
 
       - name: Deploy Worker
-        if: inputs.action == 'bootstrap' || inputs.action == 'deploy'
         run: npx wrangler deploy
 
-      - name: Bootstrap summary
-        if: inputs.action == 'bootstrap'
+      - name: Sync optional market-intelligence secrets
+        shell: bash
+        env:
+          BOOKING_DEMAND_API_TOKEN: ${{ secrets.BOOKING_DEMAND_API_TOKEN }}
+          BOOKING_DEMAND_AFFILIATE_ID: ${{ secrets.BOOKING_DEMAND_AFFILIATE_ID }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          echo "SecretNests Cloudflare bootstrap complete."
+          set -euo pipefail
+          configured=0
+          if [ -n "$BOOKING_DEMAND_API_TOKEN" ]; then
+            printf '%s' "$BOOKING_DEMAND_API_TOKEN" | npx wrangler secret put BOOKING_DEMAND_API_TOKEN
+            configured=$((configured+1))
+          else
+            echo "::notice::BOOKING_DEMAND_API_TOKEN is not configured in GitHub Actions."
+          fi
+          if [ -n "$BOOKING_DEMAND_AFFILIATE_ID" ]; then
+            printf '%s' "$BOOKING_DEMAND_AFFILIATE_ID" | npx wrangler secret put BOOKING_DEMAND_AFFILIATE_ID
+            configured=$((configured+1))
+          else
+            echo "::notice::BOOKING_DEMAND_AFFILIATE_ID is not configured in GitHub Actions."
+          fi
+          if [ -n "$OPENAI_API_KEY" ]; then
+            printf '%s' "$OPENAI_API_KEY" | npx wrangler secret put OPENAI_API_KEY
+            configured=$((configured+1))
+          else
+            echo "::notice::OPENAI_API_KEY is not configured in GitHub Actions."
+          fi
+          echo "Synced $configured of 3 optional market-intelligence secrets."
+          npx wrangler secret list || true
+
+      - name: Create one-time pilot activation token
+        id: pilot
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOKEN="$(openssl rand -hex 32)"
+          echo "::add-mask::$TOKEN"
+          printf '%s' "$TOKEN" | npx wrangler secret put PRODUCTION_ACTIVATION_TOKEN
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Production smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --connect-timeout 5 --max-time 20 -fsS https://secretnests.com/health | jq -e '.ok == true'
+          curl --connect-timeout 5 --max-time 20 -fsS https://secretnests.com/ >/dev/null
+
+      - name: Run bounded market-intelligence pilot
+        id: pilot_run
+        shell: bash
+        env:
+          PILOT_TOKEN: ${{ steps.pilot.outputs.token }}
+        run: |
+          set -euo pipefail
+          RESULT="$(curl --connect-timeout 5 --max-time 120 -fsS -X POST \
+            -H "Authorization: Bearer $PILOT_TOKEN" \
+            https://secretnests.com/api/internal/market-intelligence/pilot)"
+          echo "$RESULT" | jq .
+          echo "$RESULT" | jq -e '.ok == true'
+          echo "result=$(echo "$RESULT" | jq -c .)" >> "$GITHUB_OUTPUT"
+
+      - name: Inspect pilot quality
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "=== Booking provider mappings ==="
+          npx wrangler d1 execute secretnests --remote --command="SELECT h.name,m.provider_hotel_id,m.confidence,json_extract(m.metadata_json,'$.matched_name') AS matched_name,ROUND(CAST(json_extract(m.metadata_json,'$.distance_km') AS REAL),3) AS distance_km FROM hotel_provider_mappings m JOIN hotels h ON h.id=m.hotel_id WHERE m.provider='booking_demand' ORDER BY m.updated_at DESC LIMIT 10;" --yes
+          echo "=== Recent live rates ==="
+          npx wrangler d1 execute secretnests --remote --command="SELECT h.name,ROUND(r.nightly_rate,2) AS nightly_rate,r.currency,r.checkin_date,r.checkout_date,r.room_type,r.taxes_fees_included,r.observed_at FROM hotel_rate_observations r JOIN hotels h ON h.id=r.hotel_id WHERE r.provider_id='booking_demand' ORDER BY r.observed_at DESC LIMIT 20;" --yes
+          echo "=== Recent external evidence ==="
+          npx wrangler d1 execute secretnests --remote --command="SELECT h.name,e.source_domain,e.sentiment,e.confidence,substr(e.summary,1,180) AS summary,e.observed_at FROM hotel_external_evidence e JOIN hotels h ON h.id=e.hotel_id ORDER BY e.observed_at DESC LIMIT 20;" --yes
+
+      - name: Release summary
+        if: always()
+        run: |
           echo "D1 database: secretnests"
-          echo "D1 database id: ${{ steps.d1.outputs.database_id }}"
-          echo "R2 bucket: secretnests-media"
           echo "Worker: secretnests"
+          echo "Market intelligence mode: pilot (top 10 only)"

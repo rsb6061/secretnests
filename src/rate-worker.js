@@ -145,6 +145,7 @@ export function extractBookerRate(payload,nights=1){
     room_type:firstText(room?.name||room)||null,
     rate_name:firstText(chosen.product?.name||chosen.product?.deal?.name)||null,
     taxes_fees_included:charges.length?(!excluded):null,
+    booking_url:firstText(item?.url?.web||item?.url)||null,
     raw_total:chosen.value
   };
 }
@@ -207,12 +208,13 @@ async function fetchAvailability(env,providerHotelId,window){
   return result;
 }
 
-async function claimTasks(db,limit){
+async function claimTasks(db,limit,mode="pilot"){
+  const pilot=String(mode||"pilot").toLowerCase()!=="full";
   const rows=(await db.prepare(`SELECT q.id queue_id,q.status queue_status,q.attempts,q.priority,h.id hotel_id,h.name,h.city,h.country,h.lat,h.lng
     FROM hotel_enrichment_queue q
     JOIN hotels h ON h.id=q.hotel_id
     JOIN hotel_enrichment_profiles p ON p.hotel_id=h.id AND p.cohort='priority_250'
-    WHERE q.task_type='current_rate' AND (
+    WHERE q.task_type='current_rate' ${pilot?"AND p.priority_rank<=10":""} AND (
       q.status='queued'
       OR (q.status='complete' AND NOT EXISTS (
         SELECT 1 FROM hotel_rate_observations ro WHERE ro.hotel_id=h.id AND ro.observed_at>=datetime('now','-24 hours')
@@ -240,7 +242,8 @@ export async function drainCurrentRateQueue(env,{limit=6}={}){
   await env.DB.prepare("UPDATE affiliate_providers SET enabled=1,updated_at=? WHERE id='booking_demand'").bind(nowIso()).run();
   const runId=crypto.randomUUID(),started=nowIso();
   await env.DB.prepare("INSERT INTO hotel_rate_sync_runs (id,provider,status,started_at) VALUES (?,'booking_demand','running',?)").bind(runId,started).run();
-  const tasks=await claimTasks(env.DB,limit);
+  const mode=String(env.MARKET_INTELLIGENCE_MODE||"pilot").toLowerCase()==="full"?"full":"pilot";
+  const tasks=await claimTasks(env.DB,limit,mode);
   let observations=0,mappings=0,failures=0;
   try{
     const windows=rateWindows();
@@ -260,9 +263,9 @@ export async function drainCurrentRateQueue(env,{limit=6}={}){
           if(!rate){lastError="booking_availability_no_rate";continue}
           await env.DB.prepare(`INSERT INTO hotel_rate_observations
             (id,hotel_id,provider_id,nightly_rate,currency,checkin_date,checkout_date,room_type,rate_name,taxes_fees_included,booking_url,metadata_json,observed_at)
-            VALUES (?,?,'booking_demand',?,?,?,?,?,?,?,NULL,?,?)`)
+            VALUES (?,?,'booking_demand',?,?,?,?,?,?,?,?,?,?)`)
             .bind(crypto.randomUUID(),t.hotel_id,rate.nightly_rate,rate.currency,window.checkin,window.checkout,rate.room_type,rate.rate_name,
-              rate.taxes_fees_included==null?null:rate.taxes_fees_included?1:0,
+              rate.taxes_fees_included==null?null:rate.taxes_fees_included?1:0,rate.booking_url,
               JSON.stringify({provider_hotel_id:mapping.provider_hotel_id,rate_basis:window.basis,raw_total:rate.raw_total,nights:window.nights}),
               nowIso()).run();
           hotelWritten++; observations++;
@@ -279,7 +282,7 @@ export async function drainCurrentRateQueue(env,{limit=6}={}){
     await refreshHotelEnrichment(env.DB);
     await env.DB.prepare("UPDATE hotel_rate_sync_runs SET status='success',hotels_claimed=?,observations_written=?,mappings_created=?,failures=?,finished_at=? WHERE id=?")
       .bind(tasks.length,observations,mappings,failures,nowIso(),runId).run();
-    return {ok:true,claimed:tasks.length,observations_written:observations,mappings_created:mappings,failures};
+    return {ok:true,mode,claimed:tasks.length,observations_written:observations,mappings_created:mappings,failures};
   }catch(e){
     await env.DB.prepare("UPDATE hotel_rate_sync_runs SET status='failed',hotels_claimed=?,observations_written=?,mappings_created=?,failures=?,note=?,finished_at=? WHERE id=?")
       .bind(tasks.length,observations,mappings,failures,String(e?.message||e).slice(0,1000),nowIso(),runId).run();
