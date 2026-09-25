@@ -12,6 +12,12 @@ function normalizeUrl(v){
   return u.toString().replace(/\/$/,"");
 }
 
+function blockedSource(v,domains=[]){
+  const u=safeUrl(v); if(!u)return true;
+  const host=u.hostname.toLowerCase().replace(/^www\\./,"");
+  return domains.some(d=>host===d||host.endsWith("."+d));
+}
+
 export function citationUrls(response){
   const out=new Set();
   for(const item of Array.isArray(response?.output)?response.output:[]){
