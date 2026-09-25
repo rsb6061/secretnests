@@ -21,7 +21,8 @@ export async function nuiteeAdminBody(db){
   const rows=(await db.prepare(`SELECT h.id,h.name,h.slug,h.city,h.country,p.priority_rank,
     a.provider_hotel_id,a.environment,a.mapping_status,a.mapping_confidence,a.name_similarity,a.distance_km,
     a.metadata_status,a.metadata_fields,a.review_status,a.rate_windows_tested,a.rate_windows_with_inventory,
-    a.rate_coverage_pct,a.last_error,a.updated_at
+    a.rate_coverage_pct,a.last_error,a.mapping_error,a.metadata_error,a.review_error,a.candidate_provider_hotel_id,
+    a.candidate_name,a.candidate_similarity,a.candidate_distance_km,a.mapping_stage,a.updated_at
     FROM hotel_enrichment_profiles p
     JOIN hotels h ON h.id=p.hotel_id
     LEFT JOIN hotel_nuitee_audit a ON a.hotel_id=h.id
@@ -66,11 +67,15 @@ export async function nuiteeAdminBody(db){
       ${rows.map(r=>`<tr>
         <td style="padding:9px;border-bottom:1px solid #eee">${r.priority_rank}</td>
         <td style="padding:9px;border-bottom:1px solid #eee"><a href="/hotel/${encodeURIComponent(r.slug)}"><strong>${esc(r.name)}</strong></a><br><span class="kicker">${esc([r.city,r.country].filter(Boolean).join(", "))}</span></td>
-        <td style="padding:9px;border-bottom:1px solid #eee">${status(r.mapping_status)} ${r.mapping_confidence?esc(r.mapping_confidence):""}${r.distance_km!=null?" · "+Number(r.distance_km).toFixed(2)+" km":""}<br><span class="kicker">${esc(r.provider_hotel_id||"—")}</span>${["review","failed"].includes(r.mapping_status)?`<form method="post" style="margin-top:5px"><input type="hidden" name="hotel_id" value="${esc(r.id)}"><button class="btn secondary" name="action" value="reset">Retry</button></form>`:""}</td>
+        <td style="padding:9px;border-bottom:1px solid #eee">${status(r.mapping_status)} ${r.mapping_confidence?esc(r.mapping_confidence):""}${r.distance_km!=null?" · "+Number(r.distance_km).toFixed(2)+" km":""}<br><span class="kicker">${esc(r.provider_hotel_id||"—")}${r.mapping_stage?" · "+esc(r.mapping_stage):""}</span>${r.candidate_name?`<br><span class="kicker">best rejected: ${esc(r.candidate_name)} · ${Number(r.candidate_similarity||0).toFixed(2)}${r.candidate_distance_km!=null?" · "+Number(r.candidate_distance_km).toFixed(2)+" km":""}</span>`:""}${["review","failed"].includes(r.mapping_status)?`<form method="post" style="margin-top:5px"><input type="hidden" name="hotel_id" value="${esc(r.id)}"><button class="btn secondary" name="action" value="reset">Retry</button></form>`:""}</td>
         <td style="padding:9px;border-bottom:1px solid #eee">${status(r.metadata_status)}<br><span class="kicker">${Number(r.metadata_fields||0)} fields</span></td>
         <td style="padding:9px;border-bottom:1px solid #eee">${status(r.review_status)}</td>
         <td style="text-align:right;padding:9px;border-bottom:1px solid #eee">${r.rate_coverage_pct==null?"—":Number(r.rate_coverage_pct).toFixed(0)+"%"}<br><span class="kicker">${Number(r.rate_windows_with_inventory||0)}/${Number(r.rate_windows_tested||0)} windows</span></td>
-        <td style="padding:9px;border-bottom:1px solid #eee">${r.last_error?'<span class="error">'+esc(r.last_error)+'</span>':"—"}</td>
+        <td style="padding:9px;border-bottom:1px solid #eee">${[
+          r.mapping_error?"map: "+r.mapping_error:"",
+          r.metadata_error?"metadata: "+r.metadata_error:"",
+          r.review_error?"review: "+r.review_error:""
+        ].filter(Boolean).map(x=>'<div class="error">'+esc(x)+'</div>').join("")||"—"}</td>
       </tr>`).join("")}
       </tbody></table></div>
     </section>
