@@ -304,11 +304,12 @@ async function saveCanonicalProvenance(db,hotelId,fieldName,sourceType,sourceUrl
 
 export async function promoteTrustedNuiteeMetadata(env,{limit=200}={}){
   const rows=(await env.DB.prepare(`SELECT
-      h.id,h.city,h.country,h.address,h.formatted_address,h.lat,h.lng,h.hotel_category,h.description,h.amenities_json,
+      h.id,h.city,h.country,h.address,h.formatted_address,h.lat,h.lng,h.hotel_category,h.brand_name,h.description,h.amenities_json,
       h.external_review_summary,h.external_review_sentiment,h.external_review_confidence,h.external_review_source,
       a.provider_hotel_id,a.environment,a.mapping_confidence,p.priority_rank,
       pm.star_rating provider_star_rating,pm.address provider_address,pm.city provider_city,pm.country provider_country,
       pm.lat provider_lat,pm.lng provider_lng,pm.description provider_description,pm.amenities_json provider_amenities_json,
+      json_extract(pm.metadata_json,'$.chain') provider_chain,
       (SELECT he.provider FROM hotel_external_evidence he WHERE he.hotel_id=h.id AND he.provider LIKE 'nuitee_reviews%' ORDER BY he.observed_at DESC LIMIT 1) review_provider,
       (SELECT he.summary FROM hotel_external_evidence he WHERE he.hotel_id=h.id AND he.provider LIKE 'nuitee_reviews%' ORDER BY he.observed_at DESC LIMIT 1) review_summary,
       (SELECT he.sentiment FROM hotel_external_evidence he WHERE he.hotel_id=h.id AND he.provider LIKE 'nuitee_reviews%' ORDER BY he.observed_at DESC LIMIT 1) review_sentiment,
@@ -344,6 +345,7 @@ export async function promoteTrustedNuiteeMetadata(env,{limit=200}={}){
     if(row.lat==null&&row.provider_lat!=null)add("lat",row.provider_lat);
     if(row.lng==null&&row.provider_lng!=null)add("lng",row.provider_lng);
     if(!row.hotel_category&&row.provider_star_rating)add("hotel_category",Number(row.provider_star_rating).toFixed(0)+"-star hotel");
+    if(!row.brand_name&&String(row.provider_chain||"").trim())add("brand_name",String(row.provider_chain).trim().slice(0,160));
     if(!String(row.description||"").trim()&&String(row.provider_description||"").trim())add("description",String(row.provider_description).trim().slice(0,4000));
 
     const existingAmenities=parseArray(row.amenities_json);
