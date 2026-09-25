@@ -26,9 +26,7 @@ for (const r of rows) {
   canonicalSlugs.set(r.id, slug);
 }
 
-const statements = [
-  "BEGIN TRANSACTION;",
-  ...rows.map((r) => {
+const statements = [  ...rows.map((r) => {
     const c = contentById.get(r.id) || {};
     return `INSERT INTO hotels (
       id,name,slug,google_place_id,description,country,city,region,lat,lng,website,phone,
@@ -66,9 +64,7 @@ const statements = [
     `INSERT INTO hotel_booking_links (id,hotel_id,provider_id,destination_url,priority,enabled,metadata_json)
      VALUES (${q("legacy-direct-"+r.id)},${q(r.id)},'direct',${q(clean(r.booking_url))},10,1,'{"source":"legacy"}')
      ON CONFLICT(id) DO UPDATE SET destination_url=excluded.destination_url,enabled=1;`
-  ),
-  "COMMIT;"
-];
+  ),];
 
 fs.mkdirSync(".generated", { recursive: true });
 fs.writeFileSync(".generated/legacy-hotels.sql", statements.join("\n"));
