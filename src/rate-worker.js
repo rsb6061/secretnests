@@ -1,5 +1,6 @@
 import { refreshHotelEnrichment } from "./enrichment.js";
 import { recomputeHotelValuation } from "./value-engine.js";
+import { findNuiteeHotel, fetchNuiteeRates, extractNuiteeRate, nuiteeEnvironment } from "./nuitee.js";
 import { findSerpHotelProperty, extractSerpHotelRate } from "./serpapi.js";
 
 const nowIso=()=>new Date().toISOString();
@@ -218,7 +219,7 @@ async function claimTasks(db,limit,mode="pilot"){
     WHERE q.task_type='current_rate' ${pilot?"AND p.priority_rank<=10":""} AND (
       q.status='queued'
       OR (q.status='complete' AND NOT EXISTS (
-        SELECT 1 FROM hotel_rate_observations ro WHERE ro.hotel_id=h.id AND ro.observed_at>=datetime('now','-24 hours')
+        SELECT 1 FROM hotel_rate_observations ro WHERE ro.hotel_id=h.id AND ro.provider_id<>'nuitee_sandbox' AND ro.observed_at>=datetime('now','-24 hours')
       ))
       OR (q.status='failed' AND q.attempts<5 AND q.updated_at<=datetime('now','-12 hours'))
     )
@@ -292,6 +293,83 @@ async function drainBookingCurrentRateQueue(env,{limit=6}={}){
 }
 
 
+async function getNuiteeMapping(db,hotelId){
+  return db.prepare("SELECT * FROM hotel_provider_mappings WHERE hotel_id=? AND provider='nuitee_connect' AND status='active'").bind(hotelId).first();
+}
+
+async function saveNuiteeMapping(db,hotelId,match,environment){
+  const now=nowIso();
+  await db.prepare(`INSERT INTO hotel_provider_mappings
+    (id,hotel_id,provider,provider_hotel_id,status,confidence,source_url,metadata_json,created_at,updated_at)
+    VALUES (?,?,'nuitee_connect',?,'active',?,NULL,?,?,?)
+    ON CONFLICT(hotel_id,provider) DO UPDATE SET provider_hotel_id=excluded.provider_hotel_id,status='active',
+      confidence=excluded.confidence,metadata_json=excluded.metadata_json,updated_at=excluded.updated_at`)
+    .bind(crypto.randomUUID(),hotelId,match.id,match.confidence||"medium",
+      JSON.stringify({matched_name:match.name,similarity:match.similarity,distance_km:match.distance,environment}),now,now).run();
+}
+
+async function drainNuiteeCurrentRateQueue(env,{limit=6,allowSandbox=false}={}){
+  const environment=nuiteeEnvironment(env);
+  if(environment==="unknown")return {ok:false,skipped:true,reason:"nuitee_not_configured"};
+  if(environment==="sandbox"&&!allowSandbox)return {ok:false,skipped:true,reason:"nuitee_sandbox_manual_only"};
+  const providerId=environment==="sandbox"?"nuitee_sandbox":"nuitee_connect";
+  await env.DB.prepare("UPDATE affiliate_providers SET enabled=1,updated_at=? WHERE id=?").bind(nowIso(),providerId).run();
+  const runId=crypto.randomUUID(),started=nowIso(),mode=String(env.MARKET_INTELLIGENCE_MODE||"pilot").toLowerCase()==="full"?"full":"pilot";
+  await env.DB.prepare("INSERT INTO hotel_rate_sync_runs (id,provider,status,started_at) VALUES (?,?, 'running',?)").bind(runId,providerId,started).run();
+  const tasks=await claimTasks(env.DB,limit,mode);
+  let observations=0,mappings=0,failures=0;
+  try{
+    const windows=rateWindows();
+    for(const t of tasks){
+      try{
+        let mapping=await getNuiteeMapping(env.DB,t.hotel_id);
+        if(!mapping){
+          const found=await findNuiteeHotel(env,{name:t.name,city:t.city,country:t.country,lat:t.lat,lng:t.lng});
+          if(!found.ok){await finish(env.DB,t.queue_id,"failed",found.error);failures++;continue}
+          await saveNuiteeMapping(env.DB,t.hotel_id,found.match,environment);
+          mapping={provider_hotel_id:found.match.id};mappings++;
+        }
+        let hotelWritten=0,lastError=null;
+        for(const window of windows){
+          const response=await fetchNuiteeRates(env,mapping.provider_hotel_id,window);
+          if(!response.ok){lastError=response.error;continue}
+          const rate=extractNuiteeRate(response.data,window.nights,String(env.RATE_CURRENCY||"USD"));
+          if(!rate){lastError="nuitee_no_available_rate";continue}
+          await env.DB.prepare(`INSERT INTO hotel_rate_observations
+            (id,hotel_id,provider_id,nightly_rate,currency,checkin_date,checkout_date,room_type,rate_name,taxes_fees_included,booking_url,metadata_json,observed_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,NULL,?,?)`)
+            .bind(crypto.randomUUID(),t.hotel_id,providerId,rate.nightly_rate,rate.currency,window.checkin,window.checkout,rate.room_type,rate.rate_name,
+              rate.taxes_fees_included==null?null:rate.taxes_fees_included?1:0,
+              JSON.stringify({provider_hotel_id:mapping.provider_hotel_id,rate_basis:window.basis,nights:window.nights,
+                environment,public_total:rate.public_total,bookable_total:rate.bookable_total,offer_id:rate.offer_id}),
+              nowIso()).run();
+          hotelWritten++;observations++;
+        }
+        if(hotelWritten){
+          if(environment==="production"){
+            const latest=await env.DB.prepare("SELECT nightly_rate FROM hotel_rate_observations WHERE hotel_id=? AND provider_id='nuitee_connect' ORDER BY observed_at DESC LIMIT 1").bind(t.hotel_id).first();
+            await recomputeHotelValuation(env.DB,t.hotel_id,latest?.nightly_rate??null);
+            await finish(env.DB,t.queue_id,"complete");
+          }else{
+            await finish(env.DB,t.queue_id,"queued","sandbox_observation_not_used_for_production_valuation");
+          }
+        }else{
+          await finish(env.DB,t.queue_id,"failed",lastError||"no_nuitee_rate_observation_written");failures++;
+        }
+      }catch(e){await finish(env.DB,t.queue_id,"failed",e?.message||e);failures++}
+    }
+    await refreshHotelEnrichment(env.DB);
+    await env.DB.prepare("UPDATE hotel_rate_sync_runs SET status='success',hotels_claimed=?,observations_written=?,mappings_created=?,failures=?,note=?,finished_at=? WHERE id=?")
+      .bind(tasks.length,observations,mappings,failures,environment==="sandbox"?"sandbox_validation_only":null,nowIso(),runId).run();
+    return {ok:true,provider:providerId,environment,mode,claimed:tasks.length,observations_written:observations,mappings_created:mappings,failures,
+      valuation_updates:environment==="production"?observations:0};
+  }catch(e){
+    await env.DB.prepare("UPDATE hotel_rate_sync_runs SET status='failed',hotels_claimed=?,observations_written=?,mappings_created=?,failures=?,note=?,finished_at=? WHERE id=?")
+      .bind(tasks.length,observations,mappings,failures,String(e?.message||e).slice(0,1000),nowIso(),runId).run();
+    throw e;
+  }
+}
+
 async function getSerpMapping(db,hotelId){
   return db.prepare("SELECT * FROM hotel_provider_mappings WHERE hotel_id=? AND provider='serpapi_google_hotels' AND status='active'").bind(hotelId).first();
 }
@@ -359,9 +437,10 @@ async function drainSerpCurrentRateQueue(env,{limit=6}={}){
   }
 }
 
-export async function drainCurrentRateQueue(env,{limit=6}={}){
+export async function drainCurrentRateQueue(env,{limit=6,allowSandbox=false}={}){
+  if(String(env.NUITEE_API_KEY||"").trim())return drainNuiteeCurrentRateQueue(env,{limit,allowSandbox});
   if(String(env.SERPAPI_API_KEY||"").trim())return drainSerpCurrentRateQueue(env,{limit});
   const cfg=bookingConfig(env);
   if(cfg.token&&cfg.affiliateId)return drainBookingCurrentRateQueue(env,{limit});
-  return {ok:false,skipped:true,reason:"rate_provider_not_configured",providers:["serpapi_google_hotels","booking_demand"]};
+  return {ok:false,skipped:true,reason:"rate_provider_not_configured",providers:["nuitee_connect","serpapi_google_hotels","booking_demand"]};
 }
