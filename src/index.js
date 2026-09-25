@@ -399,19 +399,137 @@ async function recordEvent(request,env){
   return json({ok:true});
 }
 
+const travelpayoutsConfig = (env) => ({
+  token: String(env.TRAVELPAYOUTS_API_TOKEN||"").trim(),
+  partnerId: String(env.TRAVELPAYOUTS_PARTNER_ID||env.TRAVELPAYOUTS_MARKER||"").trim(),
+  projectId: String(env.TRAVELPAYOUTS_PROJECT_ID||"").trim()
+});
+
+const tpSubId = (clickId) => "sn_"+String(clickId||"").replace(/[^A-Za-z0-9_]/g,"_");
+
+async function travelpayoutsPartnerUrl(targetUrl,subId,env){
+  const cfg=travelpayoutsConfig(env);
+  if(!cfg.token||!cfg.partnerId||!cfg.projectId)return {ok:false,error:"travelpayouts_not_configured"};
+  const response=await fetch("https://api.travelpayouts.com/links/v1/create",{
+    method:"POST",
+    headers:{"content-type":"application/json","x-access-token":cfg.token},
+    body:JSON.stringify({trs:Number(cfg.projectId),marker:Number(cfg.partnerId),shorten:false,links:[{url:targetUrl,sub_id:subId}]})
+  });
+  let data={}; try{data=await response.json()}catch{}
+  const item=data?.result?.links?.[0];
+  if(!response.ok||item?.code!=="success"||!item?.partner_url)return {ok:false,error:item?.message||data?.error||("http_"+response.status)};
+  return {ok:true,url:item.partner_url};
+}
+
+async function travelpayoutsFields(env,campaignId){
+  const cfg=travelpayoutsConfig(env);
+  if(!cfg.token)return {ok:false,error:"travelpayouts_not_configured"};
+  const u=new URL("https://api.travelpayouts.com/statistics/v1/get_fields_list");
+  if(campaignId)u.searchParams.set("campaign_id",campaignId);
+  const r=await fetch(u,{headers:{"x-access-token":cfg.token}});
+  let data={};try{data=await r.json()}catch{}
+  if(!r.ok)return {ok:false,error:"http_"+r.status,data};
+  return {ok:true,fields:Array.isArray(data.fields)?data.fields:[]};
+}
+
+async function syncTravelpayoutsStats(env,campaignId,fromDate){
+  const cfg=travelpayoutsConfig(env);
+  if(!cfg.token)return {ok:false,error:"travelpayouts_not_configured"};
+  const runId=crypto.randomUUID();
+  await env.DB.prepare("INSERT INTO affiliate_sync_runs (id,provider,sync_type,campaign_id,status,started_at) VALUES (?,'travelpayouts','bookings',?,'running',?)")
+    .bind(runId,String(campaignId||""),nowIso()).run();
+  try{
+    const fieldsMeta=await travelpayoutsFields(env,campaignId);
+    if(!fieldsMeta.ok)throw new Error(fieldsMeta.error);
+    const available=new Set(fieldsMeta.fields.map(f=>f.name));
+    const desired=["action_id","external_click_id","sub_id","price_usd","paid_profit_usd","state","date","updated_at","created_at","campaign_id"];
+    const fields=desired.filter(x=>available.has(x));
+    for(const required of ["action_id","sub_id","state","date"]) if(!fields.includes(required))throw new Error("missing_required_field_"+required);
+    const filters=[
+      {field:"type",op:"eq",value:"action"},
+      {field:"campaign_id",op:"eq",value:Number(campaignId)},
+      {field:"date",op:"ge",value:fromDate}
+    ];
+    const r=await fetch("https://api.travelpayouts.com/statistics/v1/execute_query",{
+      method:"POST",
+      headers:{"content-type":"application/json","x-access-token":cfg.token},
+      body:JSON.stringify({fields,filters,sort:[{field:"date",order:"asc"}],offset:0,limit:10000})
+    });
+    let data={};try{data=await r.json()}catch{}
+    if(!r.ok)throw new Error(data?.error||("http_"+r.status));
+    const rows=Array.isArray(data.results)?data.results:[];
+    let written=0;
+    for(const row of rows){
+      const sub=String(row.sub_id||"");
+      const click= sub ? await env.DB.prepare("SELECT id,hotel_id,creator_id FROM affiliate_clicks WHERE provider='travelpayouts' AND partner_sub_id=? ORDER BY created_at DESC LIMIT 1").bind(sub).first() : null;
+      const actionId=String(row.action_id||""); if(!actionId)continue;
+      const state=String(row.state||"");
+      const status=state==="paid"?"completed":state==="canceled"?"canceled":"confirmed";
+      const bookingValue=row.price_usd==null?null:Number(row.price_usd);
+      const commission=row.paid_profit_usd==null?null:Number(row.paid_profit_usd);
+      await env.DB.prepare(`INSERT INTO booking_conversions
+        (id,click_id,provider,partner_booking_id,hotel_id,creator_id,booking_value,commission_value,currency,status,booked_at,created_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+        ON CONFLICT(provider,partner_booking_id) DO UPDATE SET
+          click_id=excluded.click_id,hotel_id=excluded.hotel_id,creator_id=excluded.creator_id,
+          booking_value=excluded.booking_value,commission_value=excluded.commission_value,
+          status=excluded.status,booked_at=excluded.booked_at`)
+        .bind("tp-"+actionId,click?.id||null,"travelpayouts",actionId,click?.hotel_id||null,click?.creator_id||null,
+          Number.isFinite(bookingValue)?bookingValue:null,Number.isFinite(commission)?commission:null,"USD",status,row.created_at||row.date||null,nowIso()).run();
+      written++;
+    }
+    await env.DB.prepare("UPDATE affiliate_sync_runs SET status='success',rows_seen=?,rows_written=?,finished_at=? WHERE id=?")
+      .bind(rows.length,written,nowIso(),runId).run();
+    return {ok:true,rows_seen:rows.length,rows_written:written};
+  }catch(e){
+    await env.DB.prepare("UPDATE affiliate_sync_runs SET status='failed',note=?,finished_at=? WHERE id=?")
+      .bind(safeLogError(e),nowIso(),runId).run();
+    return {ok:false,error:safeLogError(e)};
+  }
+}
+
+async function seedTravelpayoutsLinks(env,limit=200){
+  const cfg=travelpayoutsConfig(env);
+  if(!cfg.token||!cfg.partnerId||!cfg.projectId)return {ok:false,error:"travelpayouts_not_configured"};
+  await env.DB.prepare("UPDATE affiliate_providers SET enabled=1,updated_at=? WHERE id='travelpayouts'").bind(nowIso()).run();
+  const rows=(await env.DB.prepare(`SELECT h.id,h.name,h.city,h.country FROM hotels h
+    WHERE h.is_published=1 AND NOT EXISTS (
+      SELECT 1 FROM hotel_booking_links bl WHERE bl.hotel_id=h.id AND bl.provider_id='travelpayouts' AND bl.enabled=1
+    ) ORDER BY h.reddit_mention_count DESC,h.google_rating DESC LIMIT ?`).bind(Math.min(Math.max(Number(limit)||200,1),500)).all()).results||[];
+  let inserted=0;
+  for(const h of rows){
+    const ss=[h.name,h.city,h.country].filter(Boolean).join(" ");
+    const raw="https://www.booking.com/searchresults.html?ss="+encodeURIComponent(ss);
+    await env.DB.prepare("INSERT INTO hotel_booking_links (id,hotel_id,provider_id,destination_url,priority,enabled,metadata_json,created_at,updated_at) VALUES (?,?,?,?,20,1,?,?,?)")
+      .bind(crypto.randomUUID(),h.id,"travelpayouts",raw,JSON.stringify({brand:"booking.com",generated_search:true}),nowIso(),nowIso()).run();
+    inserted++;
+  }
+  const remaining=Number((await env.DB.prepare(`SELECT COUNT(*) n FROM hotels h WHERE h.is_published=1 AND NOT EXISTS (
+    SELECT 1 FROM hotel_booking_links bl WHERE bl.hotel_id=h.id AND bl.provider_id='travelpayouts' AND bl.enabled=1)`).first())?.n||0);
+  return {ok:true,inserted,remaining};
+}
+
 async function outbound(slug,request,env){
   const h=await env.DB.prepare("SELECT id,booking_url FROM hotels WHERE slug=? AND is_published=1").bind(slug).first();
   if(!h)return new Response("Hotel not found",{status:404});
   let link=await env.DB.prepare(`SELECT bl.destination_url,bl.provider_id,p.provider_type,p.config_json
     FROM hotel_booking_links bl JOIN affiliate_providers p ON p.id=bl.provider_id
-    WHERE bl.hotel_id=? AND bl.enabled=1 AND p.enabled=1 ORDER BY bl.priority,bl.created_at LIMIT 1`).bind(h.id).first();
+    WHERE bl.hotel_id=? AND bl.enabled=1 AND p.enabled=1
+    ORDER BY CASE WHEN bl.provider_id='travelpayouts' THEN 0 ELSE 1 END,bl.priority,bl.created_at LIMIT 1`).bind(h.id).first();
   if(!link && h.booking_url) link={destination_url:h.booking_url,provider_id:"direct",provider_type:"direct",config_json:"{}"};
   if(!link?.destination_url)return new Response("Booking link unavailable",{status:404});
   const clickId=crypto.randomUUID();
-  const destination=String(link.destination_url).replaceAll("{subid}",encodeURIComponent(clickId));
+  let destination=String(link.destination_url).replaceAll("{subid}",encodeURIComponent(clickId));
+  let partnerSubId=clickId;
+  if(link.provider_id==="travelpayouts"){
+    partnerSubId=tpSubId(clickId);
+    const affiliate=await travelpayoutsPartnerUrl(destination,partnerSubId,env);
+    if(affiliate.ok) destination=affiliate.url;
+    else console.error(JSON.stringify({type:"travelpayouts_link_failed",hotel_id:h.id,error:affiliate.error}));
+  }
   try{
     await env.DB.prepare("INSERT INTO affiliate_clicks (id,hotel_id,provider,destination_url,partner_sub_id,session_id,referrer,created_at) VALUES (?,?,?,?,?,?,?,?)")
-      .bind(clickId,h.id,link.provider_id,destination,clickId,null,request.headers.get("referer"),nowIso()).run();
+      .bind(clickId,h.id,link.provider_id,destination,partnerSubId,null,request.headers.get("referer"),nowIso()).run();
   }catch(e){console.error("affiliate_click_failed",safeLogError(e))}
   return Response.redirect(destination,302);
 }
@@ -662,6 +780,44 @@ async function createMediaIngest(request,env){
   return json({ok:true,id,status:"pending"});
 }
 
+async function adminTravelpayoutsPage(request,env){
+  const moderator=adminEmail(request,env);
+  if(!moderator)return new Response("Not found",{status:404});
+  const cfg=travelpayoutsConfig(env);
+  let message="";
+  if(request.method==="POST"){
+    const form=await request.formData(),action=String(form.get("action")||"");
+    if(action==="seed_links"){
+      const out=await seedTravelpayoutsLinks(env,Number(form.get("limit")||200));
+      message=out.ok?`Created ${out.inserted} hotel booking links; ${out.remaining} remain.`:`Travelpayouts setup error: ${out.error}`;
+    }else if(action==="test_link"){
+      const out=await travelpayoutsPartnerUrl("https://www.booking.com/searchresults.html?ss=Paris",tpSubId(crypto.randomUUID()),env);
+      message=out.ok?"Travelpayouts partner-link API is working.":"Partner-link test failed: "+out.error;
+    }else if(action==="sync_stats"){
+      const campaign=String(form.get("campaign_id")||"").trim();
+      const days=Math.min(Math.max(Number(form.get("days")||30),1),365);
+      const from=new Date(Date.now()-days*86400000).toISOString().slice(0,10);
+      const out=campaign?await syncTravelpayoutsStats(env,campaign,from):{ok:false,error:"campaign_id_required"};
+      message=out.ok?`Synced ${out.rows_written} of ${out.rows_seen} booking rows.`:`Statistics sync failed: ${out.error}`;
+    }
+  }
+  const linked=Number((await env.DB.prepare("SELECT COUNT(DISTINCT hotel_id) n FROM hotel_booking_links WHERE provider_id='travelpayouts' AND enabled=1").first())?.n||0);
+  const clicks=Number((await env.DB.prepare("SELECT COUNT(*) n FROM affiliate_clicks WHERE provider='travelpayouts'").first())?.n||0);
+  const conversions=Number((await env.DB.prepare("SELECT COUNT(*) n FROM booking_conversions WHERE provider='travelpayouts'").first())?.n||0);
+  const revenue=Number((await env.DB.prepare("SELECT COALESCE(SUM(commission_value),0) n FROM booking_conversions WHERE provider='travelpayouts' AND status='completed'").first())?.n||0);
+  const runs=(await env.DB.prepare("SELECT campaign_id,status,rows_seen,rows_written,note,started_at,finished_at FROM affiliate_sync_runs WHERE provider='travelpayouts' ORDER BY started_at DESC LIMIT 20").all()).results||[];
+  const configured={token:Boolean(cfg.token),partner_id:Boolean(cfg.partnerId),project_id:Boolean(cfg.projectId)};
+  return page(shell(`<section class="hero" style="padding-bottom:22px"><div class="eyebrow">Monetization</div><h1>Travelpayouts</h1><p>Server-side partner links, click-level SubID attribution, and booking/revenue reconciliation into SecretNests.</p></section>
+  ${message?`<div class="notice"><strong>${esc(message)}</strong></div>`:""}
+  <div class="proof"><div><strong>${linked}</strong><span class="muted">hotels with TP links</span></div><div><strong>${clicks}</strong><span class="muted">tracked clicks</span></div><div><strong>${conversions}</strong><span class="muted">booking actions</span></div><div><strong>${money(revenue)}</strong><span class="muted">completed commission</span></div></div>
+  <section class="section"><div class="grid">
+    <div class="card"><h2>Configuration</h2><ul class="list"><li>API token: <strong>${configured.token?"configured":"missing"}</strong></li><li>Partner ID: <strong>${configured.partner_id?"configured":"missing"}</strong></li><li>Project ID: <strong>${configured.project_id?"configured":"missing"}</strong></li></ul><form method="post"><button class="btn" name="action" value="test_link">Test partner-link API</button></form></div>
+    <form class="card" method="post"><h2>Seed hotel booking links</h2><p>Creates Booking.com hotel-search destinations for hotels that do not yet have a Travelpayouts link. The affiliate link itself is generated only when the traveler clicks.</p><label>Batch size<br><input name="limit" type="number" min="1" max="500" value="200" style="width:100%;padding:10px"></label><p><button class="btn" name="action" value="seed_links">Create next batch</button></p></form>
+    <form class="card" method="post"><h2>Sync booking statistics</h2><p>Enter the numeric Travelpayouts campaign/program ID from the program URL.</p><label>Campaign ID<br><input name="campaign_id" required style="width:100%;padding:10px"></label><label>Lookback days<br><input name="days" type="number" min="1" max="365" value="30" style="width:100%;padding:10px"></label><p><button class="btn" name="action" value="sync_stats">Sync bookings</button></p></form>
+  </div></section>
+  <section><h2>Recent sync runs</h2><ul class="list">${runs.map(r=>`<li><strong>${esc(r.status)}</strong> · campaign ${esc(r.campaign_id||"—")} · ${r.rows_written}/${r.rows_seen} written · ${esc(r.started_at||"")}${r.note?" · "+esc(r.note):""}</li>`).join("")||'<li class="muted">No statistics syncs yet.</li>'}</ul></section>`),env,{title:"Travelpayouts | SecretNests",canonical:"/admin/travelpayouts",robots:"noindex,nofollow"});
+}
+
 async function adminRatesPage(request,env){
   const moderator=adminEmail(request,env);
   if(!moderator)return new Response("Not found",{status:404});
@@ -770,6 +926,7 @@ async function route(request,env){
   if(request.method==="POST" && url.pathname==="/api/admin/verification-review")return verificationReview(request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/api/admin/media")return adminMedia(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/media-ingest")return createMediaIngest(request,env);
+  if((request.method==="GET"||request.method==="POST") && url.pathname==="/admin/travelpayouts")return adminTravelpayoutsPage(request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/admin/rates")return adminRatesPage(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/rates")return ingestRates(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/recompute-values")return recomputeValues(request,env);
