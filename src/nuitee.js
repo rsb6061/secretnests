@@ -110,23 +110,29 @@ function allOffers(payload){
 export function extractNuiteeRate(payload,nights=1,currency="USD"){
   const options=[];
   for(const {hotel,offer} of allOffers(payload)){
-    const publicTotal=money(offer?.suggestedSellingPrice,currency);
-    const retailTotal=money(offer?.offerRetailRate,currency);
-    const total=publicTotal??retailTotal;
-    if(total==null)continue;
-    const rates=Array.isArray(offer?.rates)?offer.rates:[];
-    const first=rates[0]||{};
-    options.push({
-      nightly_rate:total/Math.max(Number(nights)||1,1),
-      currency:String(offer?.suggestedSellingPrice?.currency||offer?.offerRetailRate?.currency||currency||"USD").toUpperCase(),
-      room_type:String(first?.name||offer?.roomName||"").slice(0,240)||null,
-      rate_name:String(first?.boardName||first?.boardType||offer?.rateType||"").slice(0,160)||null,
-      taxes_fees_included:null,
-      public_total:publicTotal,
-      bookable_total:retailTotal,
-      offer_id:String(offer?.offerId||"")||null,
-      hotel_id:hotelId(hotel)
-    });
+    const rates=Array.isArray(offer?.rates)&&offer.rates.length?offer.rates:[{}];
+    for(const rate of rates){
+      const publicTotal=money(offer?.suggestedSellingPrice,currency)??money(rate?.suggestedSellingPrice,currency);
+      const retailTotal=money(offer?.offerRetailRate,currency)
+        ??money(rate?.offerRetailRate,currency)
+        ??money(rate?.retailRate?.total,currency)
+        ??money(rate?.retailRate?.initialPrice,currency);
+      const total=publicTotal??retailTotal;
+      if(total==null)continue;
+      const taxes=Array.isArray(rate?.retailRate?.taxesAndFees)?rate.retailRate.taxesAndFees:[];
+      const allIncluded=taxes.length?taxes.every(x=>x?.included===true):null;
+      options.push({
+        nightly_rate:total/Math.max(Number(nights)||1,1),
+        currency:String(offer?.suggestedSellingPrice?.currency||offer?.offerRetailRate?.currency||rate?.retailRate?.total?.[0]?.currency||currency||"USD").toUpperCase(),
+        room_type:String(rate?.name||offer?.roomName||"").slice(0,240)||null,
+        rate_name:String(rate?.boardName||rate?.boardType||offer?.rateType||"").slice(0,160)||null,
+        taxes_fees_included:allIncluded,
+        public_total:publicTotal,
+        bookable_total:retailTotal,
+        offer_id:String(offer?.offerId||rate?.offerId||"")||null,
+        hotel_id:hotelId(hotel)
+      });
+    }
   }
   options.sort((a,b)=>a.nightly_rate-b.nightly_rate);
   return options[0]||null;
