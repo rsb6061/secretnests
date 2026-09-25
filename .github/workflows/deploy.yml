@@ -3,7 +3,23 @@ name: SecretNests Cloudflare Release
 on:
   push:
     branches: [main]
+    paths:
+      - "src/**"
+      - "migrations/**"
+      - "public/**"
+      - "scripts/**"
+      - "tests/**"
+      - "package.json"
+      - "package-lock.json"
+      - "wrangler.toml"
+      - ".github/workflows/deploy.yml"
   workflow_dispatch:
+    inputs:
+      run_market_pilot:
+        description: "Run the market-intelligence pilot and diagnostic queries"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -15,7 +31,7 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 8
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
@@ -26,7 +42,7 @@ jobs:
         with:
           node-version: 22
 
-      - run: npm install
+      - run: npm ci
       - run: npm run check
 
       - name: Resolve Cloudflare account from API token
@@ -191,6 +207,7 @@ jobs:
           esac
 
       - name: Run bounded market-intelligence pilot
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_market_pilot }}
         id: pilot_run
         shell: bash
         env:
@@ -213,6 +230,7 @@ jobs:
           echo "result=$(echo "$RESULT" | jq -c .)" >> "$GITHUB_OUTPUT"
 
       - name: Inspect pilot quality
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_market_pilot }}
         shell: bash
         run: |
           set -euo pipefail
