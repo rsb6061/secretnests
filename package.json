@@ -10,7 +10,7 @@
     "seed:hotels": "node scripts/build-legacy-hotel-seed.mjs",
     "seed:reddit": "node scripts/build-reddit-evidence-seed.mjs",
     "audit:secrets": "node scripts/audit-no-secrets.mjs",
-    "check": "node --check src/index.js && node --check src/enrichment-worker.js && node --check src/nuitee.js && node --check src/serpapi.js && node --check src/rate-worker.js && node --check src/external-evidence-worker.js && node --check scripts/build-legacy-hotel-seed.mjs && node --check scripts/build-reddit-evidence-seed.mjs && node --check scripts/audit-no-secrets.mjs && node --check scripts/audit-migration.mjs && npm run audit:secrets && npm run audit:migration && npm run audit:media && npm run qa:hotels && npm run audit:seo && npm test",
+    "check": "node --check src/index.js && node --check src/enrichment-worker.js && node --check src/nuitee-top250-worker.js && node --check src/nuitee-admin.js && node --check src/nuitee.js && node --check src/serpapi.js && node --check src/rate-worker.js && node --check src/external-evidence-worker.js && node --check scripts/build-legacy-hotel-seed.mjs && node --check scripts/build-reddit-evidence-seed.mjs && node --check scripts/audit-no-secrets.mjs && node --check scripts/audit-migration.mjs && npm run audit:secrets && npm run audit:migration && npm run audit:media && npm run qa:hotels && npm run audit:seo && npm test",
     "audit:migration": "node scripts/audit-migration.mjs",
     "audit:media": "node scripts/audit-media-policy.mjs",
     "qa:hotels": "node scripts/qa-hotels.mjs",

@@ -2,6 +2,8 @@ import { drainOfficialHotelQueue } from "./enrichment-worker.js";
 import { drainCurrentRateQueue } from "./rate-worker.js";
 import { drainExternalEvidenceQueue } from "./external-evidence-worker.js";
 import { refreshHotelEnrichment } from "./enrichment.js";
+import { runNuiteeTop250Enrichment, resetNuiteeAuditHotel } from "./nuitee-top250-worker.js";
+import { nuiteeAdminBody } from "./nuitee-admin.js";
 import { recomputeHotelValuation } from "./value-engine.js";
 import { sameOrigin, bodyTooLarge, enforceRateLimit, adminEmail, safeLogError } from "./security.js";
 
@@ -963,6 +965,37 @@ async function adminDrainEvidence(request,env){
   return json(out);
 }
 
+async function adminDrainNuitee(request,env){
+  const moderator=adminEmail(request,env);
+  if(!moderator)return new Response("Not found",{status:404});
+  const u=new URL(request.url);
+  const out=await runNuiteeTop250Enrichment(env,{
+    mapLimit:Math.min(Math.max(Number(u.searchParams.get("map")||12),1),40),
+    reviewLimit:Math.min(Math.max(Number(u.searchParams.get("reviews")||6),1),20),
+    rateLimit:Math.min(Math.max(Number(u.searchParams.get("rates")||100),1),200)
+  });
+  return json(out);
+}
+
+async function adminNuiteePage(request,env){
+  const moderator=adminEmail(request,env);
+  if(!moderator)return new Response("Not found",{status:404});
+  let message="";
+  if(request.method==="POST"){
+    const form=await request.formData(),action=String(form.get("action")||"");
+    if(action==="run"){
+      const out=await runNuiteeTop250Enrichment(env,{mapLimit:12,reviewLimit:6,rateLimit:100});
+      message="Nuitee batch: "+Number(out.mapping?.mapped||0)+" mapped, "+Number(out.mapping?.metadata||0)+" metadata, "+Number(out.reviews?.written||0)+" reviews, "+Number(out.rates?.observations||0)+" sandbox rate observations.";
+    }else if(action==="reset"){
+      const hotelId=String(form.get("hotel_id")||"");
+      if(hotelId)await resetNuiteeAuditHotel(env.DB,hotelId);
+      message="Nuitee audit reset.";
+    }
+  }
+  const body=await nuiteeAdminBody(env.DB);
+  return page(shell((message?'<div class="notice"><strong>'+esc(message)+'</strong></div>':"")+body),env,{title:"Nuitee audit | SecretNests",canonical:"/admin/nuitee",robots:"noindex,nofollow"});
+}
+
 async function adminEnrichmentPage(request,env){
   const moderator=adminEmail(request,env);
   if(!moderator)return new Response("Not found",{status:404});
@@ -1055,6 +1088,10 @@ async function internalMarketPilot(request,env){
   const expected=String(env.PRODUCTION_ACTIVATION_TOKEN||"");
   const auth=String(request.headers.get("authorization")||"");
   if(!expected||auth!=="Bearer "+expected)return new Response("Not found",{status:404});
+  if(String(env.NUITEE_API_KEY||"").trim()){
+    const nuitee=await runNuiteeTop250Enrichment(env,{mapLimit:12,reviewLimit:6,rateLimit:100});
+    return json({ok:true,mode:String(env.MARKET_INTELLIGENCE_MODE||"pilot"),nuitee});
+  }
   const rates=await drainCurrentRateQueue(env,{limit:5,allowSandbox:true});
   const evidence=await drainExternalEvidenceQueue(env,{limit:2,allowSandbox:true});
   return json({ok:true,mode:String(env.MARKET_INTELLIGENCE_MODE||"pilot"),rates,evidence});
@@ -1112,9 +1149,11 @@ async function route(request,env){
   if(request.method==="POST" && url.pathname==="/api/admin/enrichment/drain")return adminDrainEnrichment(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/enrichment/drain-rates")return adminDrainRates(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/enrichment/drain-evidence")return adminDrainEvidence(request,env);
+  if(request.method==="POST" && url.pathname==="/api/admin/enrichment/drain-nuitee")return adminDrainNuitee(request,env);
   if(request.method==="GET" && url.pathname==="/api/admin/enrichment/next")return adminEnrichmentNext(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/enrichment/apply")return adminEnrichmentApply(request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/admin/enrichment")return adminEnrichmentPage(request,env);
+  if((request.method==="GET"||request.method==="POST") && url.pathname==="/admin/nuitee")return adminNuiteePage(request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/admin/travelpayouts")return adminTravelpayoutsPage(request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/admin/rates")return adminRatesPage(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/rates")return ingestRates(request,env);
@@ -1138,10 +1177,14 @@ export default {
       return;
     }
     if(controller.cron==="7,22,37,52 * * * *"){
-      ctx.waitUntil(Promise.allSettled([
+      const jobs=[
         drainOfficialHotelQueue(env,{limit:8}),
         runExternalEvidenceAutomation(env)
-      ]).then(results=>console.log(JSON.stringify({type:"enrichment_drain",results:results.map(x=>x.status==="fulfilled"?x.value:{ok:false,error:safeLogError(x.reason)})}))).catch(e=>console.error(JSON.stringify({type:"enrichment_drain_error",message:safeLogError(e)}))));
+      ];
+      if(String(env.NUITEE_TOP250_AUDIT_ENABLED||"false").toLowerCase()==="true"&&String(env.NUITEE_API_KEY||"").trim()){
+        jobs.push(runNuiteeTop250Enrichment(env,{mapLimit:24,reviewLimit:12,rateLimit:100}));
+      }
+      ctx.waitUntil(Promise.allSettled(jobs).then(results=>console.log(JSON.stringify({type:"enrichment_drain",results:results.map(x=>x.status==="fulfilled"?x.value:{ok:false,error:safeLogError(x.reason)})}))).catch(e=>console.error(JSON.stringify({type:"enrichment_drain_error",message:safeLogError(e)}))));
       return;
     }
     ctx.waitUntil((async()=>{

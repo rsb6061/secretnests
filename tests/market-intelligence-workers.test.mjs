@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import { rateWindows, matchBookingCandidate, extractBookerRate } from "../src/rate-worker.js";
 import { citationUrls } from "../src/external-evidence-worker.js";
 import { matchSerpHotelCandidate, extractSerpHotelRate, reviewGroups } from "../src/serpapi.js";
-import { matchNuiteeCandidate, extractNuiteeRate, summarizeNuiteeSentiment } from "../src/nuitee.js";
+import { matchNuiteeCandidate, extractNuiteeRate, summarizeNuiteeSentiment, extractNuiteeMetadata } from "../src/nuitee.js";
+import { nuiteeCoverageWindows } from "../src/nuitee-top250-worker.js";
 
 test("rateWindows creates two valid two-night future windows",()=>{
   const windows=rateWindows(new Date("2026-09-25T12:00:00Z"));
@@ -128,4 +129,34 @@ test("Nuitee sentiment summary stores aggregate signals without raw reviewer tex
   assert.match(signal.summary,/Location 9\.1\/10/);
   assert.doesNotMatch(signal.summary,/raw description/);
   assert.deepEqual(signal.best_for,["Great location","Friendly staff"]);
+});
+
+test("Nuitee current retailRate response parses total and included taxes",()=>{
+  const rate=extractNuiteeRate({data:[{hotelId:"lp1",roomTypes:[{offerId:"o1",rates:[{
+    name:"Deluxe King",boardName:"Breakfast",retailRate:{total:[{amount:1200,currency:"USD"}],taxesAndFees:[{included:true}]}
+  }]}]}]},2,"USD");
+  assert.equal(rate.nightly_rate,600);
+  assert.equal(rate.bookable_total,1200);
+  assert.equal(rate.taxes_fees_included,true);
+  assert.equal(rate.room_type,"Deluxe King");
+});
+
+test("Nuitee metadata normalization captures safe structured fields",()=>{
+  const m=extractNuiteeMetadata({id:"lp1",name:"Example",hotelDescription:"<p>Quiet luxury.</p>",address:"1 Main St",city:"Paris",country:"FR",
+    starRating:5,rating:9.2,location:{latitude:48.8,longitude:2.3},hotelFacilities:["Spa","Pool"],hotelImages:[{url:"https://img.example/a.jpg",defaultImage:true}],rooms:[{id:1}]});
+  assert.equal(m.provider_hotel_id,"lp1");
+  assert.equal(m.description,"Quiet luxury.");
+  assert.equal(m.star_rating,5);
+  assert.deepEqual(m.amenities,["Spa","Pool"]);
+  assert.equal(m.room_count,1);
+});
+
+test("Nuitee coverage windows are three standardized two-night weekends",()=>{
+  const windows=nuiteeCoverageWindows(new Date("2026-09-25T12:00:00Z"));
+  assert.equal(windows.length,3);
+  for(const w of windows){
+    assert.equal(w.nights,2);
+    assert.equal(new Date(w.checkin+"T00:00:00Z").getUTCDay(),5);
+    assert.equal((new Date(w.checkout+"T00:00:00Z")-new Date(w.checkin+"T00:00:00Z"))/86400000,2);
+  }
 });
