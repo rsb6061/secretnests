@@ -239,6 +239,58 @@ async function listPage(handle, slug, env){
   return page(shell(`<section class="hero" style="padding-bottom:20px"><div class="eyebrow">A list by <a href="/@${encodeURIComponent(l.handle)}">@${esc(l.handle)}</a></div><h1>${esc(l.title)}</h1><p>${esc(l.description||"")}</p></section><ul class="list">${items.map((x,i)=>`<li><a href="/hotel/${encodeURIComponent(x.slug)}"><strong>${x.rank||i+1}. ${esc(x.name)}</strong></a> · ${esc([x.city,x.country].filter(Boolean).join(", "))}<br><span class="muted">${esc(x.note||"")}</span></li>`).join("")||'<li class="muted">No hotels added yet.</li>'}</ul>`),env,{title:`${l.title} by @${l.handle} | SecretNests`,canonical:`/@${encodeURIComponent(l.handle)}/lists/${encodeURIComponent(l.slug)}`});
 }
 
+async function contributePage(request,env){
+  const url=new URL(request.url);
+  const source=(url.searchParams.get("src")||"").trim().slice(0,80);
+  const campaign=(url.searchParams.get("campaign")||"").trim().slice(0,120);
+  const target=300;
+  const submitted=Number((await env.DB.prepare("SELECT COUNT(*) n FROM trip_submissions WHERE status<>'rejected'").first())?.n||0);
+  const published=Number((await env.DB.prepare("SELECT COUNT(*) n FROM stays WHERE COALESCE(verification_method,'')<>'demo'").first())?.n||0);
+  const targets=(await env.DB.prepare(`SELECT h.id,h.name,h.slug,h.city,h.country,p.priority_rank,
+      (SELECT COUNT(*) FROM trip_submissions ts WHERE ts.hotel_id=h.id AND ts.status<>'rejected') submission_count
+    FROM hotel_enrichment_profiles p JOIN hotels h ON h.id=p.hotel_id
+    WHERE p.cohort='priority_250' AND p.first_party_score=0
+    ORDER BY p.priority_rank LIMIT 12`).all()).results||[];
+  const qs=[source?"src="+encodeURIComponent(source):"",campaign?"campaign="+encodeURIComponent(campaign):""].filter(Boolean).join("&");
+  const suffix=qs?"&"+qs:"";
+  const progress=Math.min(100,Math.round(submitted/target*100));
+  return page(shell(`<section class="hero" data-autoevent="contribution_landing_view"><div class="eyebrow">Build the traveler value map</div><h1>Tell us what your hotel stay was actually worth.</h1><p>SecretNests is building its first 300 real stay observations. Share the nightly price you paid, what you'd happily pay again, and whether you'd return. Positive and negative takes are equally useful.</p><div class="hero-actions"><a class="btn" href="/add-your-trip${qs?"?"+qs:""}">Add any stay</a><a class="btn secondary" href="#priority-hotels">See hotels that need data</a></div></section>
+  <section class="proof"><div><strong>${submitted}</strong><span class="muted">submitted stays</span></div><div><strong>${published}</strong><span class="muted">published first-party stays</span></div><div><strong>${target}</strong><span class="muted">first milestone</span></div><div><strong>${progress}%</strong><span class="muted">submission progress</span></div></section>
+  <section class="section"><div class="section-head"><div><div class="eyebrow">Why contribute</div><h2>Two numbers are more useful than another star rating.</h2></div></div><div class="acquisition-grid"><div class="card"><h3>What you paid</h3><p>The real nightly rate, with room and booking context.</p></div><div class="card"><h3>What you'd pay again</h3><p>Your own price threshold for repeating the stay.</p></div><div class="card"><h3>Would you return?</h3><p>A clean repeat-intent signal, independent of affiliate economics.</p></div></div></section>
+  <section class="section" id="priority-hotels"><div class="section-head"><div><div class="eyebrow">Priority data gaps</div><h2>Stayed at one of these?</h2></div><span class="muted">These are high-priority SecretNests hotels without a published first-party value sample yet.</span></div><div class="grid">${targets.map(h=>`<a class="card" data-event="contribution_hotel_select" data-hotel-id="${attr(h.id)}" href="/add-your-trip?hotel=${encodeURIComponent(h.slug)}${suffix}"><div class="eyebrow">Priority #${h.priority_rank}</div><h3>${esc(h.name)}</h3><p class="muted">${esc([h.city,h.country].filter(Boolean).join(", "))} · ${Number(h.submission_count||0)} pending/submitted</p><strong>Add your stay →</strong></a>`).join("")||'<div class="notice">The current priority cohort already has first-party coverage.</div>'}</div></section>
+  <section class="section"><div class="notice"><strong>No pay-for-positive-review system.</strong><p>Contributions can be favorable, mixed, or negative. Affiliate revenue and creator economics are kept separate from review sentiment and value opinions.</p></div></section>`),env,{title:"Contribute a hotel stay | SecretNests",description:"Share what you paid for a hotel, what you would pay again, and whether you would return. Help build SecretNests traveler-assessed hotel value data.",canonical:"/contribute"});
+}
+
+async function adminContributionsPage(request,env){
+  const moderator=adminEmail(request,env);
+  if(!moderator)return new Response("Not found",{status:404});
+  const campaigns=(await env.DB.prepare(`SELECT c.code,c.name,c.channel,c.target_count,c.status,
+      (SELECT COUNT(*) FROM trip_submissions ts WHERE ts.contribution_campaign=c.code AND ts.status<>'rejected') submissions,
+      (SELECT COUNT(DISTINCT ae.session_id) FROM analytics_events ae WHERE json_extract(ae.metadata_json,'$.campaign')=c.code AND ae.event_name='contribution_landing_view') landing_sessions,
+      (SELECT COUNT(DISTINCT ae.session_id) FROM analytics_events ae WHERE json_extract(ae.metadata_json,'$.campaign')=c.code AND ae.event_name='contribution_started') started_sessions
+    FROM contribution_campaigns c ORDER BY c.created_at`).all()).results||[];
+  const totals=await env.DB.prepare(`SELECT
+      (SELECT COUNT(*) FROM trip_submissions WHERE status<>'rejected') submissions,
+      (SELECT COUNT(*) FROM stays WHERE COALESCE(verification_method,'')<>'demo') published_stays,
+      (SELECT COUNT(DISTINCT hotel_id) FROM trip_submissions WHERE status<>'rejected' AND hotel_id IS NOT NULL) hotels_touched,
+      (SELECT COUNT(DISTINCT session_id) FROM analytics_events WHERE event_name='contribution_landing_view') landing_sessions,
+      (SELECT COUNT(DISTINCT session_id) FROM analytics_events WHERE event_name='contribution_started') started_sessions,
+      (SELECT COUNT(DISTINCT session_id) FROM analytics_events WHERE event_name='contribution_submitted') submitted_sessions`).first();
+  const targets=(await env.DB.prepare(`SELECT h.name,h.slug,h.city,h.country,p.priority_rank,
+      (SELECT COUNT(*) FROM trip_submissions ts WHERE ts.hotel_id=h.id AND ts.status<>'rejected') submissions
+    FROM hotel_enrichment_profiles p JOIN hotels h ON h.id=p.hotel_id
+    WHERE p.cohort='priority_250' AND p.first_party_score=0
+    ORDER BY p.priority_rank LIMIT 40`).all()).results||[];
+  const recent=(await env.DB.prepare(`SELECT ts.created_at,ts.hotel_name,ts.city,ts.contribution_source,ts.contribution_campaign,ts.status
+    FROM trip_submissions ts ORDER BY ts.created_at DESC LIMIT 30`).all()).results||[];
+  const base=ORIGIN+"/contribute";
+  return page(shell(`<section class="hero" style="padding-bottom:20px"><div class="eyebrow">Contribution acquisition</div><h1>First 300 stay campaign</h1><p>Track outreach by source and campaign, then concentrate recruiting on the highest-priority hotels still missing first-party value data.</p></section>
+  <div class="proof"><div><strong>${Number(totals?.submissions||0)}</strong><span class="muted">submissions</span></div><div><strong>${Number(totals?.published_stays||0)}</strong><span class="muted">published stays</span></div><div><strong>${Number(totals?.hotels_touched||0)}</strong><span class="muted">hotels touched</span></div><div><strong>${Number(totals?.landing_sessions||0)}</strong><span class="muted">landing sessions</span></div><div><strong>${Number(totals?.started_sessions||0)}</strong><span class="muted">starts</span></div><div><strong>${Number(totals?.submitted_sessions||0)}</strong><span class="muted">tracked submits</span></div></div>
+  <section class="section"><div class="section-head"><div><div class="eyebrow">Campaign links</div><h2>Recruiting cohorts</h2></div></div><div class="grid">${campaigns.map(c=>{const link=base+"?src="+encodeURIComponent(c.channel)+"&campaign="+encodeURIComponent(c.code);return `<div class="card"><div class="eyebrow">${esc(c.channel)} · ${esc(c.status)}</div><h3>${esc(c.name)}</h3><p><strong>${Number(c.submissions||0)} / ${Number(c.target_count||0)}</strong> submissions</p><p class="muted">${Number(c.landing_sessions||0)} landing sessions · ${Number(c.started_sessions||0)} starts</p><input readonly value="${attr(link)}" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px"></div>`}).join("")}</div></section>
+  <section class="section"><div class="section-head"><div><div class="eyebrow">Target list</div><h2>Highest-priority hotels still needing a stay</h2></div><span class="muted">Use hotel-specific links when the recruit is known to have stayed there.</span></div><div style="overflow:auto"><table class="fact-table"><thead><tr><th>#</th><th>Hotel</th><th>Submissions</th><th>Tracked link</th></tr></thead><tbody>${targets.map(h=>{const link=ORIGIN+"/add-your-trip?hotel="+encodeURIComponent(h.slug)+"&src=direct&campaign=founder-network";return `<tr><td>${h.priority_rank}</td><td><a href="/hotel/${encodeURIComponent(h.slug)}"><strong>${esc(h.name)}</strong></a><br><span class="kicker">${esc([h.city,h.country].filter(Boolean).join(", "))}</span></td><td>${Number(h.submissions||0)}</td><td><input readonly value="${attr(link)}" style="width:100%;min-width:340px;padding:8px;border:1px solid #ddd;border-radius:7px"></td></tr>`}).join("")}</tbody></table></div></section>
+  <section class="section"><div class="section-head"><div><div class="eyebrow">Recent activity</div><h2>Attributed submissions</h2></div></div><ul class="list">${recent.map(x=>`<li><strong>${esc(x.hotel_name)}</strong> · ${esc(x.city||"")}<br><span class="muted">${esc(x.created_at)} · source ${esc(x.contribution_source||"organic")} · campaign ${esc(x.contribution_campaign||"none")} · ${esc(x.status)}</span></li>`).join("")||'<li class="muted">No submissions yet.</li>'}</ul></section>`),env,{title:"Contribution acquisition | SecretNests",canonical:"/admin/contributions",robots:"noindex,nofollow"});
+}
+
 async function addTripPage(request,env){
   const url=new URL(request.url),hotelSlug=(url.searchParams.get("hotel")||"").trim();
   const prefilled=hotelSlug?await env.DB.prepare("SELECT id,name,slug,city,country FROM hotels WHERE slug=? AND is_published=1").bind(hotelSlug).first():null;
