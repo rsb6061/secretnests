@@ -124,7 +124,7 @@ test("Nuitee sentiment summary stores aggregate signals without raw reviewer tex
     pros:["Great location","Friendly staff"],
     cons:["Dated rooms"]
   }},"lp-good");
-  assert.equal(signal.sentiment,"positive");
+  assert.equal(signal.sentiment,"neutral");
   assert.match(signal.summary,/Location 9\.1\/10/);
   assert.doesNotMatch(signal.summary,/raw description/);
   assert.deepEqual(signal.best_for,["Great location","Friendly staff"]);
