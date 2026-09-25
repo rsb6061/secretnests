@@ -1,3 +1,4 @@
+import { refreshHotelEnrichment } from "./enrichment.js";
 import { recomputeHotelValuation } from "./value-engine.js";
 import { sameOrigin, bodyTooLarge, enforceRateLimit, adminEmail, safeLogError } from "./security.js";
 
@@ -877,6 +878,68 @@ async function recomputeValues(request,env){
   return json({ok:true,recomputed:out.length});
 }
 
+async function adminEnrichmentPage(request,env){
+  const moderator=adminEmail(request,env);
+  if(!moderator)return new Response("Not found",{status:404});
+  let message="";
+  if(request.method==="POST"){
+    const form=await request.formData(),action=String(form.get("action")||"");
+    if(action==="refresh"){
+      const out=await refreshHotelEnrichment(env.DB);
+      message=`Rebuilt priority ranking for ${out.hotels_scored} hotels. Top 250 average completeness: ${out.avg_completeness}%. ${out.queue_items} open enrichment tasks.`;
+    }else if(action==="reset_task"){
+      const id=String(form.get("id")||"");
+      if(id)await env.DB.prepare("UPDATE hotel_enrichment_queue SET status='queued',attempts=0,last_error=NULL,locked_at=NULL,updated_at=? WHERE id=?").bind(nowIso(),id).run();
+      message="Task returned to queue.";
+    }
+  }
+
+  const summary=await env.DB.prepare(`SELECT
+    COUNT(*) total,
+    SUM(CASE WHEN cohort='priority_250' THEN 1 ELSE 0 END) priority_count,
+    ROUND(AVG(CASE WHEN cohort='priority_250' THEN completeness_score END),1) avg_completeness,
+    SUM(CASE WHEN cohort='priority_250' AND booking_score=0 THEN 1 ELSE 0 END) missing_booking,
+    SUM(CASE WHEN cohort='priority_250' AND rate_score=0 THEN 1 ELSE 0 END) missing_rate,
+    SUM(CASE WHEN cohort='priority_250' AND media_score=0 THEN 1 ELSE 0 END) missing_media,
+    SUM(CASE WHEN cohort='priority_250' AND evidence_score=0 THEN 1 ELSE 0 END) missing_evidence,
+    SUM(CASE WHEN cohort='priority_250' AND first_party_score=0 THEN 1 ELSE 0 END) missing_first_party
+    FROM hotel_enrichment_profiles`).first();
+
+  const top=(await env.DB.prepare(`SELECT h.id,h.name,h.slug,h.city,h.country,hep.priority_rank,hep.priority_score,hep.completeness_score,
+    hep.facts_score,hep.booking_score,hep.rate_score,hep.media_score,hep.evidence_score,hep.first_party_score,hep.missing_json
+    FROM hotel_enrichment_profiles hep JOIN hotels h ON h.id=hep.hotel_id
+    WHERE hep.cohort='priority_250' ORDER BY hep.priority_rank LIMIT 250`).all()).results||[];
+
+  const q=(await env.DB.prepare(`SELECT heq.id,heq.task_type,heq.status,heq.priority,heq.source_hint,heq.attempts,heq.last_error,h.name,h.slug
+    FROM hotel_enrichment_queue heq JOIN hotels h ON h.id=heq.hotel_id
+    WHERE heq.status IN ('queued','working','failed')
+    ORDER BY heq.priority,heq.updated_at LIMIT 100`).all()).results||[];
+
+  const gap=(n)=>Number(n||0).toLocaleString();
+  return page(shell(`<section class="hero" style="padding-bottom:20px"><div class="eyebrow">Hotel data operations</div><h1>Enrichment command center</h1><p>SecretNests ranks the full hotel corpus, promotes the highest-value 250 into the working cohort, measures completeness, and maintains a durable queue for every missing layer.</p></section>
+  ${message?`<div class="notice"><strong>${esc(message)}</strong></div>`:""}
+  <div class="proof">
+    <div><strong>${gap(summary?.priority_count)}</strong><span class="muted">priority hotels</span></div>
+    <div><strong>${Number(summary?.avg_completeness||0).toFixed(0)}%</strong><span class="muted">avg completeness</span></div>
+    <div><strong>${gap(summary?.missing_rate)}</strong><span class="muted">need current rates</span></div>
+    <div><strong>${gap(summary?.missing_media)}</strong><span class="muted">need licensed hero</span></div>
+    <div><strong>${gap(summary?.missing_first_party)}</strong><span class="muted">need first-party stays</span></div>
+  </div>
+  <section class="section"><form method="post"><button class="btn" name="action" value="refresh">Rebuild top 250 + enrichment queue</button></form></section>
+  <section class="section"><div class="section-head"><div><div class="eyebrow">Priority cohort</div><h2>Top 250 hotels</h2></div><span class="muted">Ranked from existing demand/value signals; completeness is a separate measure.</span></div>
+    <div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr><th style="text-align:left;padding:10px;border-bottom:1px solid #ddd">#</th><th style="text-align:left;padding:10px;border-bottom:1px solid #ddd">Hotel</th><th style="text-align:right;padding:10px;border-bottom:1px solid #ddd">Priority</th><th style="text-align:right;padding:10px;border-bottom:1px solid #ddd">Complete</th><th style="text-align:left;padding:10px;border-bottom:1px solid #ddd">Missing</th></tr></thead><tbody>
+    ${top.map(h=>`<tr><td style="padding:10px;border-bottom:1px solid #eee">${h.priority_rank}</td><td style="padding:10px;border-bottom:1px solid #eee"><a href="/hotel/${encodeURIComponent(h.slug)}"><strong>${esc(h.name)}</strong></a><br><span class="kicker">${esc([h.city,h.country].filter(Boolean).join(", "))}</span></td><td style="text-align:right;padding:10px;border-bottom:1px solid #eee">${Number(h.priority_score||0).toFixed(0)}</td><td style="text-align:right;padding:10px;border-bottom:1px solid #eee"><strong>${Number(h.completeness_score||0).toFixed(0)}%</strong></td><td style="padding:10px;border-bottom:1px solid #eee">${safeJson(h.missing_json,[]).map(x=>`<span class="pill">${esc(x.replaceAll("_"," "))}</span>`).join("")||'<span class="value-badge good">complete</span>'}</td></tr>`).join("")||'<tr><td colspan="5" style="padding:20px">Run the ranking to initialize the cohort.</td></tr>'}
+    </tbody></table></div>
+  </section>
+  <section class="section"><div class="section-head"><div><div class="eyebrow">Work queue</div><h2>Next enrichment jobs</h2></div><span class="muted">Stable tasks; retries and future providers plug into this queue.</span></div>
+    <div class="grid">${q.map(x=>`<div class="card"><div class="eyebrow">${esc(x.task_type.replaceAll("_"," "))} · priority ${x.priority}</div><h3><a href="/hotel/${encodeURIComponent(x.slug)}">${esc(x.name)}</a></h3><p class="muted">Source hint: ${esc(x.source_hint||"—")} · attempts ${x.attempts||0}</p>${x.last_error?`<p class="error notice">${esc(x.last_error)}</p>`:""}<form method="post"><input type="hidden" name="id" value="${attr(x.id)}"><button class="btn secondary" name="action" value="reset_task">Reset task</button></form></div>`).join("")||'<div class="notice">No open enrichment tasks.</div>'}</div>
+  </section>`),env,{title:"Hotel enrichment | SecretNests",canonical:"/admin/enrichment",robots:"noindex,nofollow"});
+}
+
+async function runEnrichmentAutomation(env){
+  return refreshHotelEnrichment(env.DB);
+}
+
 async function runTravelpayoutsAutomation(env){
   const cfg=travelpayoutsConfig(env);
   if(!cfg.token||!cfg.partnerId||!cfg.projectId)return {ok:false,skipped:true,reason:"travelpayouts_not_configured"};
@@ -939,6 +1002,7 @@ async function route(request,env){
   if(request.method==="POST" && url.pathname==="/api/admin/verification-review")return verificationReview(request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/api/admin/media")return adminMedia(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/media-ingest")return createMediaIngest(request,env);
+  if((request.method==="GET"||request.method==="POST") && url.pathname==="/admin/enrichment")return adminEnrichmentPage(request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/admin/travelpayouts")return adminTravelpayoutsPage(request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/admin/rates")return adminRatesPage(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/rates")return ingestRates(request,env);
@@ -957,6 +1021,10 @@ async function route(request,env){
 
 export default {
   async scheduled(controller,env,ctx){
+    if(controller.cron==="23 5 * * *"){
+      ctx.waitUntil(runEnrichmentAutomation(env).then(result=>console.log(JSON.stringify({type:"enrichment_automation",...result}))).catch(e=>console.error(JSON.stringify({type:"enrichment_automation_error",message:safeLogError(e)}))));
+      return;
+    }
     ctx.waitUntil(runTravelpayoutsAutomation(env).then(result=>console.log(JSON.stringify({type:"travelpayouts_automation",...result}))).catch(e=>console.error(JSON.stringify({type:"travelpayouts_automation_error",message:safeLogError(e)}))));
   },
   async fetch(request,env,ctx){
