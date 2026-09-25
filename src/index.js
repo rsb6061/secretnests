@@ -338,6 +338,7 @@ async function adminContributionsPage(request,env){
 
 async function addTripPage(request,env){
   const url=new URL(request.url),hotelSlug=(url.searchParams.get("hotel")||"").trim();
+  const acquisitionSource=(url.searchParams.get("src")||"").trim().slice(0,80),acquisitionCampaign=(url.searchParams.get("campaign")||"").trim().slice(0,120);
   const prefilled=hotelSlug?await env.DB.prepare("SELECT id,name,slug,city,country FROM hotels WHERE slug=? AND is_published=1").bind(hotelSlug).first():null;
   const enabled=String(env.SUBMISSIONS_ENABLED||"false").toLowerCase()==="true";
   const body=enabled
@@ -345,8 +346,8 @@ async function addTripPage(request,env){
 <form class="card" data-autoevent="contribution_started" data-hotel-id="${attr(prefilled?.id||"")}" method="post" action="/add-your-trip" enctype="multipart/form-data" style="max-width:820px">
   <div style="display:none"><label>Website<input name="website" tabindex="-1" autocomplete="off"></label></div>
   <input type="hidden" name="hotel_id" id="hotel_id" value="${attr(prefilled?.id||"")}">
-  <input type="hidden" name="contribution_source" data-acquisition="source">
-  <input type="hidden" name="contribution_campaign" data-acquisition="campaign">
+  <input type="hidden" name="contribution_source" data-acquisition="source" value="${attr(acquisitionSource)}">
+  <input type="hidden" name="contribution_campaign" data-acquisition="campaign" value="${attr(acquisitionCampaign)}">
   <div style="position:relative"><label><strong>Hotel</strong><br><input id="hotel_name" name="hotel_name" required maxlength="160" autocomplete="off" value="${attr(prefilled?.name||"")}" ${prefilled?"readonly":""} placeholder="Start typing a hotel name" style="width:100%;padding:13px;margin-top:6px"></label><div id="hotel_suggestions" class="card" style="display:none;position:absolute;z-index:20;width:100%;padding:6px;max-height:260px;overflow:auto"></div></div>
   <p><label>City / destination<br><input id="city" name="city" maxlength="120" value="${attr(prefilled?.city||"")}" ${prefilled?"readonly":""} style="width:100%;padding:12px"></label></p>
   <div class="mini-grid">
@@ -1220,7 +1221,7 @@ async function adminEnrichmentPage(request,env){
     <div><strong>${gap(summary?.missing_media)}</strong><span class="muted">need licensed hero</span></div>
     <div><strong>${gap(summary?.missing_first_party)}</strong><span class="muted">need first-party stays</span></div>
   </div>
-  <section class="section"><form method="post"><button class="btn" name="action" value="refresh">Rebuild top 250 + enrichment queue</button></form>
+  <section class="section"><div class="hero-actions"><form method="post"><button class="btn" name="action" value="refresh">Rebuild top 250 + enrichment queue</button></form><a class="btn secondary" href="/admin/contributions">Contribution acquisition</a><a class="btn secondary" href="/admin/nuitee">Nuitee audit</a></div>
   <p class="muted">Automated workers: official-site facts, Booking.com Demand live-rate observations when configured, and provenance-backed independent web evidence when OpenAI search is configured.</p></section>
   <section class="section"><div class="section-head"><div><div class="eyebrow">Priority cohort</div><h2>Top 250 hotels</h2></div><span class="muted">Ranked from existing demand/value signals; completeness is a separate measure.</span></div>
     <div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr><th style="text-align:left;padding:10px;border-bottom:1px solid #ddd">#</th><th style="text-align:left;padding:10px;border-bottom:1px solid #ddd">Hotel</th><th style="text-align:right;padding:10px;border-bottom:1px solid #ddd">Priority</th><th style="text-align:right;padding:10px;border-bottom:1px solid #ddd">Complete</th><th style="text-align:left;padding:10px;border-bottom:1px solid #ddd">Missing</th></tr></thead><tbody>
