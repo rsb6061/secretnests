@@ -57,7 +57,14 @@ export function calculateValuation(values, currentPrice = null) {
 
 export async function recomputeHotelValuation(db, hotelId, currentPrice = null) {
   const rows = (await db.prepare(
-    "SELECT would_pay_again FROM value_opinions WHERE hotel_id=? AND would_pay_again IS NOT NULL AND would_pay_again>0 ORDER BY would_pay_again"
+    `SELECT vo.would_pay_again
+     FROM value_opinions vo
+     JOIN stays s ON s.id=vo.stay_id
+     WHERE vo.hotel_id=?
+       AND vo.would_pay_again IS NOT NULL
+       AND vo.would_pay_again>0
+       AND COALESCE(s.verification_method,'')<>'demo'
+     ORDER BY vo.would_pay_again`
   ).bind(hotelId).all()).results || [];
   const latest = currentPrice == null
     ? await db.prepare("SELECT current_price FROM hotel_value_snapshots WHERE hotel_id=? AND current_price IS NOT NULL ORDER BY calculated_at DESC LIMIT 1").bind(hotelId).first()
