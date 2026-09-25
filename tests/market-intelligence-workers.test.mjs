@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { rateWindows, matchBookingCandidate, extractBookerRate } from "../src/rate-worker.js";
 import { citationUrls } from "../src/external-evidence-worker.js";
 import { matchSerpHotelCandidate, extractSerpHotelRate, reviewGroups } from "../src/serpapi.js";
+import { matchNuiteeCandidate, extractNuiteeRate, summarizeNuiteeSentiment } from "../src/nuitee.js";
 
 test("rateWindows creates two valid two-night future windows",()=>{
   const windows=rateWindows(new Date("2026-09-25T12:00:00Z"));
@@ -86,4 +87,45 @@ test("reviewGroups keeps verifiable source URLs and does not persist reviewer id
   assert.equal(groups.length,2);
   assert.match(groups[0].source_url,/google\.com\/travel\/hotels/);
   assert.equal("user" in groups[0].reviews[0],false);
+});
+
+test("Nuitee hotel matching prefers exact nearby property",()=>{
+  const hotel={name:"Aman Tokyo",lat:35.6852,lng:139.7634};
+  const match=matchNuiteeCandidate(hotel,[
+    {id:"lp-good",name:"Aman Tokyo",latitude:35.6851,longitude:139.7635},
+    {id:"lp-bad",name:"Aman Kyoto",latitude:35.6852,longitude:139.7634}
+  ]);
+  assert.equal(match.id,"lp-good");
+  assert.equal(match.confidence,"high");
+});
+
+test("Nuitee rate extraction uses public suggested selling price per night",()=>{
+  const rate=extractNuiteeRate({data:[{hotelId:"lp-good",roomTypes:[{
+    offerId:"offer-1",
+    suggestedSellingPrice:{amount:1100,currency:"USD",source:"providerDirect"},
+    offerRetailRate:{amount:980,currency:"USD"},
+    rates:[{name:"Deluxe King",boardType:"RO"}]
+  }]}]},2,"USD");
+  assert.equal(rate.nightly_rate,550);
+  assert.equal(rate.public_total,1100);
+  assert.equal(rate.bookable_total,980);
+  assert.equal(rate.room_type,"Deluxe King");
+});
+
+test("Nuitee sentiment summary stores aggregate signals without raw reviewer text",()=>{
+  const signal=summarizeNuiteeSentiment({sentimentAnalysis:{
+    categories:[
+      {name:"Location",rating:9.1,description:"raw description that should not be copied"},
+      {name:"Service",rating:8.0},
+      {name:"Room Quality",rating:5.1},
+      {name:"Value for Money",rating:6.2},
+      {name:"Cleanliness",rating:7.4}
+    ],
+    pros:["Great location","Friendly staff"],
+    cons:["Dated rooms"]
+  }},"lp-good");
+  assert.equal(signal.sentiment,"neutral");
+  assert.match(signal.summary,/Location 9\.1\/10/);
+  assert.doesNotMatch(signal.summary,/raw description/);
+  assert.deepEqual(signal.best_for,["Great location","Friendly staff"]);
 });

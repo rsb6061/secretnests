@@ -1,5 +1,6 @@
 import { refreshHotelEnrichment } from "./enrichment.js";
 import { findSerpHotelProperty, fetchSerpHotelReviews, reviewGroups } from "./serpapi.js";
+import { findNuiteeHotel, fetchNuiteeReviews, summarizeNuiteeSentiment, nuiteeEnvironment } from "./nuitee.js";
 
 const nowIso=()=>new Date().toISOString();
 const clamp=(n,min,max)=>Math.min(Math.max(Number(n)||min,min),max);
@@ -179,6 +180,36 @@ async function writeSignal(db,hotelId,signal,meta,provider="openai_web_search"){
 }
 
 
+async function nuiteeMapping(db,hotelId){
+  return db.prepare("SELECT * FROM hotel_provider_mappings WHERE hotel_id=? AND provider='nuitee_connect' AND status='active'").bind(hotelId).first();
+}
+
+async function ensureNuiteeMapping(env,hotel){
+  let mapping=await nuiteeMapping(env.DB,hotel.id);
+  if(mapping)return {ok:true,hotel_id:mapping.provider_hotel_id};
+  const found=await findNuiteeHotel(env,hotel);
+  if(!found.ok)return found;
+  const now=nowIso(),environment=nuiteeEnvironment(env);
+  await env.DB.prepare(`INSERT INTO hotel_provider_mappings
+    (id,hotel_id,provider,provider_hotel_id,status,confidence,source_url,metadata_json,created_at,updated_at)
+    VALUES (?,?,'nuitee_connect',?,'active',?,NULL,?,?,?)
+    ON CONFLICT(hotel_id,provider) DO UPDATE SET provider_hotel_id=excluded.provider_hotel_id,status='active',
+      confidence=excluded.confidence,metadata_json=excluded.metadata_json,updated_at=excluded.updated_at`)
+    .bind(crypto.randomUUID(),hotel.id,found.match.id,found.match.confidence||"medium",
+      JSON.stringify({matched_name:found.match.name,similarity:found.match.similarity,distance_km:found.match.distance,environment}),now,now).run();
+  return {ok:true,hotel_id:found.match.id};
+}
+
+async function researchHotelWithNuitee(env,hotel){
+  const mapping=await ensureNuiteeMapping(env,hotel);
+  if(!mapping.ok)return mapping;
+  const reviews=await fetchNuiteeReviews(env,mapping.hotel_id);
+  if(!reviews.ok)return reviews;
+  const signal=summarizeNuiteeSentiment(reviews.data,mapping.hotel_id);
+  if(!signal)return {ok:false,error:"nuitee_sentiment_unavailable"};
+  return {ok:true,signals:[signal],provider_hotel_id:mapping.hotel_id,environment:reviews.environment};
+}
+
 function evidenceWindow(base=new Date()){
   const checkin=new Date(base);checkin.setUTCDate(checkin.getUTCDate()+21);
   const checkout=new Date(checkin);checkout.setUTCDate(checkout.getUTCDate()+2);
@@ -299,11 +330,14 @@ ${JSON.stringify(input)}`;
   return {ok:true,signals,model,search_id:reviewResult.search_id,property_token:mapping.property_token};
 }
 
-export async function drainExternalEvidenceQueue(env,{limit=2}={}){
-  const useSerp=Boolean(String(env.SERPAPI_API_KEY||"").trim()&&env.AI&&typeof env.AI.run==="function");
+export async function drainExternalEvidenceQueue(env,{limit=2,allowSandbox=false}={}){
+  const useNuitee=Boolean(String(env.NUITEE_API_KEY||"").trim());
+  const nuiteeEnv=useNuitee?nuiteeEnvironment(env):"unknown";
+  if(useNuitee&&nuiteeEnv==="sandbox"&&!allowSandbox)return {ok:false,skipped:true,reason:"nuitee_sandbox_manual_only"};
+  const useSerp=!useNuitee&&Boolean(String(env.SERPAPI_API_KEY||"").trim()&&env.AI&&typeof env.AI.run==="function");
   const useOpenAI=Boolean(String(env.OPENAI_API_KEY||"").trim());
-  if(!useSerp&&!useOpenAI)return {ok:false,skipped:true,reason:"evidence_provider_not_configured",providers:["serpapi_workers_ai","openai_web_search"]};
-  const provider=useSerp?"serpapi_workers_ai":"openai_web_search";
+  if(!useNuitee&&!useSerp&&!useOpenAI)return {ok:false,skipped:true,reason:"evidence_provider_not_configured",providers:["nuitee_reviews","serpapi_workers_ai","openai_web_search"]};
+  const provider=useNuitee?(nuiteeEnv==="sandbox"?"nuitee_reviews_sandbox":"nuitee_reviews"):(useSerp?"serpapi_workers_ai":"openai_web_search");
   const runId=crypto.randomUUID(),started=nowIso();
   await env.DB.prepare("INSERT INTO hotel_evidence_sync_runs (id,provider,status,started_at) VALUES (?,?, 'running',?)").bind(runId,provider,started).run();
   const mode=String(env.MARKET_INTELLIGENCE_MODE||"pilot").toLowerCase()==="full"?"full":"pilot";
@@ -313,16 +347,18 @@ export async function drainExternalEvidenceQueue(env,{limit=2}={}){
     for(const t of tasks){
       try{
         const hotel={id:t.hotel_id,name:t.name,city:t.city,country:t.country,website:t.website,lat:t.lat,lng:t.lng};
-        const research=useSerp?await researchHotelWithSerp(env,hotel):await researchHotel(env,hotel);
+        const research=useNuitee?await researchHotelWithNuitee(env,hotel):(useSerp?await researchHotelWithSerp(env,hotel):await researchHotel(env,hotel));
         if(!research.ok){await finish(env.DB,t.queue_id,"failed",research.error);failures++;continue}
         let hotelWritten=0;
         for(const signal of research.signals){
-          const meta=useSerp
-            ?{model:research.model,serpapi_search_id:research.search_id,provider_hotel_id:research.property_token,source_group_id:signal.source_group_id,source:signal.source}
-            :{model:research.model,response_id:research.response_id};
+          const meta=useNuitee
+            ?{provider_hotel_id:research.provider_hotel_id,environment:research.environment,categories:signal.categories}
+            :(useSerp
+              ?{model:research.model,serpapi_search_id:research.search_id,provider_hotel_id:research.property_token,source_group_id:signal.source_group_id,source:signal.source}
+              :{model:research.model,response_id:research.response_id});
           hotelWritten+=await writeSignal(env.DB,t.hotel_id,signal,meta,provider);
         }
-        if(hotelWritten>0){written+=hotelWritten;await finish(env.DB,t.queue_id,"complete")}
+        if(hotelWritten>0){written+=hotelWritten;await finish(env.DB,t.queue_id,(useNuitee&&nuiteeEnv==="sandbox")?"queued":"complete",(useNuitee&&nuiteeEnv==="sandbox")?"sandbox_evidence_not_used_for_production_completeness":null)}
         else{await finish(env.DB,t.queue_id,"failed","no_citable_independent_evidence");failures++}
       }catch(e){await finish(env.DB,t.queue_id,"failed",e?.message||e);failures++}
     }

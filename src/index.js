@@ -212,7 +212,7 @@ async function hotelPage(slug, env){
     LIMIT 1`).bind(h.id).first();
   const mediaUrl=media ? (media.r2_key ? "/media/"+encodeURIComponent(media.id) : media.source_url) : null;
   const legacyEvidence=(await env.DB.prepare("SELECT 'reddit' provider,sentiment,price_mentioned,trip_context,confidence,source_url,NULL summary,created_at observed_at FROM reddit_evidence WHERE hotel_id=? ORDER BY created_at DESC LIMIT 8").bind(h.id).all()).results||[];
-  const structuredEvidence=(await env.DB.prepare("SELECT provider,sentiment,price_mentioned,trip_context,confidence,source_url,summary,observed_at FROM hotel_external_evidence WHERE hotel_id=? ORDER BY observed_at DESC LIMIT 8").bind(h.id).all()).results||[];
+  const structuredEvidence=(await env.DB.prepare("SELECT provider,sentiment,price_mentioned,trip_context,confidence,source_url,summary,observed_at FROM hotel_external_evidence WHERE hotel_id=? AND provider NOT LIKE '%_sandbox' ORDER BY observed_at DESC LIMIT 8").bind(h.id).all()).results||[];
   const evidence=[...structuredEvidence,...legacyEvidence].sort((a,b)=>String(b.observed_at||"").localeCompare(String(a.observed_at||""))).slice(0,8);
   const comps=(await env.DB.prepare(`SELECT name,slug,city,country,price_estimate_min,price_estimate_max FROM hotels WHERE is_published=1 AND id<>? AND ((city IS NOT NULL AND city=?) OR (country IS NOT NULL AND country=?)) ORDER BY ABS(COALESCE(price_estimate_min,0)-COALESCE(?,0)),reddit_mention_count DESC LIMIT 4`).bind(h.id,h.city||"",h.country||"",h.price_estimate_min||0).all()).results||[];
   const highlights=safeJson(h.highlights_json,[]), bestFor=safeJson(h.best_for_json,[]), notIdeal=safeJson(h.not_ideal_for_json,[]);
@@ -1055,8 +1055,8 @@ async function internalMarketPilot(request,env){
   const expected=String(env.PRODUCTION_ACTIVATION_TOKEN||"");
   const auth=String(request.headers.get("authorization")||"");
   if(!expected||auth!=="Bearer "+expected)return new Response("Not found",{status:404});
-  const rates=await drainCurrentRateQueue(env,{limit:5});
-  const evidence=await drainExternalEvidenceQueue(env,{limit:2});
+  const rates=await drainCurrentRateQueue(env,{limit:5,allowSandbox:true});
+  const evidence=await drainExternalEvidenceQueue(env,{limit:2,allowSandbox:true});
   return json({ok:true,mode:String(env.MARKET_INTELLIGENCE_MODE||"pilot"),rates,evidence});
 }
 async function sitemap(env){
