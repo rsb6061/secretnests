@@ -29,3 +29,6 @@ enabled = true
 [[routes]]
 pattern = "bootstrap.secretnests.com"
 custom_domain = true
+
+[triggers]
+crons = ["* * * * *"]
