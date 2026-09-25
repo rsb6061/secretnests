@@ -81,5 +81,6 @@ jobs:
 
           curl -fsS -X POST http://127.0.0.1:8787/api/events             -H 'content-type: application/json'             --data '{"name":"page_view","path":"/ci"}'             | jq -e '.ok == true'
 
-          test "$(curl -sS -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8787/add-your-trip -d 'hotel_name=Test')" = "503"
+          curl -fsS 'http://127.0.0.1:8787/api/hotel-suggest?q=Fairmont' | jq -e '.ok == true and (.hotels|length) > 0'
+          test "$(curl -sS -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8787/add-your-trip             -F 'hotel_name=Fairmont Banff Springs'             -F 'paid_nightly_rate=700'             -F 'would_pay_again=650'             -F 'would_return=1')" = "200"
           test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:8787/api/admin/submissions)" = "404"
