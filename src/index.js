@@ -709,11 +709,13 @@ async function brandPage(slug,env){
 }
 
 async function compareLanding(env){
-  const hotels=(await env.DB.prepare("SELECT name,slug,city,country FROM hotels WHERE is_published=1 ORDER BY reddit_mention_count DESC,google_rating DESC,name LIMIT 300").all()).results||[];
+  const hotels=(await env.DB.prepare(`SELECT h.name,h.slug,h.city,h.country,p.priority_rank FROM hotel_enrichment_profiles p JOIN hotels h ON h.id=p.hotel_id WHERE h.is_published=1 AND p.cohort=\'priority_250\' ORDER BY p.priority_rank LIMIT 250`).all()).results||[];
+  const pairs=buildComparisonPairs(hotels,{maxPairs:36,perGroup:4});
   const options=hotels.map(h=>`<option value="${attr(h.slug)}">${esc(h.name)}${h.city?" — "+esc(h.city):""}</option>`).join("");
   return page(shell(`<section class="hero"><div class="eyebrow">Compare hotels</div><h1>Two expensive hotels. Which rate makes more sense?</h1><p>Pick two hotels and compare estimated price context with traveler-assessed fair value where first-party observations exist.</p></section>
 <form class="compare-form" id="compare-form"><select id="hotel-a" required><option value="">First hotel</option>${options}</select><span>vs.</span><select id="hotel-b" required><option value="">Second hotel</option>${options}</select><button class="btn" type="submit">Compare</button></form>
-<script>document.getElementById('compare-form').addEventListener('submit',function(e){e.preventDefault();var a=document.getElementById('hotel-a').value,b=document.getElementById('hotel-b').value;if(a&&b&&a!==b)location.href='/compare/'+encodeURIComponent(a)+'-vs-'+encodeURIComponent(b)});</script>`),env,{title:"Compare luxury hotels | SecretNests",description:"Compare two luxury hotels by estimated rates and traveler-assessed fair value.",canonical:"/compare"});
+${pairs.length?`<section class="section"><div class="section-head"><div><div class="eyebrow">Popular matchups</div><h2>Hotel comparisons by destination</h2></div></div><div class="grid">${pairs.map(p=>`<a class="card" href="${attr(p.path)}"><div class="eyebrow">${esc([p.a.city,p.a.country].filter(Boolean).join(", "))}</div><h3>${esc(p.a.name)} vs. ${esc(p.b.name)}</h3><p>Compare estimated price, latest observed rates and traveler-assessed value where first-party stays exist.</p></a>`).join("")}</div></section>`:""}
+<script>document.getElementById('compare-form').addEventListener('submit',function(e){e.preventDefault();var a=document.getElementById('hotel-a').value,b=document.getElementById('hotel-b').value;if(a&&b&&a!==b)location.href='/compare/'+encodeURIComponent(a)+'-vs-'+encodeURIComponent(b)});</script>`),env,{title:"Compare luxury hotels: prices & value | SecretNests",description:"Compare luxury hotels side by side by estimated prices, latest observed rates and traveler-assessed value where first-party stays exist.",canonical:"/compare"});
 }
 
 async function comparisonPage(pair,env){
@@ -723,18 +725,33 @@ async function comparisonPage(pair,env){
   for(const pos of positions){
     const as=pair.slice(0,pos), bs=pair.slice(pos+4);
     const rows=(await env.DB.prepare(`SELECT h.*,v.median_would_pay,v.traveler_low,v.traveler_high,v.sample_size,v.confidence,
-      (SELECT nightly_rate FROM hotel_rate_observations ro WHERE ro.hotel_id=h.id ORDER BY observed_at DESC LIMIT 1) current_observed_rate,
-      (SELECT observed_at FROM hotel_rate_observations ro WHERE ro.hotel_id=h.id ORDER BY observed_at DESC LIMIT 1) rate_observed_at
+      (SELECT nightly_rate FROM hotel_rate_observations ro WHERE ro.hotel_id=h.id AND ro.provider_id<>'nuitee_sandbox' ORDER BY observed_at DESC LIMIT 1) current_observed_rate,
+      (SELECT observed_at FROM hotel_rate_observations ro WHERE ro.hotel_id=h.id AND ro.provider_id<>'nuitee_sandbox' ORDER BY observed_at DESC LIMIT 1) rate_observed_at
       FROM hotels h LEFT JOIN hotel_value_snapshots v ON v.id=(SELECT id FROM hotel_value_snapshots WHERE hotel_id=h.id ORDER BY calculated_at DESC LIMIT 1)
       WHERE h.is_published=1 AND h.slug IN (?,?)`).bind(as,bs).all()).results||[];
     a=rows.find(x=>x.slug===as); b=rows.find(x=>x.slug===bs);
     if(a&&b)break;
   }
   if(!a||!b)return new Response("Comparison not found",{status:404});
-  const card=x=>`<div class="card"><div class="eyebrow">${esc([x.city,x.country].filter(Boolean).join(", "))}</div><h2><a href="/hotel/${encodeURIComponent(x.slug)}">${esc(x.name)}</a></h2><p>Estimated range: <strong>${money(x.price_estimate_min)}–${money(x.price_estimate_max)}</strong></p>${x.current_observed_rate?`<p>Latest observed rate: <strong>${money(x.current_observed_rate)}</strong><br><span class="kicker">${esc(String(x.rate_observed_at||"").slice(0,10))}</span></p>`:""}<p>Traveler assessed: <strong>${x.median_would_pay?money(x.traveler_low)+"–"+money(x.traveler_high):"not enough data"}</strong></p><p class="muted">${x.sample_size?x.sample_size+" value observations · "+(x.confidence||"")+" confidence":"First-party value sample pending"}</p></div>`;
-  return page(shell(`<section class="hero"><div class="eyebrow">Hotel comparison</div><h1>${esc(a.name)} vs. ${esc(b.name)}</h1><p>Side-by-side price and traveler-value context. SecretNests does not declare a universal winner; the useful question is which property better fits your price and preferences.</p></section><div class="grid">${card(a)}${card(b)}</div>`),env,{title:metaText(`${a.name} vs. ${b.name} | SecretNests`,66),description:metaText(`Compare ${a.name} and ${b.name} using price context and traveler-assessed value.`,165),canonical:"/compare/"+pair});
+  const card=x=>`<div class="card"><div class="eyebrow">${esc([x.city,x.country].filter(Boolean).join(", "))}</div><h2><a href="/hotel/${encodeURIComponent(x.slug)}">${esc(x.name)}</a></h2><table class="fact-table"><tbody>
+    <tr><th>Brand</th><td>${x.brand_name?`<a href="/brands/${brandSlug(x.brand_name)}">${esc(x.brand_name)}</a>`:"Independent / not classified"}</td></tr>
+    <tr><th>Estimated range</th><td><strong>${money(x.price_estimate_min)}–${money(x.price_estimate_max)}</strong></td></tr>
+    <tr><th>Latest observed</th><td>${x.current_observed_rate?money(x.current_observed_rate)+" · "+esc(String(x.rate_observed_at||"").slice(0,10)):"—"}</td></tr>
+    <tr><th>Traveler value</th><td>${x.median_would_pay?money(x.traveler_low)+"–"+money(x.traveler_high):"First-party sample pending"}</td></tr>
+    <tr><th>Median would-pay</th><td>${x.median_would_pay?money(x.median_would_pay):"—"}</td></tr>
+    <tr><th>First-party sample</th><td>${Number(x.sample_size||0)} stay${Number(x.sample_size||0)===1?"":"s"}</td></tr>
+    <tr><th>External review signal</th><td>${x.external_review_summary&&!String(x.external_review_source||"").includes("sandbox")?esc(x.external_review_sentiment||"Available"):"—"}</td></tr>
+    </tbody></table></div>`;
+  const aRate=Number(a.current_observed_rate??a.price_estimate_min),bRate=Number(b.current_observed_rate??b.price_estimate_min);
+  const rateContext=Number.isFinite(aRate)&&Number.isFinite(bRate)?(aRate===bRate?"Their latest/estimated nightly prices are currently similar.":aRate<bRate?`${a.name} is currently the lower-priced option in the observed/estimated data by about ${money(Math.abs(bRate-aRate))} per night.`:`${b.name} is currently the lower-priced option in the observed/estimated data by about ${money(Math.abs(aRate-bRate))} per night.`):"Current comparable price data is incomplete.";
+  const cityLinks=[a,b].filter(x=>x.city&&x.country).map(x=>({label:"More luxury hotels in "+x.city,url:"/destinations/"+slugify(x.country)+"/"+slugify(x.city)}));
+  const jsonLd={"@context":"https://schema.org","@type":"ComparisonPage","name":a.name+" vs. "+b.name,"url":ORIGIN+"/compare/"+pair,"about":[{"@type":"Hotel","name":a.name,"url":ORIGIN+"/hotel/"+a.slug},{"@type":"Hotel","name":b.name,"url":ORIGIN+"/hotel/"+b.slug}]};
+  return page(shell(`<section class="hero"><div class="eyebrow">Hotel comparison</div><h1>${esc(a.name)} vs. ${esc(b.name)}: price, reviews & value</h1><p>Side-by-side hotel data without declaring a universal winner. Use the price, first-party value sample, location and review evidence to decide which tradeoff fits your trip.</p></section>
+  <div class="grid">${card(a)}${card(b)}</div>
+  <section class="section"><h2>Price difference</h2><div class="notice"><p>${esc(rateContext)}</p><p class="kicker">Observed rates can refer to different future stay dates or room types. Check the date and room context before treating them as like-for-like.</p></div></section>
+  <section class="section"><h2>Which one is worth more to travelers?</h2><p>${a.sample_size&&b.sample_size?`The current first-party medians are ${money(a.median_would_pay)} for ${esc(a.name)} and ${money(b.median_would_pay)} for ${esc(b.name)}. Sample sizes are ${a.sample_size} and ${b.sample_size}, respectively; these are traveler price opinions, not an overall winner.`:"At least one hotel does not yet have enough first-party stay data for a direct traveler-value comparison. SecretNests keeps that gap explicit rather than substituting provider reviews for first-party willingness-to-pay."}</p></section>
+  <section class="section"><h2>Keep exploring</h2><div class="seo-links">${cityLinks.map(x=>`<a class="pill" href="${attr(x.url)}">${esc(x.label)}</a>`).join("")}<a class="pill" href="/hotel/${encodeURIComponent(a.slug)}">${esc(a.name)} review & prices</a><a class="pill" href="/hotel/${encodeURIComponent(b.slug)}">${esc(b.name)} review & prices</a></div></section>`),env,{title:metaText(`${a.name} vs. ${b.name}: price & value | SecretNests`,66),description:metaText(`Compare ${a.name} and ${b.name} by estimated price, observed rates, review signals and first-party traveler value where available.`,165),canonical:"/compare/"+pair,jsonLd});
 }
-
 async function valueHub(env){
   return page(shell(`<section class="hero"><div class="eyebrow">Value discovery</div><h1>Where is luxury actually worth the rate?</h1><p>Browse price-sensitive collections built from traveler value opinions where available, with clearly labeled estimated-price fallbacks.</p></section><div class="grid">
   <a class="card" href="/value/under-500"><h2>Worth up to $500</h2><p>Hotels with traveler-assessed willingness-to-pay at or below $500.</p></a>
