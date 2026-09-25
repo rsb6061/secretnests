@@ -29,7 +29,7 @@ function headers(extra={}) {
     "permissions-policy":"camera=(), microphone=(), geolocation=()",
     "strict-transport-security":"max-age=31536000; includeSubDomains",
     "x-frame-options":"DENY",
-    "cross-origin-opener-policy":"same-origin",
+    "cross-origin-opener-policy":"same-origin-allow-popups",
     "cross-origin-resource-policy":"same-origin",
     "content-security-policy":"default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.clarity.ms; connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://*.clarity.ms; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
     ...extra
