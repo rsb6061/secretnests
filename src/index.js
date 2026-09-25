@@ -802,9 +802,6 @@ async function contributePage(request,env){
   const url=new URL(request.url);
   const source=(url.searchParams.get("src")||"").trim().slice(0,80);
   const campaign=(url.searchParams.get("campaign")||"").trim().slice(0,120);
-  const target=300;
-  const submitted=Number((await env.DB.prepare("SELECT COUNT(*) n FROM trip_submissions WHERE status<>'rejected'").first())?.n||0);
-  const published=Number((await env.DB.prepare("SELECT COUNT(*) n FROM stays WHERE COALESCE(verification_method,'')<>'demo'").first())?.n||0);
   const targets=(await env.DB.prepare(`SELECT h.id,h.name,h.slug,h.city,h.country,p.priority_rank,
       (SELECT COUNT(*) FROM trip_submissions ts WHERE ts.hotel_id=h.id AND ts.status<>'rejected') submission_count
     FROM hotel_enrichment_profiles p JOIN hotels h ON h.id=p.hotel_id
@@ -812,7 +809,6 @@ async function contributePage(request,env){
     ORDER BY p.priority_rank LIMIT 12`).all()).results||[];
   const qs=[source?"src="+encodeURIComponent(source):"",campaign?"campaign="+encodeURIComponent(campaign):""].filter(Boolean).join("&");
   const suffix=qs?"&"+qs:"";
-  const progress=Math.min(100,Math.round(submitted/target*100));
   return page(shell(`<section class="hero" data-autoevent="contribution_landing_view"><div class="eyebrow">Build the traveler value map</div><h1>Tell us what your hotel stay was actually worth.</h1><p>SecretNests is building its first 300 real stay observations. Share the nightly price you paid, what you'd happily pay again, and whether you'd return. Positive and negative takes are equally useful.</p><div class="hero-actions"><a class="btn" href="/add-your-trip${qs?"?"+qs:""}">Add any stay</a></div></section>
   <section class="section"><div class="section-head"><div><div class="eyebrow">Why contribute</div><h2>Two numbers are more useful than another star rating.</h2></div></div><div class="acquisition-grid"><div class="card"><h3>What you paid</h3><p>The real nightly rate, with room and booking context.</p></div><div class="card"><h3>What you'd pay again</h3><p>Your own price threshold for repeating the stay.</p></div><div class="card"><h3>Would you return?</h3><p>A clean repeat-intent signal, independent of affiliate economics.</p></div></div></section>
   <section class="section" id="priority-hotels"><div class="section-head"><div><div class="eyebrow">Priority data gaps</div><h2>Stayed at one of these?</h2></div><span class="muted">These are high-priority SecretNests hotels without a published first-party value sample yet.</span></div><div class="grid">${targets.map(h=>`<a class="card" data-event="contribution_hotel_select" data-hotel-id="${attr(h.id)}" href="/add-your-trip?hotel=${encodeURIComponent(h.slug)}${suffix}"><div class="eyebrow">Priority #${h.priority_rank}</div><h3>${esc(h.name)}</h3><p class="muted">${esc([h.city,h.country].filter(Boolean).join(", "))} · ${Number(h.submission_count||0)} pending/submitted</p><strong>Add your stay →</strong></a>`).join("")||'<div class="notice">The current priority cohort already has first-party coverage.</div>'}</div></section>
