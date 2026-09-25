@@ -188,3 +188,83 @@ export function summarizeNuiteeSentiment(payload,hotelIdValue){
     categories:cats
   };
 }
+
+
+export async function fetchNuiteeHotelDetails(env,hotelIdValue){
+  const r=await request(env,"/data/hotel",{query:{hotelId:String(hotelIdValue),timeout:6,language:"en"}});
+  if(!r.ok)return r;
+  return {ok:true,data:r.data?.data||r.data,environment:config(env).environment};
+}
+
+function cleanArray(v,limit=80){
+  return (Array.isArray(v)?v:[]).map(x=>typeof x==="string"?x:(x?.name||x?.title||x?.label||"")).map(x=>String(x).trim()).filter(Boolean).slice(0,limit);
+}
+
+export function extractNuiteeMetadata(item){
+  const x=item?.data||item||{},loc=x.location||{};
+  const images=Array.isArray(x.hotelImages)?x.hotelImages:[];
+  const main=String(x.main_photo||images.find(i=>i?.defaultImage)?.url||images[0]?.url||"").trim()||null;
+  const description=String(x.hotelDescription||x.description||"").replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim()||null;
+  const amenities=cleanArray(x.hotelFacilities||x.amenities,120);
+  const tags=cleanArray(x.tags,50);
+  const rooms=Array.isArray(x.rooms)?x.rooms:[];
+  return {
+    provider_hotel_id:hotelId(x),
+    name:String(x.name||x.hotelName||"").trim()||null,
+    address:String(x.address||x.formattedAddress||"").trim()||null,
+    city:String(x.city||"").trim()||null,
+    country:String(x.country||x.countryCode||"").trim()||null,
+    lat:Number.isFinite(Number(loc.latitude??x.latitude))?Number(loc.latitude??x.latitude):null,
+    lng:Number.isFinite(Number(loc.longitude??x.longitude))?Number(loc.longitude??x.longitude):null,
+    star_rating:Number.isFinite(Number(x.starRating??x.stars))?Number(x.starRating??x.stars):null,
+    rating:Number.isFinite(Number(x.rating))?Number(x.rating):null,
+    description,
+    main_photo_url:main,
+    amenities,
+    tags,
+    persona:String(x.persona||"").trim()||null,
+    style:String(x.style||"").trim()||null,
+    location_type:String(x.location_type||x.locationType||"").trim()||null,
+    story:String(x.story||"").trim()||null,
+    room_count:rooms.length,
+    raw_summary:{
+      chain:x.chain||x.chainName||null,
+      checkinCheckoutTimes:x.checkinCheckoutTimes||null,
+      policies_count:Array.isArray(x.policies)?x.policies.length:0,
+      images_count:images.length
+    }
+  };
+}
+
+export async function fetchNuiteeRatesBatch(env,hotelIds,window){
+  const cfg=config(env),ids=[...new Set((hotelIds||[]).map(String).filter(Boolean))].slice(0,200);
+  if(!ids.length)return {ok:true,data:{data:[]},environment:cfg.environment};
+  const r=await request(env,"/hotels/rates",{
+    method:"POST",
+    timeoutMs:30000,
+    body:{
+      hotelIds:ids,
+      checkin:window.checkin,
+      checkout:window.checkout,
+      currency:cfg.currency,
+      guestNationality:cfg.nationality,
+      occupancies:[{adults:2}],
+      includeHotelData:false,
+      maxRatesPerHotel:1,
+      roomMapping:true,
+      timeout:12
+    }
+  });
+  if(!r.ok)return r;
+  return {ok:true,data:r.data,environment:cfg.environment};
+}
+
+export function extractNuiteeRatesByHotel(payload,nights=1,currency="USD"){
+  const out=new Map();
+  for(const hotel of candidates(payload)){
+    const id=hotelId(hotel);if(!id)continue;
+    const rate=extractNuiteeRate({data:[hotel]},nights,currency);
+    if(rate)out.set(id,rate);
+  }
+  return out;
+}
