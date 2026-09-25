@@ -48,26 +48,74 @@ function page(body, env, {
 ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd).replace(/</g,"\\u003c")}</script>` : ""}
 ${analytics(env)}
 <style>
-:root{font-family:Inter,ui-sans-serif,system-ui,sans-serif;color:#111;background:#fff}*{box-sizing:border-box}body{margin:0;background:#fff;color:#111}a{color:inherit}.wrap{max-width:1160px;margin:auto;padding:24px}header{display:flex;justify-content:space-between;gap:20px;align-items:center;border-bottom:1px solid #ececec}.brand{font-family:Georgia,serif;font-size:25px;font-weight:700;text-decoration:none}nav{display:flex;gap:16px;align-items:center;flex-wrap:wrap}nav a{text-decoration:none}.hero{padding:70px 0 42px}.hero h1,h1,h2,h3{font-family:Georgia,serif}.hero h1{font-size:clamp(42px,7vw,76px);line-height:1;max-width:900px;margin:0 0 20px}.hero p{font-size:20px;line-height:1.55;max-width:790px;color:#444}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}.card{border:1px solid #ddd;border-radius:14px;padding:20px;text-decoration:none}.card:hover{border-color:#999}.eyebrow{text-transform:uppercase;font-size:12px;letter-spacing:.12em;color:#666}.metric{font-size:28px;font-weight:700}.quote{border-left:3px solid #111;padding-left:20px;margin:26px 0}.muted{color:#666}.pill{display:inline-block;padding:7px 11px;border:1px solid #ccc;border-radius:999px;margin:4px 4px 4px 0}.stats{display:flex;gap:28px;flex-wrap:wrap;margin:24px 0}.stat strong{display:block;font-size:24px}.list{padding:0;list-style:none}.list li{padding:14px 0;border-bottom:1px solid #eee}.value{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.value>div{border:1px solid #ddd;border-radius:12px;padding:16px}.search{display:flex;gap:10px;max-width:760px}.search input,.search select,.search textarea{width:100%;padding:14px 15px;border:1px solid #bbb;border-radius:10px;font:inherit}.search button,.btn{border:0;background:#111;color:#fff;padding:14px 18px;border-radius:10px;font:inherit;text-decoration:none;display:inline-block;cursor:pointer}.filters{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.section{padding:42px 0}.hotel-row{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:start}.kicker{font-size:14px;color:#666}.notice{border:1px solid #ddd;background:#fafafa;border-radius:12px;padding:16px}.error{border-color:#d99;background:#fff7f7}.footer{margin-top:70px;border-top:1px solid #eee;padding:30px 24px;color:#666}.hero-media{width:100%;max-height:620px;object-fit:cover;border-radius:16px;margin:18px 0 8px;background:#f4f4f4}.two{display:grid;grid-template-columns:1.5fr 1fr;gap:26px}@media(max-width:760px){.value{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}.search{flex-direction:column}.hotel-row{grid-template-columns:1fr}}
-</style></head><body>${body}<footer class="footer wrap">SecretNests · Luxury hotel value, according to people who actually stayed.</footer>
+:root{font-family:Inter,ui-sans-serif,system-ui,sans-serif;color:#111;background:#fff}*{box-sizing:border-box}body{margin:0;background:#fff;color:#111}a{color:inherit}.wrap{max-width:1160px;margin:auto;padding:24px}header{display:flex;justify-content:space-between;gap:20px;align-items:center;border-bottom:1px solid #ececec}.brand{font-family:Georgia,serif;font-size:25px;font-weight:700;text-decoration:none}nav{display:flex;gap:16px;align-items:center;flex-wrap:wrap}nav a{text-decoration:none}.hero{padding:70px 0 42px}.hero h1,h1,h2,h3{font-family:Georgia,serif}.hero h1{font-size:clamp(42px,7vw,76px);line-height:1;max-width:900px;margin:0 0 20px}.hero p{font-size:20px;line-height:1.55;max-width:790px;color:#444}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}.card{border:1px solid #e1e1e1;border-radius:16px;padding:22px;text-decoration:none;background:#fff;transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease}.card:hover{border-color:#aaa;transform:translateY(-1px);box-shadow:0 8px 26px rgba(0,0,0,.05)}.card h2,.card h3{margin-top:8px}.value-badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 9px;font-size:12px;font-weight:700;background:#f3f3f3}.value-badge.good{background:#edf7ef}.value-badge.high{background:#fff3eb}.price-line{display:flex;justify-content:space-between;gap:14px;align-items:end;margin-top:18px}.price-line strong{font-size:22px}.mini-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.btn.secondary{background:#fff;color:#111;border:1px solid #bbb}.section-head{display:flex;justify-content:space-between;gap:18px;align-items:end;margin-bottom:18px}.section-head h2{margin:0}.section-head a{text-decoration:none}.proof{display:flex;gap:28px;flex-wrap:wrap;padding:22px 0;border-top:1px solid #eee;border-bottom:1px solid #eee}.proof strong{font-size:26px;display:block}.compare-form{display:grid;grid-template-columns:1fr auto 1fr auto;gap:10px;align-items:center}.compare-form input{padding:14px 15px;border:1px solid #bbb;border-radius:10px;font:inherit;width:100%}.eyebrow{text-transform:uppercase;font-size:12px;letter-spacing:.12em;color:#666}.metric{font-size:28px;font-weight:700}.quote{border-left:3px solid #111;padding-left:20px;margin:26px 0}.muted{color:#666}.pill{display:inline-block;padding:7px 11px;border:1px solid #ccc;border-radius:999px;margin:4px 4px 4px 0}.stats{display:flex;gap:28px;flex-wrap:wrap;margin:24px 0}.stat strong{display:block;font-size:24px}.list{padding:0;list-style:none}.list li{padding:14px 0;border-bottom:1px solid #eee}.value{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.value>div{border:1px solid #ddd;border-radius:12px;padding:16px}.search{display:flex;gap:10px;max-width:760px}.search input,.search select,.search textarea{width:100%;padding:14px 15px;border:1px solid #bbb;border-radius:10px;font:inherit}.search button,.btn{border:0;background:#111;color:#fff;padding:14px 18px;border-radius:10px;font:inherit;text-decoration:none;display:inline-block;cursor:pointer}.filters{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.section{padding:42px 0}.hotel-row{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:start}.kicker{font-size:14px;color:#666}.notice{border:1px solid #ddd;background:#fafafa;border-radius:12px;padding:16px}.error{border-color:#d99;background:#fff7f7}.footer{margin-top:70px;border-top:1px solid #eee;padding:30px 24px;color:#666}.hero-media{width:100%;max-height:620px;object-fit:cover;border-radius:16px;margin:18px 0 8px;background:#f4f4f4}.two{display:grid;grid-template-columns:1.5fr 1fr;gap:26px}@media(max-width:760px){.value{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}.search{flex-direction:column}.hotel-row{grid-template-columns:1fr}.mini-grid{grid-template-columns:1fr}.compare-form{grid-template-columns:1fr}.section-head{align-items:start;flex-direction:column}}
+</style></head><body>${body}<footer class="footer wrap"><strong>SecretNests</strong> · Luxury hotel value, according to people who actually stayed.<br><span class="kicker"><a href="/about">How it works</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/disclosures">Disclosures</a></span></footer>
 <script>(function(){var k='sn_session_id',sid=sessionStorage.getItem(k);if(!sid){sid=crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random().toString(36).slice(2);sessionStorage.setItem(k,sid)}function send(p){p.session_id=sid;p.path=location.pathname;fetch('/api/events',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(p),keepalive:true}).catch(function(){})}send({name:'page_view'});document.querySelectorAll('[data-autoevent]').forEach(function(a){send({name:a.dataset.autoevent,hotel_id:a.dataset.hotelId||null,creator_id:a.dataset.creatorId||null,list_id:a.dataset.listId||null})});document.addEventListener('click',function(e){var a=e.target.closest('[data-event]');if(!a)return;send({name:a.dataset.event,hotel_id:a.dataset.hotelId||null,creator_id:a.dataset.creatorId||null,list_id:a.dataset.listId||null})})})();</script>
 </body></html>`,{headers:headers()});
 }
 
 const json = (data,status=200) => new Response(JSON.stringify(data),{status,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store"}});
 
-const shell = (content) => `<header class="wrap"><a class="brand" href="/">SecretNests</a><nav><a href="/destinations">Destinations</a><a href="/creators">Travelers</a><a href="/add-your-trip">Add Your Trip</a><a href="/about">How it works</a></nav></header><main class="wrap">${content}</main>`;
+const shell = (content) => `<header class="wrap"><a class="brand" href="/">SecretNests</a><nav><a href="/value">Value</a><a href="/destinations">Destinations</a><a href="/compare">Compare</a><a href="/creators">Travelers</a><a href="/add-your-trip">Add Your Trip</a></nav></header><main class="wrap">${content}</main>`;
 
 async function home(env){
-  let hotelCount=0;
-  try { hotelCount=(await env.DB.prepare("SELECT COUNT(*) AS n FROM hotels WHERE is_published=1").first())?.n||0; } catch {}
-  let top=[];
-  try { top=(await env.DB.prepare("SELECT name,slug,city,country,price_estimate_min,price_estimate_max,google_rating FROM hotels WHERE is_published=1 ORDER BY reddit_mention_count DESC,google_rating DESC LIMIT 6").all()).results||[]; } catch {}
+  const hotelCount=Number((await env.DB.prepare("SELECT COUNT(*) AS n FROM hotels WHERE is_published=1").first())?.n||0);
+  const evidenceCount=Number((await env.DB.prepare("SELECT COUNT(*) AS n FROM reddit_evidence").first())?.n||0);
+  const destinations=Number((await env.DB.prepare("SELECT COUNT(*) AS n FROM (SELECT city,country FROM hotels WHERE is_published=1 AND city IS NOT NULL AND city<>'' GROUP BY city,country)").first())?.n||0);
+  const top=(await env.DB.prepare(`SELECT h.name,h.slug,h.city,h.country,h.price_estimate_min,h.price_estimate_max,
+    v.traveler_low,v.traveler_high,v.median_would_pay,v.sample_size,v.value_classification,v.confidence
+    FROM hotels h
+    LEFT JOIN hotel_value_snapshots v ON v.id=(SELECT id FROM hotel_value_snapshots WHERE hotel_id=h.id ORDER BY calculated_at DESC LIMIT 1)
+    WHERE h.is_published=1
+    ORDER BY CASE WHEN COALESCE(v.sample_size,0)>0 THEN 0 ELSE 1 END, COALESCE(v.sample_size,0) DESC,h.reddit_mention_count DESC,h.google_rating DESC
+    LIMIT 6`).all()).results||[];
+  const popular=(await env.DB.prepare(`SELECT city,country,COUNT(*) n FROM hotels
+    WHERE is_published=1 AND city IS NOT NULL AND city<>'' GROUP BY city,country ORDER BY n DESC LIMIT 8`).all()).results||[];
+  const valueLabel=(h)=>h.sample_size?(
+    h.value_classification||"traveler value available"
+  ):"price context available";
+  const valueClass=(h)=>String(h.value_classification||"").includes("below")?"good":String(h.value_classification||"").includes("above")?"high":"";
   return page(shell(`
-<section class="hero"><div class="eyebrow">Luxury hotel value, according to people who actually stayed</div><h1>What should this hotel cost?</h1><p>Search luxury hotels by destination, then compare what travelers paid, what they would pay again, and whether the current rate looks justified.</p>
-<form class="search" action="/search" method="get"><input name="q" placeholder="Hotel, city, country, or style" aria-label="Search hotels"><button>Search</button></form></section>
-<section class="grid"><div class="card"><div class="eyebrow">Value intelligence</div><h2>Paid vs. worth</h2><p>Price-sensitive hotel opinions, not generic star ratings.</p></div><div class="card"><div class="eyebrow">Traveler portfolios</div><h2>Follow taste</h2><p>Public stays, trip reports, and lists tied to identifiable traveler taste.</p></div><div class="card"><div class="eyebrow">Booking attribution</div><h2>Creators earn from outcomes</h2><p>Revenue can follow attributable bookings, never review positivity.</p></div></section>
-<section class="section"><h2>Explore the current hotel corpus</h2><div class="grid">${top.map(h=>`<a class="card" href="/hotel/${encodeURIComponent(h.slug)}"><div class="eyebrow">${esc([h.city,h.country].filter(Boolean).join(", "))}</div><h3>${esc(h.name)}</h3><p class="muted">${money(h.price_estimate_min)}–${money(h.price_estimate_max)} estimated nightly range</p></a>`).join("")}</div><p class="muted" style="margin-top:18px">${hotelCount ? hotelCount+" published hotels in the current corpus." : "Cloudflare data bootstrap pending."}</p></section>`),env,{title:"SecretNests | What should this hotel cost?",canonical:"/"});
+<section class="hero">
+  <div class="eyebrow">Luxury hotel value intelligence</div>
+  <h1>Know what a luxury hotel is actually worth.</h1>
+  <p>Search a hotel or destination. SecretNests separates <em>good hotel</em> from <em>good value</em> using what travelers paid, what they would pay again, and the alternatives available at the same budget.</p>
+  <form class="search" action="/search" method="get"><input name="q" placeholder="Try “Aman Tokyo”, “Mallorca”, or “quiet design hotel”" aria-label="Search hotels"><button data-event="search">Search hotels</button></form>
+  <div class="hero-actions"><a class="btn secondary" href="/value">Browse by value</a><a class="btn secondary" href="/compare">Compare two hotels</a></div>
+</section>
+
+<section class="proof">
+  <div><strong>${hotelCount.toLocaleString()}</strong><span class="muted">luxury hotels</span></div>
+  <div><strong>${destinations.toLocaleString()}</strong><span class="muted">destinations</span></div>
+  <div><strong>${evidenceCount.toLocaleString()}</strong><span class="muted">structured traveler signals</span></div>
+  <div><strong>Paid vs. worth</strong><span class="muted">the metric that matters</span></div>
+</section>
+
+<section class="section">
+  <div class="section-head"><div><div class="eyebrow">Start here</div><h2>Hotels with the strongest signals</h2></div><a href="/value">See value collections →</a></div>
+  <div class="grid">${top.map(h=>`<a class="card" href="/hotel/${encodeURIComponent(h.slug)}">
+    <div class="eyebrow">${esc([h.city,h.country].filter(Boolean).join(", "))}</div>
+    <h3>${esc(h.name)}</h3>
+    <span class="value-badge ${valueClass(h)}">${esc(valueLabel(h))}</span>
+    <div class="price-line"><div><div class="kicker">Estimated rate</div><strong>${money(h.price_estimate_min)}–${money(h.price_estimate_max)}</strong></div>
+    <div style="text-align:right"><div class="kicker">Traveler value</div><strong>${h.sample_size?money(h.median_would_pay):"—"}</strong></div></div>
+    <p class="muted">${h.sample_size?`${h.sample_size} value observation(s) · ${esc(h.confidence||"")} confidence`:"First-party fair-value sample building now."}</p>
+  </a>`).join("")}</div>
+</section>
+
+<section class="section">
+  <div class="section-head"><div><div class="eyebrow">Browse</div><h2>Popular destinations</h2></div><a href="/destinations">All destinations →</a></div>
+  <div class="grid">${popular.map(x=>`<a class="card" href="/destinations/${slugify(x.country)}/${slugify(x.city)}"><h3>${esc(x.city)}</h3><div class="muted">${esc(x.country||"")} · ${x.n} hotels</div></a>`).join("")}</div>
+</section>
+
+<section class="section">
+  <div class="section-head"><div><div class="eyebrow">The SecretNests loop</div><h2>Stay → value it → help the next traveler.</h2></div></div>
+  <div class="grid">
+    <div class="card"><div class="eyebrow">1 · Stay</div><h3>Log what you actually paid</h3><p>Include the room, date, booking channel, and meaningful inclusions so the number has context.</p></div>
+    <div class="card"><div class="eyebrow">2 · Value it</div><h3>Say what you'd happily pay again</h3><p>A hotel can be excellent and still be overpriced. SecretNests makes that distinction explicit.</p></div>
+    <div class="card"><div class="eyebrow">3 · Publish taste</div><h3>Build lists people can trust</h3><p>Your stays become a travel portfolio: where you splurge, where you don't, and what you would book again.</p></div>
+  </div>
+</section>`),env,{title:"SecretNests | What is this luxury hotel actually worth?",description:"Compare luxury hotel prices with traveler-assessed value: what guests paid, what they would pay again, and which alternatives offer better value.",canonical:"/"});
 }
 
 async function searchPage(request,env){
@@ -249,6 +297,14 @@ async function mediaAsset(id,env){
   h.set("cache-control","public,max-age=86400");
   h.set("x-content-type-options","nosniff");
   return new Response(obj.body,{headers:h});
+}
+
+async function compareLanding(env){
+  const hotels=(await env.DB.prepare("SELECT name,slug,city,country FROM hotels WHERE is_published=1 ORDER BY reddit_mention_count DESC,google_rating DESC,name LIMIT 300").all()).results||[];
+  const options=hotels.map(h=>`<option value="${attr(h.slug)}">${esc(h.name)}${h.city?" — "+esc(h.city):""}</option>`).join("");
+  return page(shell(`<section class="hero"><div class="eyebrow">Compare hotels</div><h1>Two expensive hotels. Which rate makes more sense?</h1><p>Pick two hotels and compare estimated price context with traveler-assessed fair value where first-party observations exist.</p></section>
+<form class="compare-form" id="compare-form"><select id="hotel-a" required><option value="">First hotel</option>${options}</select><span>vs.</span><select id="hotel-b" required><option value="">Second hotel</option>${options}</select><button class="btn" type="submit">Compare</button></form>
+<script>document.getElementById('compare-form').addEventListener('submit',function(e){e.preventDefault();var a=document.getElementById('hotel-a').value,b=document.getElementById('hotel-b').value;if(a&&b&&a!==b)location.href='/compare/'+encodeURIComponent(a)+'-vs-'+encodeURIComponent(b)});</script>`),env,{title:"Compare luxury hotels | SecretNests",description:"Compare two luxury hotels by estimated rates and traveler-assessed fair value.",canonical:"/compare"});
 }
 
 async function comparisonPage(pair,env){
@@ -499,6 +555,7 @@ async function route(request,env){
   if(request.method==="GET" && url.pathname==="/value")return valueHub(env);
   const valueCountry=url.pathname.match(/^\/value\/country\/([^/]+)$/); if(request.method==="GET"&&valueCountry)return countryValuePage(decodeURIComponent(valueCountry[1]),env);
   const value=url.pathname.match(/^\/value\/([^/]+)$/); if(request.method==="GET"&&value)return valueCollection(decodeURIComponent(value[1]),env);
+  if(request.method==="GET" && url.pathname==="/compare")return compareLanding(env);
   const compare=url.pathname.match(/^\/compare\/(.+)$/); if(request.method==="GET"&&compare)return comparisonPage(decodeURIComponent(compare[1]),env);
   if(request.method==="GET" && url.pathname==="/api/hotels")return apiHotels(request,env);
   if(request.method==="POST" && url.pathname==="/api/events")return recordEvent(request,env);
