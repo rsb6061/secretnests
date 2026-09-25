@@ -63,7 +63,7 @@ export async function refreshHotelEnrichment(db){
       (SELECT COUNT(*) FROM hotel_booking_links bl WHERE bl.hotel_id=h.id AND bl.enabled=1) booking_links,
       (SELECT COUNT(*) FROM hotel_rate_observations ro WHERE ro.hotel_id=h.id AND ro.observed_at>=datetime('now','-45 days')) current_rates,
       (SELECT COUNT(*) FROM media_assets ma WHERE ma.hotel_id=h.id AND ma.rights_status IN ('owned_user_upload','hotel_authorized','licensed_api','licensed_public')) licensed_media,
-      (SELECT COUNT(*) FROM reddit_evidence re WHERE re.hotel_id=h.id) external_evidence
+      ((SELECT COUNT(*) FROM reddit_evidence re WHERE re.hotel_id=h.id) + (SELECT COUNT(*) FROM hotel_external_evidence he WHERE he.hotel_id=h.id)) external_evidence
       FROM hotels h WHERE h.is_published=1`).all()).results||[];
 
     const scored=rows.map(h=>({h,priority:priorityScore(h),complete:completeness(h)}))
