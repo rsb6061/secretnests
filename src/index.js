@@ -1337,20 +1337,24 @@ async function adminSubmissions(request,env){
   if(body.action!=="approve"||!body.hotel_id)return json({ok:false,error:"invalid_action"},400);
   const hotel=await env.DB.prepare("SELECT id FROM hotels WHERE id=?").bind(body.hotel_id).first();
   if(!hotel)return json({ok:false,error:"invalid_hotel"},400);
-  const creatorId="system-community-intake";
-  await env.DB.prepare("INSERT INTO creator_profiles (id,user_id,handle,display_name,bio,taste_profile_json,is_public,is_demo,created_at,updated_at) VALUES (?,?,?,?,?,'[]',0,0,?,?) ON CONFLICT(id) DO NOTHING")
-    .bind(creatorId,null,"community-intake","Community intake","Internal moderation identity for approved anonymous trip submissions.",nowIso(),nowIso()).run();
+  const creatorId=submission.creator_id||"system-community-intake";
+  if(!submission.creator_id){
+    await env.DB.prepare("INSERT INTO creator_profiles (id,user_id,handle,display_name,bio,taste_profile_json,is_public,is_demo,created_at,updated_at) VALUES (?,?,?,?,?,'[]',0,0,?,?) ON CONFLICT(id) DO NOTHING")
+      .bind(creatorId,null,"community-intake","Community intake","Internal moderation identity for approved anonymous trip submissions.",nowIso(),nowIso()).run();
+  }
+  const creator=await env.DB.prepare("SELECT handle,display_name,is_public FROM creator_profiles WHERE id=? LIMIT 1").bind(creatorId).first();
+  const intakeMethod=submission.creator_id?"first_party_submission":"community_submission";
   const stayId="submission-"+submission.id;
   await env.DB.prepare(`INSERT INTO stays (id,creator_id,hotel_id,stay_month,nights,party_type,room_type,booking_channel,paid_nightly_rate,currency,verified,verification_method,created_at,updated_at,perks_json,inclusions_json,rate_basis)
-    VALUES (?,?,?,?,?,?,?,?,?,'USD',0,'community_submission',?,?,?,?,?) ON CONFLICT(id) DO NOTHING`)
-    .bind(stayId,creatorId,hotel.id,submission.stay_month,submission.nights,submission.party_type,submission.room_type,submission.booking_channel,submission.paid_nightly_rate,nowIso(),nowIso(),submission.perks_json||"[]",submission.inclusions_json||"[]",submission.rate_basis||null).run();
+    VALUES (?,?,?,?,?,?,?,?,?,'USD',0,?,?,?,?,?,?) ON CONFLICT(id) DO NOTHING`)
+    .bind(stayId,creatorId,hotel.id,submission.stay_month,submission.nights,submission.party_type,submission.room_type,submission.booking_channel,submission.paid_nightly_rate,intakeMethod,nowIso(),nowIso(),submission.perks_json||"[]",submission.inclusions_json||"[]",submission.rate_basis||null).run();
   if(submission.would_pay_again!=null){
     await env.DB.prepare(`INSERT INTO value_opinions (id,stay_id,creator_id,hotel_id,paid_nightly_rate,would_pay_again,currency,created_at)
       VALUES (?,?,?,?,?,?,'USD',?) ON CONFLICT(id) DO UPDATE SET would_pay_again=excluded.would_pay_again`)
       .bind("value-"+submission.id,stayId,creatorId,hotel.id,submission.paid_nightly_rate,submission.would_pay_again,nowIso()).run();
   }
-  await env.DB.prepare("INSERT INTO trip_reports (id,stay_id,creator_id,hotel_id,title,review_text,verdict,would_return,standout_json,disappointments_json,status,published_at,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,'[]','[]','published',?,?,?) ON CONFLICT(stay_id) DO NOTHING")
-    .bind("report-"+submission.id,stayId,creatorId,hotel.id,submission.hotel_name,submission.notes||null,"community_submission",submission.would_return,nowIso(),nowIso(),nowIso()).run();
+  await env.DB.prepare("INSERT INTO trip_reports (id,stay_id,creator_id,hotel_id,title,review_text,verdict,would_return,standout_json,disappointments_json,status,published_at,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,'[]','[]','published',?,?,?) ON CONFLICT(stay_id) DO UPDATE SET review_text=excluded.review_text,would_return=excluded.would_return,status='published',updated_at=excluded.updated_at")
+    .bind("report-"+submission.id,stayId,creatorId,hotel.id,submission.hotel_name,submission.notes||submission.raw_text||null,intakeMethod,submission.would_return,nowIso(),nowIso(),nowIso()).run();
   if(body.verify_receipt){
     await env.DB.prepare("UPDATE submission_verification_artifacts SET status='verified',redaction_status='not_required',reviewer_note=?,reviewed_at=? WHERE submission_id=? AND status='pending'")
       .bind("Rate verified by "+moderator,nowIso(),submission.id).run();
@@ -1360,8 +1364,9 @@ async function adminSubmissions(request,env){
   if(verifiedArtifact)await env.DB.prepare("UPDATE stays SET verified=1,verification_method='receipt_or_folio',updated_at=? WHERE id=?").bind(nowIso(),stayId).run();
   await env.DB.prepare("UPDATE trip_submissions SET status='approved',hotel_id=?,reviewed_at=? WHERE id=?").bind(hotel.id,nowIso(),submission.id).run();
   await env.DB.prepare("INSERT INTO submission_moderation (id,submission_id,action,hotel_id,moderator_email,note,created_at) VALUES (?,?,?,?,?,?,?)").bind(crypto.randomUUID(),submission.id,"approve",hotel.id,moderator,String(body.note||"").slice(0,1000),nowIso()).run();
+  const mediaPromoted=await contributionFlow.promoteDraftMedia(env,submission,creatorId,hotel.id,creator?.display_name||creator?.handle||null);
   const valuation=await recomputeHotelValuation(env.DB,hotel.id);
-  return json({ok:true,status:"approved",stay_id:stayId,valuation});
+  return json({ok:true,status:"approved",stay_id:stayId,creator_id:creatorId,media_promoted:mediaPromoted,valuation});
 }
 
 async function submissionVerificationFile(id,request,env){
