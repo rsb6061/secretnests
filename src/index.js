@@ -238,15 +238,17 @@ async function listPage(handle, slug, env){
   return page(shell(`<section class="hero" style="padding-bottom:20px"><div class="eyebrow">A list by <a href="/@${encodeURIComponent(l.handle)}">@${esc(l.handle)}</a></div><h1>${esc(l.title)}</h1><p>${esc(l.description||"")}</p></section><ul class="list">${items.map((x,i)=>`<li><a href="/hotel/${encodeURIComponent(x.slug)}"><strong>${x.rank||i+1}. ${esc(x.name)}</strong></a> · ${esc([x.city,x.country].filter(Boolean).join(", "))}<br><span class="muted">${esc(x.note||"")}</span></li>`).join("")||'<li class="muted">No hotels added yet.</li>'}</ul>`),env,{title:`${l.title} by @${l.handle} | SecretNests`,canonical:`/@${encodeURIComponent(l.handle)}/lists/${encodeURIComponent(l.slug)}`});
 }
 
-async function addTripPage(env){
+async function addTripPage(request,env){
+  const url=new URL(request.url),hotelSlug=(url.searchParams.get("hotel")||"").trim();
+  const prefilled=hotelSlug?await env.DB.prepare("SELECT id,name,slug,city,country FROM hotels WHERE slug=? AND is_published=1").bind(hotelSlug).first():null;
   const enabled=String(env.SUBMISSIONS_ENABLED||"false").toLowerCase()==="true";
   const body=enabled
     ? `<section class="hero" style="padding-bottom:22px"><div class="eyebrow">Add Your Trip</div><h1>What did the hotel cost — and what was it worth?</h1><p>The useful signal is not a 1–5 star score. It is the price you actually paid, the price you'd happily pay again, and the context around that stay.</p></section>
-<form class="card" method="post" action="/add-your-trip" enctype="multipart/form-data" style="max-width:820px">
+<form class="card" data-autoevent="contribution_started" data-hotel-id="${attr(prefilled?.id||"")}" method="post" action="/add-your-trip" enctype="multipart/form-data" style="max-width:820px">
   <div style="display:none"><label>Website<input name="website" tabindex="-1" autocomplete="off"></label></div>
-  <input type="hidden" name="hotel_id" id="hotel_id">
-  <div style="position:relative"><label><strong>Hotel</strong><br><input id="hotel_name" name="hotel_name" required maxlength="160" autocomplete="off" placeholder="Start typing a hotel name" style="width:100%;padding:13px;margin-top:6px"></label><div id="hotel_suggestions" class="card" style="display:none;position:absolute;z-index:20;width:100%;padding:6px;max-height:260px;overflow:auto"></div></div>
-  <p><label>City / destination<br><input id="city" name="city" maxlength="120" style="width:100%;padding:12px"></label></p>
+  <input type="hidden" name="hotel_id" id="hotel_id" value="${attr(prefilled?.id||"")}">
+  <div style="position:relative"><label><strong>Hotel</strong><br><input id="hotel_name" name="hotel_name" required maxlength="160" autocomplete="off" value="${attr(prefilled?.name||"")}" ${prefilled?"readonly":""} placeholder="Start typing a hotel name" style="width:100%;padding:13px;margin-top:6px"></label><div id="hotel_suggestions" class="card" style="display:none;position:absolute;z-index:20;width:100%;padding:6px;max-height:260px;overflow:auto"></div></div>
+  <p><label>City / destination<br><input id="city" name="city" maxlength="120" value="${attr(prefilled?.city||"")}" ${prefilled?"readonly":""} style="width:100%;padding:12px"></label></p>
   <div class="mini-grid">
     <p><label>Stay month<br><input name="stay_month" type="month" style="width:100%;padding:12px"></label></p>
     <p><label>Nights<br><input name="nights" type="number" min="1" max="90" step="1" style="width:100%;padding:12px"></label></p>
@@ -279,7 +281,7 @@ async function addTripPage(env){
   <p><button class="btn" type="submit">Submit stay</button></p>
 </form>
 <script>(function(){
-  var input=document.getElementById('hotel_name'),box=document.getElementById('hotel_suggestions'),hid=document.getElementById('hotel_id'),city=document.getElementById('city'),timer;
+  var input=document.getElementById('hotel_name'),box=document.getElementById('hotel_suggestions'),hid=document.getElementById('hotel_id'),city=document.getElementById('city'),timer;if(input.readOnly)return;
   function hide(){box.style.display='none';box.innerHTML=''}
   input.addEventListener('input',function(){hid.value='';clearTimeout(timer);var q=input.value.trim();if(q.length<2){hide();return}timer=setTimeout(function(){fetch('/api/hotel-suggest?q='+encodeURIComponent(q)).then(r=>r.json()).then(d=>{var rows=d.hotels||[];if(!rows.length){hide();return}box.innerHTML=rows.map(h=>'<button type="button" data-id="'+h.id+'" data-name="'+h.name.replace(/"/g,'&quot;')+'" data-city="'+(h.city||'').replace(/"/g,'&quot;')+'" style="display:block;width:100%;text-align:left;border:0;background:#fff;padding:10px;cursor:pointer"><strong>'+h.name+'</strong><br><span class="kicker">'+[h.city,h.country].filter(Boolean).join(', ')+'</span></button>').join('');box.style.display='block';box.querySelectorAll('button').forEach(b=>b.onclick=function(){input.value=this.dataset.name;hid.value=this.dataset.id;if(!city.value)city.value=this.dataset.city;hide()})}).catch(hide)},180)});
   document.addEventListener('click',e=>{if(!box.contains(e.target)&&e.target!==input)hide()});
@@ -1133,7 +1135,7 @@ async function route(request,env){
   const cleanDest=url.pathname.match(/^\/destinations\/([^/]+)\/([^/]+)$/); if(request.method==="GET"&&cleanDest)return destinationPage(decodeURIComponent(cleanDest[1]),decodeURIComponent(cleanDest[2]),env);
   if(request.method==="GET" && /^\/destination\//.test(url.pathname))return legacyDestinationRedirect(request,env);
   if(request.method==="GET" && url.pathname==="/creators")return creatorsPage(env);
-  if(request.method==="GET" && url.pathname==="/add-your-trip")return addTripPage(env);
+  if(request.method==="GET" && url.pathname==="/add-your-trip")return addTripPage(request,env);
   if(request.method==="POST" && url.pathname==="/add-your-trip")return submitTrip(request,env);
   if(request.method==="GET" && url.pathname==="/about")return aboutPage(env);
   if(request.method==="GET" && url.pathname==="/privacy")return legalPage("privacy",env);
