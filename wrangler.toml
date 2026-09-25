@@ -27,6 +27,14 @@ EXTERNAL_EVIDENCE_MODEL = "gpt-5.6-luna"
 RATE_BOOKER_COUNTRY = "us"
 RATE_CURRENCY = "USD"
 
+[[routes]]
+pattern = "secretnests.com/*"
+zone_name = "secretnests.com"
+
+[[routes]]
+pattern = "www.secretnests.com/*"
+zone_name = "secretnests.com"
+
 [observability]
 enabled = true
 
