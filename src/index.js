@@ -1,4 +1,3 @@
-import { handleBootstrap } from "./bootstrap.js";
 import { recomputeHotelValuation } from "./value-engine.js";
 import { sameOrigin, bodyTooLarge, enforceRateLimit, adminEmail, safeLogError } from "./security.js";
 
@@ -483,7 +482,6 @@ async function sitemap(env){
 }
 
 async function route(request,env){
-  const bootstrapResponse=await handleBootstrap(request,env); if(bootstrapResponse) return bootstrapResponse;
   const url=new URL(request.url);
   if(url.hostname==="www.secretnests.com") return Response.redirect(ORIGIN+url.pathname+url.search,301);
   if(request.method==="GET" && url.pathname==="/")return home(env);
