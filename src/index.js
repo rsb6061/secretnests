@@ -243,7 +243,7 @@ async function addTripPage(request,env){
   const prefilled=hotelSlug?await env.DB.prepare("SELECT id,name,slug,city,country FROM hotels WHERE slug=? AND is_published=1").bind(hotelSlug).first():null;
   const enabled=String(env.SUBMISSIONS_ENABLED||"false").toLowerCase()==="true";
   const body=enabled
-    ? `<section class="hero" style="padding-bottom:22px"><div class="eyebrow">Add Your Trip</div><h1>What did the hotel cost — and what was it worth?</h1><p>The useful signal is not a 1–5 star score. It is the price you actually paid, the price you'd happily pay again, and the context around that stay.</p></section>
+    ? `<section class="hero" id="add-your-stay" style="padding-bottom:22px"><div class="eyebrow">Add Your Trip</div><h1>${prefilled?`Value your stay at ${esc(prefilled.name)}`:"What did the hotel cost — and what was it worth?"}</h1><p>The useful signal is not a 1–5 star score. It is the price you actually paid, the price you’d happily pay again, and the context around that stay.</p></section>
 <form class="card" data-autoevent="contribution_started" data-hotel-id="${attr(prefilled?.id||"")}" method="post" action="/add-your-trip" enctype="multipart/form-data" style="max-width:820px">
   <div style="display:none"><label>Website<input name="website" tabindex="-1" autocomplete="off"></label></div>
   <input type="hidden" name="hotel_id" id="hotel_id" value="${attr(prefilled?.id||"")}">
