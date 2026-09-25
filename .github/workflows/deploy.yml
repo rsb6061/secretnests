@@ -81,6 +81,7 @@ jobs:
       - name: Sync optional market-intelligence secrets
         shell: bash
         env:
+          NUITEE_API_KEY: ${{ secrets.NUITEE_API_KEY }}
           SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
           BOOKING_DEMAND_API_TOKEN: ${{ secrets.BOOKING_DEMAND_API_TOKEN }}
           BOOKING_DEMAND_AFFILIATE_ID: ${{ secrets.BOOKING_DEMAND_AFFILIATE_ID }}
@@ -88,6 +89,12 @@ jobs:
         run: |
           set -euo pipefail
           configured=0
+          if [ -n "$NUITEE_API_KEY" ]; then
+            printf '%s' "$NUITEE_API_KEY" | npx wrangler secret put NUITEE_API_KEY
+            configured=$((configured+1))
+          else
+            echo "::notice::NUITEE_API_KEY is not configured in GitHub Actions."
+          fi
           if [ -n "$SERPAPI_API_KEY" ]; then
             printf '%s' "$SERPAPI_API_KEY" | npx wrangler secret put SERPAPI_API_KEY
             configured=$((configured+1))
@@ -112,7 +119,7 @@ jobs:
           else
             echo "::notice::OPENAI_API_KEY is not configured in GitHub Actions."
           fi
-          echo "Synced $configured of 4 optional market-intelligence secrets."
+          echo "Synced $configured of 5 optional market-intelligence secrets."
           npx wrangler secret list || true
 
       - name: Create one-time pilot activation token
@@ -159,9 +166,9 @@ jobs:
         run: |
           set -euo pipefail
           echo "=== Market-data provider mappings ==="
-          npx wrangler d1 execute secretnests --remote --command="SELECT h.name,m.provider_hotel_id,m.confidence,json_extract(m.metadata_json,'$.matched_name') AS matched_name,ROUND(CAST(json_extract(m.metadata_json,'$.distance_km') AS REAL),3) AS distance_km FROM hotel_provider_mappings m JOIN hotels h ON h.id=m.hotel_id WHERE m.provider IN ('serpapi_google_hotels','booking_demand') ORDER BY m.updated_at DESC LIMIT 10;" --yes
+          npx wrangler d1 execute secretnests --remote --command="SELECT h.name,m.provider_hotel_id,m.confidence,json_extract(m.metadata_json,'$.matched_name') AS matched_name,ROUND(CAST(json_extract(m.metadata_json,'$.distance_km') AS REAL),3) AS distance_km FROM hotel_provider_mappings m JOIN hotels h ON h.id=m.hotel_id WHERE m.provider IN ('nuitee_connect','serpapi_google_hotels','booking_demand') ORDER BY m.updated_at DESC LIMIT 10;" --yes
           echo "=== Recent live rates ==="
-          npx wrangler d1 execute secretnests --remote --command="SELECT h.name,ROUND(r.nightly_rate,2) AS nightly_rate,r.currency,r.checkin_date,r.checkout_date,r.room_type,r.taxes_fees_included,r.observed_at FROM hotel_rate_observations r JOIN hotels h ON h.id=r.hotel_id WHERE r.provider_id IN ('serpapi_google_hotels','booking_demand') ORDER BY r.observed_at DESC LIMIT 20;" --yes
+          npx wrangler d1 execute secretnests --remote --command="SELECT h.name,ROUND(r.nightly_rate,2) AS nightly_rate,r.currency,r.checkin_date,r.checkout_date,r.room_type,r.taxes_fees_included,r.observed_at FROM hotel_rate_observations r JOIN hotels h ON h.id=r.hotel_id WHERE r.provider_id IN ('nuitee_connect','nuitee_sandbox','serpapi_google_hotels','booking_demand') ORDER BY r.observed_at DESC LIMIT 20;" --yes
           echo "=== Recent external evidence ==="
           npx wrangler d1 execute secretnests --remote --command="SELECT h.name,e.source_domain,e.sentiment,e.confidence,substr(e.summary,1,180) AS summary,e.observed_at FROM hotel_external_evidence e JOIN hotels h ON h.id=e.hotel_id ORDER BY e.observed_at DESC LIMIT 20;" --yes
 
