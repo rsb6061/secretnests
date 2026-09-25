@@ -43,3 +43,38 @@ export async function handleBootstrap(request,env){
     return json({ok:false,stage,error:String(e?.message||e).slice(0,800)},500);
   }
 }
+
+
+async function ensureSchema(env){
+  const statements=SCHEMA_SQL
+    .split(";")
+    .map(s=>s.trim())
+    .filter(Boolean)
+    .filter(s=>!/^PRAGMA\s+foreign_keys\s*=\s*ON$/i.test(s));
+  for(const sql of statements){
+    try{
+      await env.DB.prepare(sql).run();
+    }catch(e){
+      const msg=String(e?.message||e);
+      if(/duplicate column name/i.test(msg)) continue;
+      throw e;
+    }
+  }
+}
+
+export async function runAutomaticBootstrap(env){
+  await ensureSchema(env);
+  const hotelCount=Number((await env.DB.prepare("SELECT COUNT(*) n FROM hotels").first())?.n||0);
+  if(hotelCount<1066){
+    const start=Math.floor(hotelCount/40);
+    for(let p=start;p<Math.min(start+5,27);p++) await seedHotelPart(env,p);
+    return {stage:"hotels",from:hotelCount};
+  }
+  const redditCount=Number((await env.DB.prepare("SELECT COUNT(*) n FROM reddit_evidence").first())?.n||0);
+  if(redditCount<143){
+    const start=Math.floor(redditCount/50);
+    for(let p=start;p<3;p++) await seedRedditPart(env,p);
+    return {stage:"reddit",from:redditCount};
+  }
+  return {stage:"complete",hotels:hotelCount,reddit_evidence:redditCount};
+}
