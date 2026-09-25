@@ -225,7 +225,9 @@ export async function publishTripDraft(request,env,ui){
   const nights=intOrNull(field(form,"nights",parsed.nights),1,90);
   const roomType=clean(field(form,"room_type",parsed.room_type),160)||null;
   const booking=clean(field(form,"booking_channel",parsed.booking_channel),120)||null;
-  const party=clean(field(form,"trip_context",parsed.trip_context||parsed.party_type),100)||null;
+  const tripContext=clean(field(form,"trip_context",parsed.trip_context),100)||null;
+  const party=clean(parsed.party_type,80)||null;
+  const promotion=clean(parsed.promotion,240)||null;
   const rateBasis=["room_rate","all_in","unknown"].includes(parsed.rate_basis)?parsed.rate_basis:"unknown";
   const wr=field(form,"would_return",parsed.would_return===true?"1":parsed.would_return===false?"0":"");
   const wouldReturn=wr==="1"?1:wr==="0"?0:null;
@@ -239,12 +241,14 @@ export async function publishTripDraft(request,env,ui){
     const match=await exactHotel(env.DB,hotelName,city);
     hotelId=match?.id||null;
   }
-  const finalParsed={...parsed,hotel_name:hotelName,city:city||null,stay_period:stayMonth,stay_month:null,nights,trip_context:party,party_type:parsed.party_type||null,room_type:roomType,booking_channel:booking,paid_nightly_rate:paid,would_pay_again:wouldPay,would_return:wouldReturn==null?null:Boolean(wouldReturn),rate_basis:rateBasis,public_review_text:reviewText};
+  const finalParsed={...parsed,hotel_name:hotelName,city:city||null,stay_period:stayMonth,stay_month:null,nights,trip_context:tripContext,party_type:party,promotion,room_type:roomType,booking_channel:booking,paid_nightly_rate:paid,would_pay_again:wouldPay,would_return:wouldReturn==null?null:Boolean(wouldReturn),rate_basis:rateBasis,public_review_text:reviewText};
   const assets=(await env.DB.prepare("SELECT * FROM contribution_draft_assets WHERE draft_id=? ORDER BY created_at").bind(draft.id).all()).results||[];
   const hasReceipt=assets.some(a=>a.asset_role==="receipt_private");
   const id=crypto.randomUUID(),created=nowIso();
-  await env.DB.prepare("INSERT INTO trip_submissions (id,contact_email,hotel_name,city,stay_month,paid_nightly_rate,would_pay_again,room_type,booking_channel,notes,status,created_at,hotel_id,nights,party_type,would_return,perks_json,inclusions_json,rate_basis,verification_status,contribution_source,contribution_campaign,contribution_referrer,creator_id,raw_text,parsed_json,parser_version,user_confirmed_at,draft_id) VALUES (?,?,?,?,?,?,?,?,?,?, 'pending',?,?,?,?,?,'[]',?,?,?,?,?,?,?,?,?,?,?,?)")
-    .bind(id,user.email||null,hotelName,city||null,stayMonth,paid,wouldPay,roomType,booking,reviewText,created,hotelId,nights,party,wouldReturn,JSON.stringify(parsed.inclusions||[]),rateBasis,hasReceipt?"pending":"unverified",draft.contribution_source,draft.contribution_campaign,draft.contribution_referrer,user.creator_id,draft.raw_text,JSON.stringify(finalParsed),draft.parser_version,created,draft.id).run();
+  await env.DB.prepare(`INSERT INTO trip_submissions
+    (id,contact_email,hotel_name,city,stay_month,paid_nightly_rate,would_pay_again,room_type,booking_channel,notes,status,created_at,hotel_id,nights,party_type,trip_context,promotion,would_return,perks_json,inclusions_json,rate_basis,verification_status,contribution_source,contribution_campaign,contribution_referrer,creator_id,raw_text,parsed_json,parser_version,user_confirmed_at,draft_id)
+    VALUES (?,?,?,?,?,?,?,?,?,?,'pending',?,?,?,?,?,?,?,'[]',?,?,?,?,?,?,?,?,?,?,?,?)`)
+    .bind(id,user.email||null,hotelName,city||null,stayMonth,paid,wouldPay,roomType,booking,reviewText,created,hotelId,nights,party,tripContext,promotion,wouldReturn,JSON.stringify(parsed.inclusions||[]),rateBasis,hasReceipt?"pending":"unverified",draft.contribution_source,draft.contribution_campaign,draft.contribution_referrer,user.creator_id,draft.raw_text,JSON.stringify(finalParsed),draft.parser_version,created,draft.id).run();
   for(const asset of assets.filter(a=>a.asset_role==="receipt_private")){
     await env.DB.prepare("INSERT INTO submission_verification_artifacts (id,submission_id,r2_key,mime_type,file_size,status,redaction_status,created_at) VALUES (?,?,?,?,?,'pending','pending',?)")
       .bind(asset.id,id,asset.r2_key,asset.mime_type,asset.file_size,created).run();

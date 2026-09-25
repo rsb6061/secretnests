@@ -730,7 +730,7 @@ async function hotelPage(slug, env){
   const structuredEvidence=(await env.DB.prepare("SELECT provider,sentiment,price_mentioned,trip_context,confidence,source_url,summary,observed_at FROM hotel_external_evidence WHERE hotel_id=? AND provider NOT LIKE '%_sandbox' ORDER BY observed_at DESC LIMIT 8").bind(h.id).all()).results||[];
   const evidence=[...structuredEvidence,...legacyEvidence].sort((a,b)=>String(b.observed_at||"").localeCompare(String(a.observed_at||""))).slice(0,8);
   const firstParty=(await env.DB.prepare(`SELECT tr.review_text,tr.would_return,tr.published_at,
-      s.stay_month,s.nights,s.room_type,s.booking_channel,s.paid_nightly_rate,s.verified,
+      s.stay_month,s.nights,s.trip_context,s.promotion,s.inclusions_json,s.room_type,s.booking_channel,s.paid_nightly_rate,s.verified,
       vo.would_pay_again,cp.handle,cp.display_name,cp.is_public
     FROM trip_reports tr
     JOIN stays s ON s.id=tr.stay_id
@@ -760,7 +760,7 @@ async function hotelPage(slug, env){
     ["External review signal",h.external_review_summary&&!String(h.external_review_source||"").includes("sandbox")?(h.external_review_sentiment||"Available"):"—"]
   ];
   const contributionUrl="/add-your-trip?hotel="+encodeURIComponent(h.slug)+"#add-your-stay";
-  const contributionCard=(variant="rail")=>`<div class="contribution-card ${variant}" data-autoevent="contribution_seen" data-hotel-id="${attr(h.id)}"><div class="eyebrow">Stayed here?</div><h3>What did you pay — and what was it worth?</h3><p>Help the next traveler with the two numbers that matter: your actual nightly rate and what you’d happily pay to stay again.</p><a class="btn" data-event="contribution_cta_click" data-hotel-id="${attr(h.id)}" href="${attr(contributionUrl)}">Add your stay →</a><p class="kicker">About 2 minutes · not a star rating</p></div>`;
+  const contributionCard=(variant="rail")=>`<div class="contribution-card ${variant}" data-autoevent="contribution_seen" data-hotel-id="${attr(h.id)}"><div class="eyebrow">Stayed here?</div><h3>Tell travelers what the stay was actually like.</h3><p>Share the experience in your own words. If you remember what you paid or what you’d happily pay again, add that too.</p><a class="btn" data-event="contribution_cta_click" data-hotel-id="${attr(h.id)}" href="${attr(contributionUrl)}">Add your stay →</a><p class="kicker">About 2 minutes · not a star rating</p></div>`;
   const publicExternalReview=h.external_review_summary&&!String(h.external_review_source||"").includes("sandbox")
     ?`<section><h2>External guest-review signal</h2><div class="notice"><strong>${esc(h.external_review_sentiment||"External signal")}</strong><p>${esc(h.external_review_summary)}</p><div class="kicker">External aggregated review data · ${esc(h.external_review_source||"provider")} · does not affect SecretNests traveler value.</div></div></section>`
     :"";
@@ -768,7 +768,7 @@ async function hotelPage(slug, env){
   const valueConfidence=v?.confidence&&!String(v.confidence).toLowerCase().startsWith("insufficient")?String(v.confidence):"";
   const valueMeta=[valueClassification,valueConfidence?`${valueConfidence} confidence`:""].filter(Boolean);
   const valueBlock=v?`<section><h2>What travelers think it's worth</h2><div class="value"><div><div class="eyebrow">Traveler range</div><strong>${money(v.traveler_low)}–${money(v.traveler_high)}</strong></div><div><div class="eyebrow">Median would pay</div><strong>${money(v.median_would_pay)}</strong></div><div><div class="eyebrow">Current observed rate</div><strong>${money(latestRate?.nightly_rate??v.current_price)}</strong></div><div><div class="eyebrow">Sample</div><strong>${esc(v.sample_size)}</strong> stays</div></div>${valueMeta.length?`<p><strong>Value:</strong> ${valueMeta.map(esc).join(" · ")}</p>`:""}</section>`:`<section><h2>What travelers think it's worth</h2><p class="muted">Not enough first-party stay data yet. Add your stay to help establish the fair-value range.</p></section>`;
-  const firstPartyBlock=firstParty.length?`<section class="section"><h2>What SecretNests travelers say</h2><ul class="list">${firstParty.map(x=>{const publicCreator=Number(x.is_public||0)===1&&x.handle!=="community-intake";const who=publicCreator?`<a href="/@${encodeURIComponent(x.handle)}"><strong>@${esc(x.handle)}</strong></a>`:"SecretNests traveler";const context=[x.stay_month?"Stayed "+esc(x.stay_month):"",x.paid_nightly_rate!=null?"paid "+money(x.paid_nightly_rate):"",x.would_pay_again!=null?"would pay again "+money(x.would_pay_again):"",x.would_return==null?"":x.would_return?"would return":"would not return",x.verified?"verified rate":""].filter(Boolean).join(" · ");return `<li>${who}${context?`<br><span class="kicker">${context}</span>`:""}${x.review_text?`<p>${esc(x.review_text)}</p>`:""}</li>`}).join("")}</ul></section>`:"";
+  const firstPartyBlock=firstParty.length?`<section class="section"><h2>What SecretNests travelers say</h2><ul class="list">${firstParty.map(x=>{const publicCreator=Number(x.is_public||0)===1&&x.handle!=="community-intake";const who=publicCreator?`<a href="/@${encodeURIComponent(x.handle)}"><strong>@${esc(x.handle)}</strong></a>`:"SecretNests traveler";const inclusions=safeJson(x.inclusions_json,[]);const context=[x.trip_context?esc(x.trip_context):"",x.stay_month?"Stayed "+esc(x.stay_month):"",x.promotion?esc(x.promotion):"",inclusions.length?"Included: "+inclusions.slice(0,2).map(esc).join(", "):"",x.paid_nightly_rate!=null?"paid "+money(x.paid_nightly_rate):"",x.would_pay_again!=null?"would pay again "+money(x.would_pay_again):"",x.would_return==null?"":x.would_return?"would return":"would not return",x.verified?"verified rate":""].filter(Boolean).join(" · ");return `<li>${who}${context?`<br><span class="kicker">${context}</span>`:""}${x.review_text?`<p>${esc(x.review_text)}</p>`:""}</li>`}).join("")}</ul></section>`:"";
   const externalEvidenceBlock=evidence.length?`<section><h2>External traveler evidence</h2><ul class="list">${evidence.map(e=>`<li>${e.price_mentioned?`<strong>${money(e.price_mentioned)}</strong> · `:""}${esc(e.summary||e.trip_context||e.sentiment||"Traveler mention")} ${e.source_url?`<a href="${attr(e.source_url)}" rel="nofollow noopener">source</a>`:""}</li>`).join("")}</ul></section>`:"";
   const jsonLd={"@context":"https://schema.org","@graph":[
     {"@type":"Hotel","name":h.name,"description":h.description||undefined,"url":ORIGIN+"/hotel/"+h.slug,"image":mediaUrl?(mediaUrl.startsWith("http")?mediaUrl:ORIGIN+mediaUrl):undefined,"address":h.formatted_address||h.address||undefined,"telephone":h.phone||undefined,"brand":h.brand_name?{"@type":"Brand","name":h.brand_name}:undefined,"sameAs":h.website?[h.website]:undefined,"aggregateRating":h.google_rating?{"@type":"AggregateRating","ratingValue":h.google_rating,"reviewCount":h.google_review_count||undefined}:undefined},
@@ -789,7 +789,7 @@ ${(latestRate?.booking_url||h.booking_url)?`<p><a class="btn" data-event="outbou
 <aside class="hotel-rail"><div class="hotel-rail-inner">${contributionCard("rail")}${bestFor.length?`<div class="card"><div class="eyebrow">Good fit for</div><h3>Best for</h3><ul class="fit-list">${bestFor.slice(0,3).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}</div></aside></div>
 <section class="section"><h2>Nearby / comparable alternatives</h2><div class="grid">${comps.map(c=>`<a class="card" href="/hotel/${encodeURIComponent(c.slug)}"><strong>${esc(c.name)}</strong><br><span class="muted">${esc([c.city,c.country].filter(Boolean).join(", "))} · ${money(c.price_estimate_min)}–${money(c.price_estimate_max)}</span></a>`).join("")}</div>${compareLinks.length?`<div class="seo-links" style="margin-top:14px">${compareLinks.map(x=>`<a class="pill" href="${attr(x.url)}">Compare with ${esc(x.name)}</a>`).join("")}</div>`:""}
 <section class="section faq"><h2>${esc(h.name)} FAQ</h2>${faq.map(x=>`<details><summary>${esc(x.q)}</summary><p>${esc(x.a)}</p></details>`).join("")}</section>
-<div class="contribution-bottom" data-autoevent="contribution_seen" data-hotel-id="${attr(h.id)}"><div><div class="eyebrow">Add one useful data point</div><h2>Stayed at ${esc(h.name)}?</h2><p class="muted">Share what you paid, what you’d pay again, and whether you’d return. That is how the fair-value range gets better.</p></div><a class="btn" data-event="contribution_cta_click" data-hotel-id="${attr(h.id)}" href="${attr(contributionUrl)}">Add your stay →</a></div></section>`),env,{title:seo.title,description:seo.description,canonical:"/hotel/"+encodeURIComponent(h.slug),jsonLd});
+<div class="contribution-bottom" data-autoevent="contribution_seen" data-hotel-id="${attr(h.id)}"><div><div class="eyebrow">Add one useful data point</div><h2>Stayed at ${esc(h.name)}?</h2><p class="muted">Share the stay in your own words. Price and value details are optional, but useful when you have them.</p></div><a class="btn" data-event="contribution_cta_click" data-hotel-id="${attr(h.id)}" href="${attr(contributionUrl)}">Add your stay →</a></div></section>`),env,{title:seo.title,description:seo.description,canonical:"/hotel/"+encodeURIComponent(h.slug),jsonLd});
 }
 
 async function listPage(handle, slug, env){
@@ -1335,7 +1335,7 @@ async function adminSubmissions(request,env){
   const moderator=adminEmail(request,env);
   if(!moderator)return new Response("Not found",{status:404});
   if(request.method==="GET"){
-    const rows=(await env.DB.prepare("SELECT id,contact_email,hotel_name,city,stay_month,paid_nightly_rate,would_pay_again,room_type,booking_channel,notes,status,created_at,hotel_id,nights,party_type,would_return,perks_json,inclusions_json,rate_basis,verification_status,creator_id,raw_text,parsed_json,parser_version,user_confirmed_at,draft_id FROM trip_submissions WHERE status IN ('pending','matched') ORDER BY created_at LIMIT 200").all()).results||[];
+    const rows=(await env.DB.prepare("SELECT id,contact_email,hotel_name,city,stay_month,paid_nightly_rate,would_pay_again,room_type,booking_channel,notes,status,created_at,hotel_id,nights,party_type,trip_context,promotion,would_return,perks_json,inclusions_json,rate_basis,verification_status,creator_id,raw_text,parsed_json,parser_version,user_confirmed_at,draft_id FROM trip_submissions WHERE status IN ('pending','matched') ORDER BY created_at LIMIT 200").all()).results||[];
     return json({ok:true,submissions:rows});
   }
   if(bodyTooLarge(request,32768))return json({ok:false,error:"payload_too_large"},413);
@@ -1357,17 +1357,18 @@ async function adminSubmissions(request,env){
   }
   const creator=await env.DB.prepare("SELECT handle,display_name,is_public FROM creator_profiles WHERE id=? LIMIT 1").bind(creatorId).first();
   const intakeMethod=submission.creator_id?"first_party_submission":"community_submission";
+  const parsedSubmission=safeJson(submission.parsed_json,{});
   const stayId="submission-"+submission.id;
-  await env.DB.prepare(`INSERT INTO stays (id,creator_id,hotel_id,stay_month,nights,party_type,room_type,booking_channel,paid_nightly_rate,currency,verified,verification_method,created_at,updated_at,perks_json,inclusions_json,rate_basis)
-    VALUES (?,?,?,?,?,?,?,?,?,'USD',0,?,?,?,?,?,?) ON CONFLICT(id) DO NOTHING`)
-    .bind(stayId,creatorId,hotel.id,submission.stay_month,submission.nights,submission.party_type,submission.room_type,submission.booking_channel,submission.paid_nightly_rate,intakeMethod,nowIso(),nowIso(),submission.perks_json||"[]",submission.inclusions_json||"[]",submission.rate_basis||null).run();
+  await env.DB.prepare(`INSERT INTO stays (id,creator_id,hotel_id,stay_month,nights,party_type,trip_context,promotion,room_type,booking_channel,paid_nightly_rate,currency,verified,verification_method,created_at,updated_at,perks_json,inclusions_json,rate_basis)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,'USD',0,?,?,?,?,?,?) ON CONFLICT(id) DO NOTHING`)
+    .bind(stayId,creatorId,hotel.id,submission.stay_month,submission.nights,submission.party_type,submission.trip_context||parsedSubmission.trip_context||null,submission.promotion||parsedSubmission.promotion||null,submission.room_type,submission.booking_channel,submission.paid_nightly_rate,intakeMethod,nowIso(),nowIso(),submission.perks_json||"[]",submission.inclusions_json||"[]",submission.rate_basis||null).run();
   if(submission.would_pay_again!=null){
     await env.DB.prepare(`INSERT INTO value_opinions (id,stay_id,creator_id,hotel_id,paid_nightly_rate,would_pay_again,currency,created_at)
       VALUES (?,?,?,?,?,?,'USD',?) ON CONFLICT(id) DO UPDATE SET would_pay_again=excluded.would_pay_again`)
       .bind("value-"+submission.id,stayId,creatorId,hotel.id,submission.paid_nightly_rate,submission.would_pay_again,nowIso()).run();
   }
-  await env.DB.prepare("INSERT INTO trip_reports (id,stay_id,creator_id,hotel_id,title,review_text,verdict,would_return,standout_json,disappointments_json,status,published_at,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,'[]','[]','published',?,?,?) ON CONFLICT(stay_id) DO UPDATE SET review_text=excluded.review_text,would_return=excluded.would_return,status='published',updated_at=excluded.updated_at")
-    .bind("report-"+submission.id,stayId,creatorId,hotel.id,submission.hotel_name,submission.notes||submission.raw_text||null,intakeMethod,submission.would_return,nowIso(),nowIso(),nowIso()).run();
+  await env.DB.prepare("INSERT INTO trip_reports (id,stay_id,creator_id,hotel_id,title,review_text,verdict,would_return,standout_json,disappointments_json,status,published_at,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,'published',?,?,?) ON CONFLICT(stay_id) DO UPDATE SET review_text=excluded.review_text,would_return=excluded.would_return,standout_json=excluded.standout_json,disappointments_json=excluded.disappointments_json,status='published',updated_at=excluded.updated_at")
+    .bind("report-"+submission.id,stayId,creatorId,hotel.id,submission.hotel_name,submission.notes||submission.raw_text||null,intakeMethod,submission.would_return,JSON.stringify(parsedSubmission.standouts||[]),JSON.stringify(parsedSubmission.drawbacks||[]),nowIso(),nowIso(),nowIso()).run();
   if(body.verify_receipt){
     await env.DB.prepare("UPDATE submission_verification_artifacts SET status='verified',redaction_status='not_required',reviewer_note=?,reviewed_at=? WHERE submission_id=? AND status='pending'")
       .bind("Rate verified by "+moderator,nowIso(),submission.id).run();
@@ -1378,7 +1379,7 @@ async function adminSubmissions(request,env){
   await env.DB.prepare("UPDATE trip_submissions SET status='approved',hotel_id=?,reviewed_at=? WHERE id=?").bind(hotel.id,nowIso(),submission.id).run();
   await env.DB.prepare("INSERT INTO submission_moderation (id,submission_id,action,hotel_id,moderator_email,note,created_at) VALUES (?,?,?,?,?,?,?)").bind(crypto.randomUUID(),submission.id,"approve",hotel.id,moderator,String(body.note||"").slice(0,1000),nowIso()).run();
   const mediaPromoted=await contributionFlow.promoteDraftMedia(env,submission,creatorId,hotel.id,creator?.display_name||creator?.handle||null);
-  const valuation=await recomputeHotelValuation(env.DB,hotel.id);
+  const valuation=submission.would_pay_again!=null?await recomputeHotelValuation(env.DB,hotel.id):null;
   return json({ok:true,status:"approved",stay_id:stayId,creator_id:creatorId,media_promoted:mediaPromoted,valuation});
 }
 
