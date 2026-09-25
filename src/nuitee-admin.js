@@ -12,6 +12,8 @@ export async function nuiteeAdminBody(db){
     SUM(CASE WHEN a.review_status='complete' THEN 1 ELSE 0 END) reviews_available,
     SUM(CASE WHEN a.review_status='unavailable' THEN 1 ELSE 0 END) reviews_unavailable,
     SUM(CASE WHEN a.rate_audited_at IS NOT NULL THEN 1 ELSE 0 END) rate_audited,
+    SUM(CASE WHEN a.canonical_status='complete' THEN 1 ELSE 0 END) canonical_complete,
+    SUM(CASE WHEN a.canonical_status='complete' AND a.canonical_fields>0 THEN 1 ELSE 0 END) canonical_updated,
     ROUND(AVG(CASE WHEN a.rate_audited_at IS NOT NULL THEN a.rate_coverage_pct END),1) avg_rate_coverage
     FROM hotel_enrichment_profiles p
     JOIN hotels h ON h.id=p.hotel_id
@@ -21,7 +23,7 @@ export async function nuiteeAdminBody(db){
   const rows=(await db.prepare(`SELECT h.id,h.name,h.slug,h.city,h.country,p.priority_rank,
     a.provider_hotel_id,a.environment,a.mapping_status,a.mapping_confidence,a.name_similarity,a.distance_km,
     a.metadata_status,a.metadata_fields,a.review_status,a.rate_windows_tested,a.rate_windows_with_inventory,
-    a.rate_coverage_pct,a.last_error,a.mapping_error,a.metadata_error,a.review_error,a.candidate_provider_hotel_id,
+    a.rate_coverage_pct,a.canonical_status,a.canonical_fields,a.canonical_at,a.last_error,a.mapping_error,a.metadata_error,a.review_error,a.candidate_provider_hotel_id,
     a.candidate_name,a.candidate_similarity,a.candidate_distance_km,a.mapping_stage,a.updated_at
     FROM hotel_enrichment_profiles p
     JOIN hotels h ON h.id=p.hotel_id
@@ -47,6 +49,7 @@ export async function nuiteeAdminBody(db){
       <div><strong>${num(summary?.metadata_complete)}</strong><span class="muted">metadata captured</span></div>
       <div><strong>${num(summary?.reviews_available)}</strong><span class="muted">review signal</span></div>
       <div><strong>${num(summary?.rate_audited)}</strong><span class="muted">rate audited</span></div>
+      <div><strong>${num(summary?.canonical_complete)}</strong><span class="muted">canonical promoted</span></div>
       <div><strong>${Number(summary?.avg_rate_coverage||0).toFixed(0)}%</strong><span class="muted">avg availability</span></div>
     </div>
     <section class="section"><div class="filters">
@@ -61,6 +64,7 @@ export async function nuiteeAdminBody(db){
         <th style="text-align:left;padding:9px;border-bottom:1px solid #ddd">Mapping</th>
         <th style="text-align:left;padding:9px;border-bottom:1px solid #ddd">Metadata</th>
         <th style="text-align:left;padding:9px;border-bottom:1px solid #ddd">Reviews</th>
+        <th style="text-align:left;padding:9px;border-bottom:1px solid #ddd">Canonical</th>
         <th style="text-align:right;padding:9px;border-bottom:1px solid #ddd">Rate coverage</th>
         <th style="text-align:left;padding:9px;border-bottom:1px solid #ddd">Error</th>
       </tr></thead><tbody>
@@ -70,6 +74,7 @@ export async function nuiteeAdminBody(db){
         <td style="padding:9px;border-bottom:1px solid #eee">${status(r.mapping_status)} ${r.mapping_confidence?esc(r.mapping_confidence):""}${r.distance_km!=null?" · "+Number(r.distance_km).toFixed(2)+" km":""}<br><span class="kicker">${esc(r.provider_hotel_id||"—")}${r.mapping_stage?" · "+esc(r.mapping_stage):""}</span>${r.candidate_name?`<br><span class="kicker">best rejected: ${esc(r.candidate_name)} · ${Number(r.candidate_similarity||0).toFixed(2)}${r.candidate_distance_km!=null?" · "+Number(r.candidate_distance_km).toFixed(2)+" km":""}</span>`:""}${r.mapping_status==="review"?`<form method="post" style="margin-top:5px;display:flex;gap:6px"><input type="hidden" name="hotel_id" value="${esc(r.id)}"><button class="btn" name="action" value="approve">Approve</button><button class="btn secondary" name="action" value="reset">Retry</button></form>`:r.mapping_status==="failed"?`<form method="post" style="margin-top:5px"><input type="hidden" name="hotel_id" value="${esc(r.id)}"><button class="btn secondary" name="action" value="reset">Retry</button></form>`:""}</td>
         <td style="padding:9px;border-bottom:1px solid #eee">${status(r.metadata_status)}<br><span class="kicker">${Number(r.metadata_fields||0)} fields</span></td>
         <td style="padding:9px;border-bottom:1px solid #eee">${status(r.review_status)}</td>
+        <td style="padding:9px;border-bottom:1px solid #eee">${status(r.canonical_status)}<br><span class="kicker">${Number(r.canonical_fields||0)} promoted fields</span></td>
         <td style="text-align:right;padding:9px;border-bottom:1px solid #eee">${r.rate_coverage_pct==null?"—":Number(r.rate_coverage_pct).toFixed(0)+"%"}<br><span class="kicker">${Number(r.rate_windows_with_inventory||0)}/${Number(r.rate_windows_tested||0)} windows</span></td>
         <td style="padding:9px;border-bottom:1px solid #eee">${[
           r.mapping_error?"map: "+r.mapping_error:"",
