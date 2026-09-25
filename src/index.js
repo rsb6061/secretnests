@@ -676,6 +676,38 @@ async function mediaAsset(id,env){
   return new Response(obj.body,{headers:h});
 }
 
+async function brandsPage(env){
+  const rows=(await env.DB.prepare(`SELECT brand_name,COUNT(*) hotel_count,COUNT(DISTINCT city) city_count,
+      SUM(CASE WHEN EXISTS (SELECT 1 FROM hotel_value_snapshots v WHERE v.hotel_id=h.id AND v.sample_size>0) THEN 1 ELSE 0 END) first_party_count
+    FROM hotels h WHERE is_published=1 AND brand_name IS NOT NULL AND trim(brand_name)<>''
+    GROUP BY brand_name HAVING COUNT(*)>=2 ORDER BY hotel_count DESC,brand_name LIMIT 200`).all()).results||[];
+  return page(shell(`<section class="hero" style="padding-bottom:24px"><div class="eyebrow">Hotel brands</div><h1>Luxury hotel brands, compared by price and traveler value.</h1><p>Browse multi-property brands represented in SecretNests. Brand membership comes from trusted provider metadata; traveler fair-value data remains first-party and separate.</p></section>
+  <div class="grid">${rows.map(x=>`<a class="card" href="/brands/${brandSlug(x.brand_name)}"><h3>${esc(x.brand_name)}</h3><p class="muted">${Number(x.hotel_count)} hotels · ${Number(x.city_count)} destinations · ${Number(x.first_party_count||0)} with first-party value data</p></a>`).join("")||'<div class="notice">Brand pages will appear as trusted hotel metadata expands.</div>'}</div>`),env,{title:"Luxury hotel brands: prices & value | SecretNests",description:"Browse luxury hotel brands and compare their SecretNests hotel coverage, price context and traveler value data.",canonical:"/brands"});
+}
+
+async function brandPage(slug,env){
+  const brands=(await env.DB.prepare("SELECT DISTINCT brand_name FROM hotels WHERE is_published=1 AND brand_name IS NOT NULL AND trim(brand_name)<>''").all()).results||[];
+  const match=brands.find(x=>brandSlug(x.brand_name)===slug);
+  if(!match)return new Response("Brand not found",{status:404});
+  const rows=(await env.DB.prepare(`SELECT h.name,h.slug,h.city,h.country,h.brand_name,h.description,h.price_estimate_min,h.price_estimate_max,h.google_rating,h.reddit_mention_count,
+      v.median_would_pay,v.traveler_low,v.traveler_high,v.sample_size,v.confidence,v.value_classification
+    FROM hotels h LEFT JOIN hotel_value_snapshots v ON v.id=(SELECT id FROM hotel_value_snapshots WHERE hotel_id=h.id ORDER BY calculated_at DESC LIMIT 1)
+    WHERE h.is_published=1 AND h.brand_name=? ORDER BY CASE WHEN COALESCE(v.sample_size,0)>0 THEN 0 ELSE 1 END,COALESCE(v.sample_size,0) DESC,h.reddit_mention_count DESC,h.google_rating DESC,h.name`).bind(match.brand_name).all()).results||[];
+  const cities=[...new Set(rows.map(x=>[x.city,x.country].filter(Boolean).join(", ")).filter(Boolean))];
+  const priced=rows.filter(x=>x.price_estimate_min!=null||x.price_estimate_max!=null);
+  const avg=priced.length?Math.round(priced.reduce((n,x)=>n+Number(x.price_estimate_min??x.price_estimate_max??0),0)/priced.length):null;
+  const firstParty=rows.filter(x=>Number(x.sample_size||0)>0).length;
+  const top=rows.slice(0,5),pairs=[];
+  for(let i=0;i<top.length&&pairs.length<8;i++)for(let j=i+1;j<top.length&&pairs.length<8;j++)pairs.push({a:top[i],b:top[j],path:"/compare/"+encodeURIComponent(top[i].slug)+"-vs-"+encodeURIComponent(top[j].slug)});
+  const canonical="/brands/"+slug;
+  const jsonLd={"@context":"https://schema.org","@type":"CollectionPage","name":match.brand_name+" hotels","url":ORIGIN+canonical,"mainEntity":{"@type":"ItemList","itemListElement":rows.map((x,i)=>({"@type":"ListItem","position":i+1,"url":ORIGIN+"/hotel/"+x.slug,"name":x.name}))}};
+  return page(shell(`<section class="hero" style="padding-bottom:24px"><div class="eyebrow">Hotel brand guide</div><h1>${esc(match.brand_name)} hotels: prices, reviews & value</h1><p>Compare ${rows.length} ${esc(match.brand_name)} properties in SecretNests across ${cities.length} destinations. Provider-sourced brand metadata and external review signals are kept separate from first-party traveler value opinions.</p></section>
+  <section class="proof"><div><strong>${rows.length}</strong><span class="muted">hotels</span></div><div><strong>${cities.length}</strong><span class="muted">destinations</span></div><div><strong>${firstParty}</strong><span class="muted">with first-party value data</span></div><div><strong>${avg!=null?money(avg):"—"}</strong><span class="muted">avg. estimated lower rate</span></div></section>
+  <section class="section"><div class="section-head"><div><div class="eyebrow">Destinations</div><h2>Where ${esc(match.brand_name)} appears</h2></div></div><div class="seo-links">${cities.slice(0,20).map(x=>`<span class="pill">${esc(x)}</span>`).join("")}</div></section>
+  <section class="section"><div class="section-head"><div><div class="eyebrow">Properties</div><h2>${esc(match.brand_name)} hotel pages</h2></div></div><div class="grid">${rows.map(h=>hotelCard(h)).join("")}</div></section>
+  ${pairs.length?`<section class="section"><div class="section-head"><div><div class="eyebrow">Compare within the brand</div><h2>${esc(match.brand_name)} vs. ${esc(match.brand_name)}</h2></div></div><div class="grid">${pairs.map(p=>`<a class="card" href="${attr(p.path)}"><strong>${esc(p.a.name)} vs. ${esc(p.b.name)}</strong><p class="muted">${esc([p.a.city,p.a.country].filter(Boolean).join(", "))} vs. ${esc([p.b.city,p.b.country].filter(Boolean).join(", "))}</p></a>`).join("")}</div></section>`:""}`),env,{title:metaText(match.brand_name+" hotels: prices & value | SecretNests",66),description:metaText("Compare "+rows.length+" "+match.brand_name+" hotels by estimated prices, traveler value where available, and direct hotel matchups.",165),canonical,jsonLd});
+}
+
 async function compareLanding(env){
   const hotels=(await env.DB.prepare("SELECT name,slug,city,country FROM hotels WHERE is_published=1 ORDER BY reddit_mention_count DESC,google_rating DESC,name LIMIT 300").all()).results||[];
   const options=hotels.map(h=>`<option value="${attr(h.slug)}">${esc(h.name)}${h.city?" — "+esc(h.city):""}</option>`).join("");
