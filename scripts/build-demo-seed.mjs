@@ -27,7 +27,7 @@ const lists=[
   {id:"demo-list-ripoff",slug:"700-hotels-i-thought-were-a-ripoff",title:"$700+ hotels I thought were a ripoff",description:"Illustrative demo list; not a claim about an actual traveler experience.",items:[0]}
 ];
 
-const sql=["BEGIN TRANSACTION;"];
+const sql=[];
 sql.push(
   "INSERT INTO creator_profiles (id,user_id,handle,display_name,bio,taste_profile_json,is_public,is_demo,created_at,updated_at) VALUES ("+
   [q(creatorId),"NULL",q(creator.handle),q(creator.display_name),q(creator.bio),q(JSON.stringify(creator.taste)),"1","1","CURRENT_TIMESTAMP","CURRENT_TIMESTAMP"].join(",")+
@@ -76,7 +76,7 @@ for(const l of lists){
   });
 }
 
-sql.push("COMMIT;");
+sql.push();
 fs.mkdirSync(".generated",{recursive:true});
 fs.writeFileSync(".generated/demo.sql",sql.join("\n"));
 console.log("Built clearly labeled demo creator seed with "+demo.length+" illustrative stays and "+lists.length+" lists.");
