@@ -2,7 +2,7 @@ import { drainOfficialHotelQueue } from "./enrichment-worker.js";
 import { drainCurrentRateQueue } from "./rate-worker.js";
 import { drainExternalEvidenceQueue } from "./external-evidence-worker.js";
 import { refreshHotelEnrichment } from "./enrichment.js";
-import { runNuiteeTop250Enrichment, resetNuiteeAuditHotel } from "./nuitee-top250-worker.js";
+import { runNuiteeTop250Enrichment, resetNuiteeAuditHotel, approveNuiteeAuditHotel } from "./nuitee-top250-worker.js";
 import { nuiteeAdminBody } from "./nuitee-admin.js";
 import { recomputeHotelValuation } from "./value-engine.js";
 import { sameOrigin, bodyTooLarge, enforceRateLimit, adminEmail, safeLogError } from "./security.js";
@@ -986,6 +986,10 @@ async function adminNuiteePage(request,env){
     if(action==="run"){
       const out=await runNuiteeTop250Enrichment(env,{mapLimit:12,reviewLimit:6,rateLimit:100});
       message="Nuitee batch: "+Number(out.mapping?.mapped||0)+" mapped, "+Number(out.mapping?.metadata||0)+" metadata, "+Number(out.reviews?.written||0)+" reviews, "+Number(out.rates?.observations||0)+" sandbox rate observations.";
+    }else if(action==="approve"){
+      const hotelId=String(form.get("hotel_id")||"");
+      const out=hotelId?await approveNuiteeAuditHotel(env.DB,hotelId):{ok:false};
+      message=out.ok?"Nuitee mapping approved.":"Mapping could not be approved.";
     }else if(action==="reset"){
       const hotelId=String(form.get("hotel_id")||"");
       if(hotelId)await resetNuiteeAuditHotel(env.DB,hotelId);

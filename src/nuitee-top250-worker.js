@@ -85,10 +85,10 @@ async function saveMapping(db,hotelId,match,environment){
   const now=nowIso(),status=match.confidence==="high"?"mapped":"review";
   await db.prepare(`INSERT INTO hotel_provider_mappings
     (id,hotel_id,provider,provider_hotel_id,status,confidence,source_url,metadata_json,created_at,updated_at)
-    VALUES (?,?,'nuitee_connect',?,'active',?,NULL,?,?,?)
-    ON CONFLICT(hotel_id,provider) DO UPDATE SET provider_hotel_id=excluded.provider_hotel_id,status='active',
+    VALUES (?,?,'nuitee_connect',?,?,?,NULL,?,?,?)
+    ON CONFLICT(hotel_id,provider) DO UPDATE SET provider_hotel_id=excluded.provider_hotel_id,status=excluded.status,
       confidence=excluded.confidence,metadata_json=excluded.metadata_json,updated_at=excluded.updated_at`)
-    .bind(crypto.randomUUID(),hotelId,match.id,match.confidence||"medium",
+    .bind(crypto.randomUUID(),hotelId,match.id,match.confidence==="high"?"active":"review",match.confidence||"medium",
       JSON.stringify({matched_name:match.name,similarity:match.similarity,distance_km:match.distance,environment,mapping_stage:match.stage||null}),now,now).run();
   await upsertAudit(db,hotelId,{
     provider_hotel_id:match.id,environment,mapping_status:status,mapping_confidence:match.confidence||"medium",
@@ -229,7 +229,7 @@ async function reviewBatch(env,limit){
   const environment=nuiteeEnvironment(env);
   const rows=(await env.DB.prepare(`SELECT a.hotel_id,a.provider_hotel_id,p.priority_rank
     FROM hotel_nuitee_audit a JOIN hotel_enrichment_profiles p ON p.hotel_id=a.hotel_id
-    WHERE p.cohort='priority_250' AND a.mapping_status IN ('mapped','review') AND a.review_status='pending'
+    WHERE p.cohort='priority_250' AND a.mapping_status='mapped' AND a.review_status='pending'
     ORDER BY p.priority_rank LIMIT ?`).bind(clamp(limit,1,20)).all()).results||[];
   const results=await chunks(rows,2,async row=>{
     try{
@@ -251,7 +251,7 @@ async function rateCoverageBatch(env,limit){
   const environment=nuiteeEnvironment(env),provider=environment==="sandbox"?"nuitee_sandbox":"nuitee_connect";
   const rows=(await env.DB.prepare(`SELECT a.hotel_id,a.provider_hotel_id,p.priority_rank
     FROM hotel_nuitee_audit a JOIN hotel_enrichment_profiles p ON p.hotel_id=a.hotel_id
-    WHERE p.cohort='priority_250' AND a.mapping_status IN ('mapped','review') AND a.rate_audited_at IS NULL
+    WHERE p.cohort='priority_250' AND a.mapping_status='mapped' AND a.rate_audited_at IS NULL
     ORDER BY p.priority_rank LIMIT ?`).bind(clamp(limit,1,200)).all()).results||[];
   if(!rows.length)return {claimed:0,windows:0,observations:0,failures:0};
   const byProvider=new Map(rows.map(r=>[String(r.provider_hotel_id),r]));
@@ -334,4 +334,14 @@ export async function resetNuiteeAuditHotel(db,hotelId){
       candidate_provider_hotel_id=NULL,candidate_name=NULL,candidate_similarity=NULL,candidate_distance_km=NULL,mapping_stage=NULL,
       updated_at=excluded.updated_at`).bind(hotelId,nowIso()).run();
   return {ok:true,hotel_id:hotelId};
+}
+
+
+export async function approveNuiteeAuditHotel(db,hotelId){
+  const audit=await db.prepare("SELECT provider_hotel_id,mapping_status FROM hotel_nuitee_audit WHERE hotel_id=?").bind(hotelId).first();
+  if(!audit?.provider_hotel_id||audit.mapping_status!=="review")return {ok:false,hotel_id:hotelId,reason:"not_reviewable"};
+  const now=nowIso();
+  await db.prepare("UPDATE hotel_nuitee_audit SET mapping_status='mapped',last_error=NULL,mapping_error=NULL,updated_at=? WHERE hotel_id=?").bind(now,hotelId).run();
+  await db.prepare("UPDATE hotel_provider_mappings SET status='active',updated_at=? WHERE hotel_id=? AND provider='nuitee_connect' AND provider_hotel_id=?").bind(now,hotelId,audit.provider_hotel_id).run();
+  return {ok:true,hotel_id:hotelId,provider_hotel_id:audit.provider_hotel_id};
 }
