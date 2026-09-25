@@ -74,7 +74,7 @@ function schema(){
 async function researchHotel(env,hotel){
   const key=String(env.OPENAI_API_KEY||"").trim();
   if(!key)return {ok:false,error:"openai_not_configured"};
-  const model=String(env.EXTERNAL_EVIDENCE_MODEL||"gpt-5.5").trim();
+  const model=String(env.EXTERNAL_EVIDENCE_MODEL||"gpt-5.6-luna").trim();
   const blocked=["reddit.com"];
   const official=safeUrl(hotel.website); if(official?.hostname)blocked.push(official.hostname.replace(/^www\./,""));
   const prompt=`Search the public web for independent traveler experience evidence about this hotel:
@@ -99,6 +99,7 @@ Rules:
       body:JSON.stringify({
         model,
         tools:[{type:"web_search",search_context_size:"low",filters:{blocked_domains:[...new Set(blocked)]}}],
+        include:["web_search_call.action.sources"],
         input:prompt,
         text:{format:{type:"json_schema",name:"hotel_external_evidence",strict:true,schema:schema()}},
         max_output_tokens:1200
