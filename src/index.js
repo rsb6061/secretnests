@@ -386,8 +386,29 @@ input:focus,select:focus,textarea:focus{
   gap:28px;
   align-items:start;
 }
+.hotel-shell{
+  display:grid;
+  grid-template-columns:minmax(0,3fr) minmax(280px,1fr);
+  gap:28px;
+  align-items:start;
+}
+.hotel-main{min-width:0}
 .hotel-rail{min-width:0}
 .hotel-rail-inner{position:sticky;top:106px;display:grid;gap:16px}
+.hotel-highlights .pill{
+  max-width:min(360px,100%);
+  white-space:normal;
+  line-height:1.35;
+}
+.fit-list{
+  margin:6px 0 0;
+  padding-left:18px;
+  color:#514b65;
+}
+.fit-list li{
+  margin:10px 0;
+  line-height:1.4;
+}
 .contribution-card{
   border:1px solid var(--lavender);
   border-radius:28px;
@@ -506,7 +527,7 @@ form.card{background:rgba(255,255,255,.82)}
   .hero h1{font-size:44px}
   .section-head{align-items:flex-start;flex-direction:column}
   .value{grid-template-columns:1fr 1fr}
-  .two{grid-template-columns:1fr}
+  .two,.hotel-shell{grid-template-columns:1fr}
   .hotel-rail .contribution-card{display:none}
   .hotel-rail-inner{position:static}
   .contribution-inline-mobile{display:block;margin:22px 0}
@@ -706,7 +727,7 @@ async function hotelPage(slug, env){
   const structuredEvidence=(await env.DB.prepare("SELECT provider,sentiment,price_mentioned,trip_context,confidence,source_url,summary,observed_at FROM hotel_external_evidence WHERE hotel_id=? AND provider NOT LIKE '%_sandbox' ORDER BY observed_at DESC LIMIT 8").bind(h.id).all()).results||[];
   const evidence=[...structuredEvidence,...legacyEvidence].sort((a,b)=>String(b.observed_at||"").localeCompare(String(a.observed_at||""))).slice(0,8);
   const comps=(await env.DB.prepare(`SELECT name,slug,city,country,brand_name,price_estimate_min,price_estimate_max FROM hotels WHERE is_published=1 AND id<>? AND ((city IS NOT NULL AND city=?) OR (country IS NOT NULL AND country=?)) ORDER BY CASE WHEN city=? THEN 0 ELSE 1 END,ABS(COALESCE(price_estimate_min,0)-COALESCE(?,0)),reddit_mention_count DESC LIMIT 4`).bind(h.id,h.city||"",h.country||"",h.city||"",h.price_estimate_min||0).all()).results||[];
-  const highlights=safeJson(h.highlights_json,[]), bestFor=safeJson(h.best_for_json,[]), notIdeal=safeJson(h.not_ideal_for_json,[]), amenities=safeJson(h.amenities_json,[]);
+  const highlights=safeJson(h.highlights_json,[]), bestFor=safeJson(h.best_for_json,[]), amenities=safeJson(h.amenities_json,[]);
   const location=[h.city,h.country].filter(Boolean).join(", ");
   const seo=hotelSeoCopy(h,{travelerMedian:v?.median_would_pay,sampleSize:v?.sample_size||0,currentRate:latestRate?.nightly_rate??v?.current_price});
   const cityUrl=h.city&&h.country?"/destinations/"+slugify(h.country)+"/"+slugify(h.city):null;
@@ -731,7 +752,10 @@ async function hotelPage(slug, env){
   const publicExternalReview=h.external_review_summary&&!String(h.external_review_source||"").includes("sandbox")
     ?`<section><h2>External guest-review signal</h2><div class="notice"><strong>${esc(h.external_review_sentiment||"External signal")}</strong><p>${esc(h.external_review_summary)}</p><div class="kicker">External aggregated review data · ${esc(h.external_review_source||"provider")} · does not affect SecretNests traveler value.</div></div></section>`
     :"";
-  const valueBlock=v?`<section><h2>What travelers think it's worth</h2><div class="value"><div><div class="eyebrow">Traveler range</div><strong>${money(v.traveler_low)}–${money(v.traveler_high)}</strong></div><div><div class="eyebrow">Median would pay</div><strong>${money(v.median_would_pay)}</strong></div><div><div class="eyebrow">Current observed rate</div><strong>${money(latestRate?.nightly_rate??v.current_price)}</strong></div><div><div class="eyebrow">Sample</div><strong>${esc(v.sample_size)}</strong> stays</div></div><p><strong>Value:</strong> ${esc(v.value_classification||"insufficient data")} · <span class="muted">${esc(v.confidence||"insufficient")} confidence · ${esc(v.methodology_version||"legacy")}</span></p></section>`:`<section><h2>What travelers think it's worth</h2><p class="muted">Not enough first-party stay data yet. Add your stay to help establish the fair-value range.</p></section>`;
+  const valueClassification=v?.value_classification&&!String(v.value_classification).toLowerCase().startsWith("insufficient")?String(v.value_classification):"";
+  const valueConfidence=v?.confidence&&!String(v.confidence).toLowerCase().startsWith("insufficient")?String(v.confidence):"";
+  const valueMeta=[valueClassification,valueConfidence?`${valueConfidence} confidence`:""].filter(Boolean);
+  const valueBlock=v?`<section><h2>What travelers think it's worth</h2><div class="value"><div><div class="eyebrow">Traveler range</div><strong>${money(v.traveler_low)}–${money(v.traveler_high)}</strong></div><div><div class="eyebrow">Median would pay</div><strong>${money(v.median_would_pay)}</strong></div><div><div class="eyebrow">Current observed rate</div><strong>${money(latestRate?.nightly_rate??v.current_price)}</strong></div><div><div class="eyebrow">Sample</div><strong>${esc(v.sample_size)}</strong> stays</div></div>${valueMeta.length?`<p><strong>Value:</strong> ${valueMeta.map(esc).join(" · ")}</p>`:""}</section>`:`<section><h2>What travelers think it's worth</h2><p class="muted">Not enough first-party stay data yet. Add your stay to help establish the fair-value range.</p></section>`;
   const jsonLd={"@context":"https://schema.org","@graph":[
     {"@type":"Hotel","name":h.name,"description":h.description||undefined,"url":ORIGIN+"/hotel/"+h.slug,"image":mediaUrl?(mediaUrl.startsWith("http")?mediaUrl:ORIGIN+mediaUrl):undefined,"address":h.formatted_address||h.address||undefined,"telephone":h.phone||undefined,"brand":h.brand_name?{"@type":"Brand","name":h.brand_name}:undefined,"sameAs":h.website?[h.website]:undefined,"aggregateRating":h.google_rating?{"@type":"AggregateRating","ratingValue":h.google_rating,"reviewCount":h.google_review_count||undefined}:undefined},
     {"@type":"BreadcrumbList","itemListElement":[
@@ -741,12 +765,15 @@ async function hotelPage(slug, env){
     ]},
     {"@type":"FAQPage","mainEntity":faq.map(x=>({"@type":"Question","name":x.q,"acceptedAnswer":{"@type":"Answer","text":x.a}}))}
   ]};
-  return page(shell(`<section class="hero" data-autoevent="hotel_view" data-hotel-id="${attr(h.id)}" style="padding-bottom:28px"><div class="eyebrow">${esc(location)}</div><h1>${esc(h.name)}: prices, traveler reviews & what it’s worth</h1>${mediaUrl?`<img class="hero-media" src="${attr(mediaUrl)}" alt="${attr(h.name)}">${media.attribution_text?`<div class="kicker">${esc(media.attribution_text)}</div>`:""}`:""}<p>${esc(h.description||"")}</p><div class="seo-links">${cityUrl?`<a class="pill" href="${attr(cityUrl)}">Luxury hotels in ${esc(h.city)}</a>`:""}${brandUrl?`<a class="pill" href="${attr(brandUrl)}">${esc(h.brand_name)} hotels</a>`:""}</div><div class="filters">${highlights.slice(0,5).map(x=>`<span class="pill">${esc(x)}</span>`).join("")}</div></section><div class="two"><div>${valueBlock}<div class="contribution-inline-mobile">${contributionCard("mobile")}</div>
+  return page(shell(`<div class="hotel-shell"><div class="hotel-main"><section class="hero" data-autoevent="hotel_view" data-hotel-id="${attr(h.id)}" style="padding-bottom:28px"><div class="eyebrow">${esc(location)}</div><h1>${esc(h.name)}: prices, traveler reviews & what it’s worth</h1>${mediaUrl?`<img class="hero-media" src="${attr(mediaUrl)}" alt="${attr(h.name)}">${media.attribution_text?`<div class="kicker">${esc(media.attribution_text)}</div>`:""}`:""}<p>${esc(h.description||"")}</p><div class="seo-links">${cityUrl?`<a class="pill" href="${attr(cityUrl)}">Luxury hotels in ${esc(h.city)}</a>`:""}${brandUrl?`<a class="pill" href="${attr(brandUrl)}">${esc(h.brand_name)} hotels</a>`:""}</div><div class="filters hotel-highlights">${highlights.slice(0,4).map(x=>`<span class="pill">${esc(x)}</span>`).join("")}</div></section>
+${valueBlock}<div class="contribution-inline-mobile">${contributionCard("mobile")}</div>
 <section class="section"><h2>Is ${esc(h.name)} worth it?</h2><p>${esc(seo.worthAnswer)}</p></section>
 <section><h2>${esc(h.name)} at a glance</h2><table class="fact-table"><tbody>${factRows.map(([k,val])=>`<tr><th>${esc(k)}</th><td>${esc(val)}</td></tr>`).join("")}</tbody></table></section>
 <section class="section"><h2>How much does ${esc(h.name)} cost?</h2><p>${esc(seo.priceAnswer)}</p><p>Estimated historical range: <strong>${money(h.price_estimate_min)}–${money(h.price_estimate_max)}</strong> per night.</p>
 ${latestRate?`<div class="notice"><div class="eyebrow">Latest observed bookable rate</div><div class="price-line"><strong>${money(latestRate.nightly_rate)}</strong><span class="muted">${esc(latestRate.provider_name||latestRate.provider_id||"provider")} · observed ${esc(String(latestRate.observed_at||"").slice(0,10))}</span></div>${latestRate.checkin_date?`<p class="kicker">${esc(latestRate.checkin_date)} → ${esc(latestRate.checkout_date||"")} ${latestRate.room_type?"· "+esc(latestRate.room_type):""} ${latestRate.taxes_fees_included==null?"":latestRate.taxes_fees_included?"· taxes/fees included":"· before taxes/fees"}</p>`:""}</div>`:""}
-${(latestRate?.booking_url||h.booking_url)?`<p><a class="btn" data-event="outbound_booking_click" data-hotel-id="${attr(h.id)}" href="/out/${encodeURIComponent(h.slug)}" rel="nofollow sponsored">Check booking options</a></p>`:""}</section>${amenities.length?`<section><h2>Amenities</h2><div class="amenity-list">${amenities.slice(0,18).map(x=>`<span class="pill">${esc(x)}</span>`).join("")}</div></section>`:""}<section><h2>Traveler evidence</h2><ul class="list">${evidence.map(e=>`<li>${e.price_mentioned?`<strong>${money(e.price_mentioned)}</strong> · `:""}${esc(e.summary||e.trip_context||e.sentiment||"Traveler mention")} ${e.source_url?`<a href="${attr(e.source_url)}" rel="nofollow noopener">source</a>`:""}</li>`).join("")||'<li class="muted">No structured traveler evidence yet.</li>'}</ul></section>${publicExternalReview}</div><aside class="hotel-rail"><div class="hotel-rail-inner">${contributionCard("rail")}<div class="card"><h3>Best for</h3><div>${bestFor.map(x=>`<span class="pill">${esc(x)}</span>`).join("")||'<span class="muted">Not classified yet.</span>'}</div><h3>Not ideal for</h3><div>${notIdeal.map(x=>`<span class="pill">${esc(x)}</span>`).join("")||'<span class="muted">Not classified yet.</span>'}</div></div></div></aside></div><section class="section"><h2>Nearby / comparable alternatives</h2><div class="grid">${comps.map(c=>`<a class="card" href="/hotel/${encodeURIComponent(c.slug)}"><strong>${esc(c.name)}</strong><br><span class="muted">${esc([c.city,c.country].filter(Boolean).join(", "))} · ${money(c.price_estimate_min)}–${money(c.price_estimate_max)}</span></a>`).join("")}</div>${compareLinks.length?`<div class="seo-links" style="margin-top:14px">${compareLinks.map(x=>`<a class="pill" href="${attr(x.url)}">Compare with ${esc(x.name)}</a>`).join("")}</div>`:""}
+${(latestRate?.booking_url||h.booking_url)?`<p><a class="btn" data-event="outbound_booking_click" data-hotel-id="${attr(h.id)}" href="/out/${encodeURIComponent(h.slug)}" rel="nofollow sponsored">Check booking options</a></p>`:""}</section>${amenities.length?`<section><h2>Amenities</h2><div class="amenity-list">${amenities.slice(0,18).map(x=>`<span class="pill">${esc(x)}</span>`).join("")}</div></section>`:""}<section><h2>Traveler evidence</h2><ul class="list">${evidence.map(e=>`<li>${e.price_mentioned?`<strong>${money(e.price_mentioned)}</strong> · `:""}${esc(e.summary||e.trip_context||e.sentiment||"Traveler mention")} ${e.source_url?`<a href="${attr(e.source_url)}" rel="nofollow noopener">source</a>`:""}</li>`).join("")||'<li class="muted">No structured traveler evidence yet.</li>'}</ul></section>${publicExternalReview}</div>
+<aside class="hotel-rail"><div class="hotel-rail-inner">${contributionCard("rail")}${bestFor.length?`<div class="card"><div class="eyebrow">Good fit for</div><h3>Best for</h3><ul class="fit-list">${bestFor.slice(0,3).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}</div></aside></div>
+<section class="section"><h2>Nearby / comparable alternatives</h2><div class="grid">${comps.map(c=>`<a class="card" href="/hotel/${encodeURIComponent(c.slug)}"><strong>${esc(c.name)}</strong><br><span class="muted">${esc([c.city,c.country].filter(Boolean).join(", "))} · ${money(c.price_estimate_min)}–${money(c.price_estimate_max)}</span></a>`).join("")}</div>${compareLinks.length?`<div class="seo-links" style="margin-top:14px">${compareLinks.map(x=>`<a class="pill" href="${attr(x.url)}">Compare with ${esc(x.name)}</a>`).join("")}</div>`:""}
 <section class="section faq"><h2>${esc(h.name)} FAQ</h2>${faq.map(x=>`<details><summary>${esc(x.q)}</summary><p>${esc(x.a)}</p></details>`).join("")}</section>
 <div class="contribution-bottom" data-autoevent="contribution_seen" data-hotel-id="${attr(h.id)}"><div><div class="eyebrow">Add one useful data point</div><h2>Stayed at ${esc(h.name)}?</h2><p class="muted">Share what you paid, what you’d pay again, and whether you’d return. That is how the fair-value range gets better.</p></div><a class="btn" data-event="contribution_cta_click" data-hotel-id="${attr(h.id)}" href="${attr(contributionUrl)}">Add your stay →</a></div></section>`),env,{title:seo.title,description:seo.description,canonical:"/hotel/"+encodeURIComponent(h.slug),jsonLd});
 }
