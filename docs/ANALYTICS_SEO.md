@@ -2,17 +2,17 @@
 
 ## Runtime variables
 
-The Worker already supports these public configuration values:
+The Worker supports these public configuration values:
 
 - `GA4_MEASUREMENT_ID`
 - `CLARITY_PROJECT_ID`
 - `GOOGLE_SITE_VERIFICATION`
 
-Do not commit provider secrets. GA4 measurement IDs, Clarity project IDs, and Search Console verification strings are public identifiers and can be configured as Worker variables once the Cloudflare project exists.
+Do not commit provider secrets. GA4 measurement IDs, Clarity project IDs, and Search Console verification strings are public identifiers.
 
 ## First-party events
 
-The Worker stores bounded event rows in D1:
+The Worker stores bounded D1 events including:
 
 - `page_view`
 - `hotel_view`
@@ -21,45 +21,56 @@ The Worker stores bounded event rows in D1:
 - `value_view`
 - `search`
 - `outbound_booking_click`
+- `contribution_seen`
+- `contribution_cta_click`
+- `contribution_landing_view`
+- `contribution_hotel_select`
+- `contribution_started`
+- `contribution_submitted`
+- `contribution_share`
+- `contribution_referral_share`
 
-A per-tab pseudonymous session ID is generated in browser session storage. No raw IP address is intentionally persisted by this event layer.
+A per-tab pseudonymous session ID is generated in browser session storage. Contribution source/campaign parameters are persisted in session storage and copied into event metadata and trip submissions. No raw IP address is intentionally persisted by this event layer.
 
-## Conversion path
+## Contribution acquisition
 
-Target measurement path:
+Public campaign landing page: `/contribute`.
 
-visitor/session → search → hotel → creator/list → outbound provider → booking conversion → booking value → commission → creator earnings
+Admin acquisition dashboard: `/admin/contributions`.
 
-The schema already contains:
+Seed campaigns:
 
-- `affiliate_clicks`
-- `booking_conversions`
-- `creator_earnings`
+- `founder-network` — target 75
+- `luxury-travel-creators` — target 125
+- `guest-referrals` — target 100
 
-Provider-specific conversion webhooks/postbacks should be added only after a booking partner is selected.
+Tracked URLs use `src` and `campaign` query parameters. Hotel-specific recruiting URLs should use `/add-your-trip?hotel={slug}&src={source}&campaign={campaign}`.
 
 ## Search / AI discovery
 
-Production publishes:
+Production publishes and internally links:
 
-- canonical tags
-- Hotel JSON-LD
-- `/sitemap.xml`
-- `/robots.txt`
-- `/llms.txt`
+- canonical hotel pages targeting hotel review / price / worth-it intent
+- city guides at `/destinations/{country}/{city}`
+- brand guides at `/brands/{brand}`
+- comparison pages at `/compare/{hotel-a}-vs-{hotel-b}`
+- value collections
+- Hotel + BreadcrumbList + FAQPage JSON-LD on hotel pages
+- CollectionPage JSON-LD on city and brand guides
+- `/sitemap.xml`, `/robots.txt`, and `/llms.txt`
 
-Hotel pages should remain indexable only when `is_published=1`.
+The sitemap includes the top-250 hotel cohort even when the legacy editorial description is thin because those pages now contain structured price, facts, traveler-evidence and FAQ sections. Comparison URLs are generated from geographically coherent top-250 hotel clusters.
+
+Provider metadata, external review evidence and first-party traveler value remain separate layers. SEO copy must not convert provider review data into a SecretNests first-party opinion.
 
 ## Launch verification
 
-After DNS cutover:
+After each release:
 
-1. open the homepage and a hotel page;
-2. verify GA4 realtime activity;
-3. verify a Clarity session;
-4. verify Search Console ownership;
-5. submit `https://secretnests.com/sitemap.xml`;
-6. inspect Hotel JSON-LD;
-7. verify `www` redirects to apex;
-8. verify first-party `analytics_events` receives page views;
-9. verify outbound booking redirects create `affiliate_clicks`.
+1. verify `/health`, homepage, `/brands`, `/compare`, and `/contribute`;
+2. inspect a top-250 hotel page for Hotel and FAQPage JSON-LD;
+3. verify city/brand/comparison internal links;
+4. verify Search Console sitemap acceptance;
+5. verify GA4/Clarity;
+6. verify contribution funnel events and campaign attribution;
+7. verify outbound booking redirects create `affiliate_clicks`.
