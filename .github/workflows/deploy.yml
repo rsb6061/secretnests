@@ -139,9 +139,17 @@ jobs:
           PILOT_TOKEN: ${{ steps.pilot.outputs.token }}
         run: |
           set -euo pipefail
-          RESULT="$(curl --connect-timeout 5 --max-time 120 -fsS -X POST \
-            -H "Authorization: Bearer $PILOT_TOKEN" \
-            https://secretnests.com/api/internal/market-intelligence/pilot)"
+          HTTP_CODE=""
+          for attempt in 1 2 3 4 5 6 7 8; do
+            HTTP_CODE="$(curl --connect-timeout 5 --max-time 120 -sS -o /tmp/pilot.json -w '%{http_code}' -X POST \
+              -H "Authorization: Bearer $PILOT_TOKEN" \
+              https://secretnests.com/api/internal/market-intelligence/pilot || true)"
+            if [ "$HTTP_CODE" = "200" ]; then break; fi
+            echo "Pilot endpoint returned HTTP $HTTP_CODE; waiting for Worker secret propagation (attempt $attempt/8)."
+            sleep 2
+          done
+          test "$HTTP_CODE" = "200"
+          RESULT="$(cat /tmp/pilot.json)"
           echo "$RESULT" | jq .
           echo "$RESULT" | jq -e '.ok == true'
           echo "result=$(echo "$RESULT" | jq -c .)" >> "$GITHUB_OUTPUT"
