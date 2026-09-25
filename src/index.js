@@ -987,9 +987,12 @@ async function adminSubmissionsPage(request,env){
     return Response.redirect(ORIGIN+"/admin/submissions",303);
   }
   const rows=(await env.DB.prepare(`SELECT ts.*,h.name matched_name,h.slug matched_slug,
+    cp.handle creator_handle,cp.display_name creator_name,
     (SELECT COUNT(*) FROM submission_verification_artifacts sva WHERE sva.submission_id=ts.id AND sva.status='pending') verification_files,
     (SELECT id FROM submission_verification_artifacts sva WHERE sva.submission_id=ts.id AND sva.status='pending' ORDER BY created_at LIMIT 1) verification_artifact_id
-    FROM trip_submissions ts LEFT JOIN hotels h ON h.id=ts.hotel_id
+    FROM trip_submissions ts
+    LEFT JOIN hotels h ON h.id=ts.hotel_id
+    LEFT JOIN creator_profiles cp ON cp.id=ts.creator_id
     WHERE ts.status IN ('pending','matched') ORDER BY ts.created_at LIMIT 100`).all()).results||[];
   const cards=[];
   for(const s of rows){
@@ -1003,11 +1006,13 @@ async function adminSubmissionsPage(request,env){
     const inclusions=safeJson(s.inclusions_json,[]);
     const options=(s.hotel_id?[{id:s.hotel_id,name:s.matched_name,city:s.city,country:""}]:candidates).map(h=>`<option value="${attr(h.id)}">${esc(h.name)}${h.city?" — "+esc(h.city):""}</option>`).join("");
     cards.push(`<div class="card"><div class="eyebrow">${esc(s.created_at)} · ${esc(s.verification_status||"unverified")}</div><h2>${esc(s.hotel_name)}</h2><p class="muted">${esc(s.city||"")} · stayed ${esc(s.stay_month||"—")} · ${s.nights||"—"} nights</p>
+      <p class="kicker"><strong>Contributor:</strong> ${s.creator_handle?`@${esc(s.creator_handle)} · ${esc(s.creator_name||"")}`:"Anonymous / legacy community intake"}${s.parser_version?` · parsed by ${esc(s.parser_version)}`:""}</p>
       <div class="value"><div><div class="eyebrow">Paid</div><strong>${money(s.paid_nightly_rate)}</strong></div><div><div class="eyebrow">Would pay again</div><strong>${money(s.would_pay_again)}</strong></div><div><div class="eyebrow">Would return</div><strong>${s.would_return==null?"—":s.would_return?"Yes":"No"}</strong></div><div><div class="eyebrow">Verification</div><strong>${s.verification_files||0}</strong> file(s)</div></div>
       <p><strong>Room:</strong> ${esc(s.room_type||"—")} · <strong>Booked:</strong> ${esc(s.booking_channel||"—")} · <strong>Basis:</strong> ${esc(s.rate_basis||"—")}</p>
       ${s.verification_artifact_id?`<p><a class="btn secondary" target="_blank" rel="noopener" href="/admin/submission-verification/${encodeURIComponent(s.verification_artifact_id)}">View private receipt / folio</a> <label class="pill"><input type="checkbox" name="verify_receipt" value="1" form="mod-${attr(s.id)}"> Mark rate verified</label></p>`:""}
       <p><strong>Included:</strong> ${inclusions.length?inclusions.map(x=>`<span class="pill">${esc(x)}</span>`).join(""):"—"}</p>
-      <p>${esc(s.notes||"")}</p>
+      ${s.raw_text?`<div class="notice"><strong>Original traveler note</strong><p>${esc(s.raw_text)}</p></div>`:""}
+      ${s.notes?`<p><strong>Confirmed publishable take:</strong> ${esc(s.notes)}</p>`:""}
       <form id="mod-${attr(s.id)}" method="post" action="/admin/submissions"><input type="hidden" name="id" value="${attr(s.id)}"><label>Match hotel<br><select name="hotel_id" required style="width:100%;padding:10px;margin:6px 0 10px"><option value="">Choose match</option>${options}</select></label><label>Moderator note<br><input name="note" style="width:100%;padding:10px"></label><div class="hero-actions"><button class="btn" name="action" value="approve">Approve + publish value observation</button><button class="btn secondary" name="action" value="reject">Reject</button></div></form>
     </div>`);
   }
@@ -1329,7 +1334,7 @@ async function adminSubmissions(request,env){
   const moderator=adminEmail(request,env);
   if(!moderator)return new Response("Not found",{status:404});
   if(request.method==="GET"){
-    const rows=(await env.DB.prepare("SELECT id,contact_email,hotel_name,city,stay_month,paid_nightly_rate,would_pay_again,room_type,booking_channel,notes,status,created_at,hotel_id,nights,party_type,would_return,perks_json,inclusions_json,rate_basis,verification_status FROM trip_submissions WHERE status IN ('pending','matched') ORDER BY created_at LIMIT 200").all()).results||[];
+    const rows=(await env.DB.prepare("SELECT id,contact_email,hotel_name,city,stay_month,paid_nightly_rate,would_pay_again,room_type,booking_channel,notes,status,created_at,hotel_id,nights,party_type,would_return,perks_json,inclusions_json,rate_basis,verification_status,creator_id,raw_text,parsed_json,parser_version,user_confirmed_at,draft_id FROM trip_submissions WHERE status IN ('pending','matched') ORDER BY created_at LIMIT 200").all()).results||[];
     return json({ok:true,submissions:rows});
   }
   if(bodyTooLarge(request,32768))return json({ok:false,error:"payload_too_large"},413);
