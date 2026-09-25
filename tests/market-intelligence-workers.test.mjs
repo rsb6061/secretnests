@@ -40,7 +40,7 @@ test("extractBookerRate normalizes total stay price into nightly price",()=>{
   assert.equal(rate.currency,"USD");
   assert.equal(rate.room_type,"King");
   assert.equal(rate.taxes_fees_included,true);
-  assert.match(rate.booking_url,/booking\\.com/);
+  assert.match(rate.booking_url,/booking\.com/);
 });
 
 test("citationUrls accepts only normalized URLs actually returned by web search",()=>{
