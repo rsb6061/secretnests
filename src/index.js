@@ -1093,7 +1093,7 @@ async function internalMarketPilot(request,env){
   const auth=String(request.headers.get("authorization")||"");
   if(!expected||auth!=="Bearer "+expected)return new Response("Not found",{status:404});
   if(String(env.NUITEE_API_KEY||"").trim()){
-    const nuitee=await runNuiteeTop250Enrichment(env,{mapLimit:24,reviewLimit:12,rateLimit:100});
+    const nuitee=await runNuiteeTop250Enrichment(env,{mapLimit:32,reviewLimit:16,rateLimit:150});
     return json({ok:true,mode:String(env.MARKET_INTELLIGENCE_MODE||"pilot"),nuitee});
   }
   const rates=await drainCurrentRateQueue(env,{limit:5,allowSandbox:true});
