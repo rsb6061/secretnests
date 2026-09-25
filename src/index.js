@@ -52,6 +52,7 @@ function page(body, env, {
   const canonicalUrl = canonical.startsWith("http") ? canonical : ORIGIN + canonical;
   return new Response(`<!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" type="image/png" sizes="180x180" href="/favicon.png"><link rel="shortcut icon" href="/favicon.png"><link rel="apple-touch-icon" href="/favicon.png">
 <title>${esc(title)}</title><meta name="description" content="${attr(description)}"><meta name="robots" content="${attr(robots)}">${env.GOOGLE_SITE_VERIFICATION ? `<meta name="google-site-verification" content="${attr(env.GOOGLE_SITE_VERIFICATION)}">` : ""}
 <link rel="canonical" href="${attr(canonicalUrl)}"><meta property="og:title" content="${attr(title)}"><meta property="og:description" content="${attr(description)}"><meta property="og:url" content="${attr(canonicalUrl)}"><meta property="og:type" content="website">
 ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd).replace(/</g,"\\u003c")}</script>` : ""}
@@ -1821,6 +1822,10 @@ async function sitemap(env){
 async function route(request,env){
   const url=new URL(request.url);
   if(url.hostname==="www.secretnests.com") return Response.redirect(ORIGIN+url.pathname+url.search,301);
+  if(request.method==="GET" && (url.pathname==="/favicon.png"||url.pathname==="/favicon.ico"||url.pathname==="/apple-touch-icon.png")){
+    const assetUrl=new URL(request.url); assetUrl.pathname="/favicon.png";
+    return env.ASSETS.fetch(new Request(assetUrl.toString(),request));
+  }
   if(request.method==="GET" && url.pathname==="/")return home(env);
   if(request.method==="GET" && url.pathname==="/search")return searchPage(request,env);
   if(request.method==="GET" && url.pathname==="/destinations")return destinationsPage(env);
