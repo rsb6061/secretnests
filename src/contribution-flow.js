@@ -35,6 +35,13 @@ function summaryItem(label,value){
 function roleLabel(role){
   return role==="receipt_private"?"Receipt / folio · private":"Hotel photo · public";
 }
+function explicitStayPeriod(text){
+  const source=String(text||"");
+  const iso=source.match(/\b(?:19|20)\d{2}[-/]?(?:0?[1-9]|1[0-2])\b/);
+  if(iso)return iso[0];
+  const month=source.match(/\b(?:January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)(?:\s+(?:19|20)\d{2})?\b/i);
+  return month?month[0]:null;
+}
 
 export async function addTripPage(request,env,ui){
   const url=new URL(request.url);
@@ -48,46 +55,62 @@ export async function addTripPage(request,env,ui){
     const matched=draft.hotel_id?await env.DB.prepare("SELECT id,name,slug,city,country FROM hotels WHERE id=? LIMIT 1").bind(draft.hotel_id).first():null;
     const hotelName=parsed.hotel_name||matched?.name||"";
     const city=parsed.city||matched?.city||"";
-    const returnLabel=parsed.would_return==null?"Not captured":parsed.would_return?"Yes":"No";
-    const assetHtml=assets.length?'<div class="notice" style="margin-top:18px"><strong>Uploads</strong><ul class="list">'+assets.map(a=>'<li>'+ui.esc(a.original_name||"Upload")+' · '+ui.esc(roleLabel(a.asset_role))+'</li>').join("")+'</ul></div>':"";
-    const authNote=user?'<div class="notice" style="margin-top:18px"><strong>Signed in as @'+ui.esc(user.handle)+'</strong><p class="muted">This stay will be attached to your traveler profile after moderation.</p></div>':'<p class="muted" style="margin-top:14px">You will sign in with Google before publishing. Your draft is already saved.</p>';
-    const missing=[];
-    if(!hotelName)missing.push("hotel");
-    if(parsed.paid_nightly_rate==null)missing.push("what you paid per night");
-    if(parsed.would_pay_again==null)missing.push("what you would happily pay again");
-    const missingHtml=missing.length?'<div class="notice" style="margin:18px 0"><strong>One more thing.</strong><p>We still need '+ui.esc(missing.join(", "))+' before this can become useful hotel value data.</p></div>':"";
+    const stayPeriod=explicitStayPeriod(draft.raw_text)||parsed.stay_period||parsed.stay_month||"";
+    const tripType=parsed.trip_context||parsed.party_type||"";
+    const assetHtml=assets.length?'<div class="review-section"><div class="review-section-title">Uploads</div><ul class="list">'+assets.map(a=>'<li>'+ui.esc(a.original_name||"Upload")+' · '+ui.esc(roleLabel(a.asset_role))+'</li>').join("")+'</ul></div>':"";
+    const authNote=user?'<p class="muted review-auth">Signed in as <a href="/@'+encodeURIComponent(user.handle)+'"><strong>@'+ui.esc(user.handle)+'</strong></a>. This stay will be attached to your traveler profile after moderation.</p>':'<p class="muted review-auth">You will sign in with Google before publishing. Your draft is already saved.</p>';
+    const reviewCss=`<style>
+      .review-form{max-width:900px;padding:24px}
+      .review-form h2{margin:0 0 8px}
+      .review-intro{margin:0 0 24px}
+      .review-section{border-top:1px solid var(--line);padding-top:22px;margin-top:24px}
+      .review-section-title{font-weight:800;font-size:18px;margin-bottom:6px}
+      .review-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+      .review-field{display:flex;flex-direction:column;gap:7px;min-width:0}
+      .review-field label{font-weight:650;color:#28243d}
+      .review-field input,.review-field select,.review-field textarea{width:100%;box-sizing:border-box;border:1px solid #d8d1ff;border-radius:14px;background:#fff;color:var(--ink);font:inherit}
+      .review-field input,.review-field select{height:52px;padding:0 14px}
+      .review-field textarea{min-height:180px;padding:14px;line-height:1.55;resize:vertical}
+      .review-value-note{margin:0 0 14px}
+      .review-auth{margin:22px 0 0}
+      @media(max-width:720px){.review-grid{grid-template-columns:1fr}.review-form{padding:18px}}
+    </style>`;
     const reviewForm=
-      '<form id="confirm-stay" class="card" method="post" action="/add-your-trip/publish" style="max-width:900px">'+
+      reviewCss+
+      '<form id="confirm-stay" class="card review-form" method="post" action="/add-your-trip/publish">'+
       '<input type="hidden" name="draft_id" value="'+ui.attr(draft.id)+'">'+
       '<input type="hidden" name="hotel_id" value="'+ui.attr(matched?.id||"")+'">'+
-      '<div class="eyebrow">We parsed this from your note</div>'+
-      '<h2 style="margin-top:6px">'+ui.esc(hotelName||"Your stay")+'</h2>'+
-      '<div class="proof" style="margin-top:18px">'+
-        summaryItem("Paid / night",formatMoney(parsed.paid_nightly_rate,ui.money))+
-        summaryItem("Would pay again",formatMoney(parsed.would_pay_again,ui.money))+
-        summaryItem("Would return",ui.esc(returnLabel))+
-        summaryItem("Stay",ui.esc([parsed.stay_month,parsed.nights?parsed.nights+" nights":null].filter(Boolean).join(" · ")||"Not captured"))+
+      '<div class="eyebrow">Review your stay</div>'+
+      '<h2>'+ui.esc(hotelName||"Your stay")+'</h2>'+
+      '<p class="muted review-intro">Check the details we pulled out. Your review stays in your own words.</p>'+
+      '<div class="review-field">'+
+        '<label for="review_text">Your review</label>'+
+        '<textarea id="review_text" name="review_text" maxlength="8000" required>'+ui.esc(draft.raw_text)+'</textarea>'+
+        '<span class="muted">This is what we will publish. We do not rewrite it.</span>'+
       '</div>'+
-      missingHtml+
-      '<p style="font-size:17px">'+ui.esc(parsed.review_text||draft.raw_text)+'</p>'+
-      (parsed.inclusions?.length?'<p><strong>Included / perks:</strong> '+parsed.inclusions.map(ui.esc).join(" · ")+'</p>':"")+
-      assetHtml+
-      '<details style="margin-top:22px"><summary style="cursor:pointer;font-weight:650">Fix anything we parsed wrong</summary>'+
-        '<div class="mini-grid" style="margin-top:16px">'+
-          '<p><label>Hotel<br><input name="hotel_name" required maxlength="160" value="'+ui.attr(hotelName)+'"></label></p>'+
-          '<p><label>City / destination<br><input name="city" maxlength="120" value="'+ui.attr(city)+'"></label></p>'+
-          '<p><label>Stay month<br><input name="stay_month" type="month" value="'+ui.attr(parsed.stay_month||"")+'"></label></p>'+
-          '<p><label>Nights<br><input name="nights" type="number" min="1" max="90" value="'+ui.attr(parsed.nights??"")+'"></label></p>'+
-          '<p><label><strong>What you paid per night</strong><br><input name="paid_nightly_rate" type="number" min="0" max="100000" step="0.01" required value="'+ui.attr(parsed.paid_nightly_rate??"")+'"></label></p>'+
-          '<p><label><strong>What you would happily pay again</strong><br><input name="would_pay_again" type="number" min="0" max="100000" step="0.01" required value="'+ui.attr(parsed.would_pay_again??"")+'"></label></p>'+
-          '<p><label>Room type<br><input name="room_type" maxlength="160" value="'+ui.attr(parsed.room_type||"")+'"></label></p>'+
-          '<p><label>Booking method<br><input name="booking_channel" maxlength="120" value="'+ui.attr(parsed.booking_channel||"")+'"></label></p>'+
-          '<p><label>Who were you with?<br><input name="party_type" maxlength="80" value="'+ui.attr(parsed.party_type||"")+'"></label></p>'+
-          '<p><label>Would you return?<br><select name="would_return"><option value="">Not sure / not stated</option><option value="1"'+(parsed.would_return===true?" selected":"")+'>Yes</option><option value="0"'+(parsed.would_return===false?" selected":"")+'>No</option></select></label></p>'+
-          '<p><label>Rate basis<br><select name="rate_basis"><option value="unknown">Not sure</option><option value="room_rate"'+(parsed.rate_basis==="room_rate"?" selected":"")+'>Before taxes / fees</option><option value="all_in"'+(parsed.rate_basis==="all_in"?" selected":"")+'>All-in</option></select></label></p>'+
+      '<div class="review-section">'+
+        '<div class="review-section-title">Stay details</div>'+
+        '<p class="muted review-value-note">Edit anything we misunderstood.</p>'+
+        '<div class="review-grid">'+
+          '<div class="review-field"><label for="hotel_name">Hotel</label><input id="hotel_name" name="hotel_name" required maxlength="160" value="'+ui.attr(hotelName)+'"></div>'+
+          '<div class="review-field"><label for="city">Destination</label><input id="city" name="city" maxlength="120" value="'+ui.attr(city)+'"></div>'+
+          '<div class="review-field"><label for="stay_period">When did you stay?</label><input id="stay_period" name="stay_period" maxlength="80" placeholder="e.g. August 2023" value="'+ui.attr(stayPeriod)+'"></div>'+
+          '<div class="review-field"><label for="nights">Nights</label><input id="nights" name="nights" type="number" min="1" max="90" placeholder="Optional" value="'+ui.attr(parsed.nights??"")+'"></div>'+
+          '<div class="review-field"><label for="trip_context">Trip type</label><input id="trip_context" name="trip_context" maxlength="100" placeholder="e.g. Babymoon" value="'+ui.attr(tripType)+'"></div>'+
+          '<div class="review-field"><label for="booking_channel">Booking method</label><input id="booking_channel" name="booking_channel" maxlength="120" placeholder="e.g. Amex points" value="'+ui.attr(parsed.booking_channel||"")+'"></div>'+
+          '<div class="review-field"><label for="would_return">Would you return?</label><select id="would_return" name="would_return"><option value="">Not stated</option><option value="1"'+(parsed.would_return===true?" selected":"")+'>Yes</option><option value="0"'+(parsed.would_return===false?" selected":"")+'>No</option></select></div>'+
+          '<div class="review-field"><label for="room_type">Room type</label><input id="room_type" name="room_type" maxlength="160" placeholder="Optional" value="'+ui.attr(parsed.room_type||"")+'"></div>'+
         '</div>'+
-        '<p><label>Traveler note we will publish as your take<br><textarea name="review_text" maxlength="3000" rows="5">'+ui.esc(parsed.review_text||draft.raw_text)+'</textarea></label></p>'+
-      '</details>'+
+      '</div>'+
+      '<div class="review-section">'+
+        '<div class="review-section-title">Optional: help travelers understand the value</div>'+
+        '<p class="muted review-value-note">Skip these if you paid with points or simply do not remember.</p>'+
+        '<div class="review-grid">'+
+          '<div class="review-field"><label for="paid_nightly_rate">What did you pay per night?</label><input id="paid_nightly_rate" name="paid_nightly_rate" type="number" min="0" max="100000" step="0.01" placeholder="Optional" value="'+ui.attr(parsed.paid_nightly_rate??"")+'"></div>'+
+          '<div class="review-field"><label for="would_pay_again">What would you happily pay again?</label><input id="would_pay_again" name="would_pay_again" type="number" min="0" max="100000" step="0.01" placeholder="Optional" value="'+ui.attr(parsed.would_pay_again??"")+'"></div>'+
+        '</div>'+
+      '</div>'+
+      assetHtml+
       authNote+
       '<div class="hero-actions">'+
         (user?'<button class="btn" type="submit">Publish my stay →</button>':(authConfigured(env)?'<button class="btn" type="button" id="google-signin">Continue with Google →</button>':'<button class="btn" type="button" disabled>Google sign-in setup required</button>'))+
@@ -96,10 +119,9 @@ export async function addTripPage(request,env,ui){
       '</form>';
     const script=!user&&authConfigured(env)?
       '<script>(function(){var form=document.getElementById("confirm-stay"),btn=document.getElementById("google-signin"),key="sn-draft-'+ui.attr(draft.id)+'";try{var saved=JSON.parse(sessionStorage.getItem(key)||"{}");Object.keys(saved).forEach(function(name){var el=form.elements[name];if(el&&saved[name]!=null)el.value=saved[name]})}catch{}if(btn)btn.addEventListener("click",function(){var saved={};new FormData(form).forEach(function(v,k){if(typeof v==="string")saved[k]=v});sessionStorage.setItem(key,JSON.stringify(saved));var ret="/add-your-trip?draft='+encodeURIComponent(draft.id)+'",url="/login?popup=1&return_to="+encodeURIComponent(ret),w=window.open(url,"secretnests-auth","popup=yes,width=520,height=720");if(!w)location.href="/login?return_to="+encodeURIComponent(ret)});window.addEventListener("message",function(e){if(e.origin!==location.origin||!e.data||e.data.type!=="secretnests-auth"||!e.data.ok)return;location.reload()})})();</script>':"";
-    const body='<section class="hero" style="padding-bottom:22px"><div class="eyebrow">Review your stay</div><h1>Make sure we got the useful parts right.</h1><p>We keep your original note, but only confirmed structured fields can affect hotel value data.</p></section>'+reviewForm+script;
+    const body='<section class="hero" style="padding-bottom:22px"><div class="eyebrow">Review your stay</div><h1>Make sure the details look right.</h1><p>Your words stay yours. We only use the structured details to organize the stay and, when provided, improve hotel value data.</p></section>'+reviewForm+script;
     return ui.page(ui.shell(body),env,{title:"Review your hotel stay | SecretNests",canonical:"/add-your-trip",robots:"noindex,follow"});
   }
-
   const hotelSlug=clean(url.searchParams.get("hotel"),160);
   const acquisitionSource=clean(url.searchParams.get("src"),80),acquisitionCampaign=clean(url.searchParams.get("campaign"),120);
   const prefilled=hotelSlug?await env.DB.prepare("SELECT id,name,slug,city,country FROM hotels WHERE slug=? AND is_published=1").bind(hotelSlug).first():null;
@@ -199,16 +221,15 @@ export async function publishTripDraft(request,env,ui){
   if(!hotelName)return new Response("Hotel name is required.",{status:400});
   const paid=numberOrNull(field(form,"paid_nightly_rate",parsed.paid_nightly_rate));
   const wouldPay=numberOrNull(field(form,"would_pay_again",parsed.would_pay_again));
-  if(paid==null||wouldPay==null)return new Response("Paid nightly rate and what you would pay again are required.",{status:400});
-  const stayMonth=clean(field(form,"stay_month",parsed.stay_month),20)||null;
+  const stayMonth=clean(field(form,"stay_period",parsed.stay_period||parsed.stay_month),80)||null;
   const nights=intOrNull(field(form,"nights",parsed.nights),1,90);
   const roomType=clean(field(form,"room_type",parsed.room_type),160)||null;
   const booking=clean(field(form,"booking_channel",parsed.booking_channel),120)||null;
-  const party=clean(field(form,"party_type",parsed.party_type),80)||null;
-  const rateBasis=["room_rate","all_in","unknown"].includes(field(form,"rate_basis",parsed.rate_basis))?field(form,"rate_basis",parsed.rate_basis):"unknown";
+  const party=clean(field(form,"trip_context",parsed.trip_context||parsed.party_type),100)||null;
+  const rateBasis=["room_rate","all_in","unknown"].includes(parsed.rate_basis)?parsed.rate_basis:"unknown";
   const wr=field(form,"would_return",parsed.would_return===true?"1":parsed.would_return===false?"0":"");
   const wouldReturn=wr==="1"?1:wr==="0"?0:null;
-  const reviewText=clean(field(form,"review_text",parsed.review_text||draft.raw_text),3000)||null;
+  const reviewText=clean(field(form,"review_text",draft.raw_text),8000)||null;
   let hotelId=clean(form.get("hotel_id"),100)||draft.hotel_id||null;
   if(hotelId){
     const h=await env.DB.prepare("SELECT id,name,city FROM hotels WHERE id=? AND is_published=1 LIMIT 1").bind(hotelId).first();
@@ -218,7 +239,7 @@ export async function publishTripDraft(request,env,ui){
     const match=await exactHotel(env.DB,hotelName,city);
     hotelId=match?.id||null;
   }
-  const finalParsed={...parsed,hotel_name:hotelName,city:city||null,stay_month:stayMonth,nights,party_type:party,room_type:roomType,booking_channel:booking,paid_nightly_rate:paid,would_pay_again:wouldPay,would_return:wouldReturn==null?null:Boolean(wouldReturn),rate_basis:rateBasis,review_text:reviewText};
+  const finalParsed={...parsed,hotel_name:hotelName,city:city||null,stay_period:stayMonth,stay_month:null,nights,trip_context:party,party_type:parsed.party_type||null,room_type:roomType,booking_channel:booking,paid_nightly_rate:paid,would_pay_again:wouldPay,would_return:wouldReturn==null?null:Boolean(wouldReturn),rate_basis:rateBasis,public_review_text:reviewText};
   const assets=(await env.DB.prepare("SELECT * FROM contribution_draft_assets WHERE draft_id=? ORDER BY created_at").bind(draft.id).all()).results||[];
   const hasReceipt=assets.some(a=>a.asset_role==="receipt_private");
   const id=crypto.randomUUID(),created=nowIso();
@@ -231,17 +252,14 @@ export async function publishTripDraft(request,env,ui){
   await env.DB.prepare("UPDATE contribution_drafts SET creator_id=?,status='submitted',parsed_json=?,updated_at=? WHERE id=?")
     .bind(user.creator_id,JSON.stringify(finalParsed),created,draft.id).run();
   const matched=hotelId?await env.DB.prepare("SELECT id,name,slug FROM hotels WHERE id=? LIMIT 1").bind(hotelId).first():null;
-  const snapshot=hotelId?await env.DB.prepare("SELECT median_would_pay,sample_size FROM hotel_value_snapshots WHERE hotel_id=? ORDER BY calculated_at DESC LIMIT 1").bind(hotelId).first():null;
-  const pct=paid>0?Math.round((wouldPay-paid)/paid*100):null;
+  const snapshot=hotelId&&wouldPay!=null?await env.DB.prepare("SELECT median_would_pay,sample_size FROM hotel_value_snapshots WHERE hotel_id=? ORDER BY calculated_at DESC LIMIT 1").bind(hotelId).first():null;
+  const pct=paid!=null&&paid>0&&wouldPay!=null?Math.round((wouldPay-paid)/paid*100):null;
   const comparison=pct==null?"":pct===0?"the same as you paid":pct>0?pct+"% more than you paid":Math.abs(pct)+"% less than you paid";
   const hotelUrl=matched?"/hotel/"+encodeURIComponent(matched.slug):"/@"+encodeURIComponent(user.handle);
+  const valueSummary=wouldPay!=null?'<div class="review-section"><div class="review-section-title">Your value take</div><div class="review-grid"><div><div class="kicker">You paid</div><strong>'+(paid!=null?ui.money(paid)+" / night":"Not provided")+'</strong></div><div><div class="kicker">You would pay again</div><strong>'+ui.money(wouldPay)+(comparison?" · "+ui.esc(comparison):"")+'</strong></div></div>'+(snapshot?.sample_size?'<p class="muted">Current traveler median: '+ui.money(snapshot.median_would_pay)+'</p>':"")+'</div>':"";
   const body=
-    '<section class="hero" data-autoevent="contribution_submitted" data-hotel-id="'+ui.attr(hotelId||"")+'"><div class="eyebrow">Trip received</div><h1>Your take is captured.</h1><p>Your submission is in moderation before it affects the public hotel page or traveler-value range.'+(hasReceipt?" Your receipt / folio remains private.":"")+'</p></section>'+
-    '<div class="take-card"><div class="eyebrow">'+(matched?ui.esc(matched.name):ui.esc(hotelName))+'</div><h2>Paid vs. worth</h2><div class="take-grid">'+
-      summaryItem("You paid",ui.money(paid)+" / night")+
-      summaryItem("You would pay again",ui.money(wouldPay)+(comparison?" · "+ui.esc(comparison):""))+
-      summaryItem("Current traveler median",snapshot?.sample_size?ui.money(snapshot.median_would_pay):"Building")+
-    '</div><p class="muted">When approved, this stay is attributed to <a href="/@'+encodeURIComponent(user.handle)+'"><strong>@'+ui.esc(user.handle)+'</strong></a>.</p><div class="hero-actions"><a class="btn" href="'+ui.attr(hotelUrl)+'">'+(matched?"Back to hotel":"View my profile")+'</a><a class="btn secondary" href="/add-your-trip">Add another stay</a></div></div>';
+    '<section class="hero" data-autoevent="contribution_submitted" data-hotel-id="'+ui.attr(hotelId||"")+'"><div class="eyebrow">Trip received</div><h1>Your stay is submitted.</h1><p>Your review is in moderation before it appears publicly.'+(wouldPay!=null?" Your value take will be added to the hotel’s traveler-value data after approval.":"")+(hasReceipt?" Your receipt / folio remains private.":"")+'</p></section>'+
+    '<div class="card" style="max-width:900px"><div class="eyebrow">'+(matched?ui.esc(matched.name):ui.esc(hotelName))+'</div><p style="font-size:17px;line-height:1.6">'+ui.esc(reviewText||draft.raw_text)+'</p>'+valueSummary+'<p class="muted">When approved, this stay is attributed to <a href="/@'+encodeURIComponent(user.handle)+'"><strong>@'+ui.esc(user.handle)+'</strong></a>.</p><div class="hero-actions"><a class="btn" href="'+ui.attr(hotelUrl)+'">'+(matched?"Back to hotel":"View my profile")+'</a><a class="btn secondary" href="/add-your-trip">Add another stay</a></div></div>';
   return ui.page(ui.shell(body),env,{title:"Trip received | SecretNests",canonical:"/add-your-trip",robots:"noindex,follow"});
 }
 
