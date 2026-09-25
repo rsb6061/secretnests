@@ -1,4 +1,4 @@
-# Project State — 2026-09-24
+# Project State — 2026-09-25
 
 ## Canonical stack
 
@@ -19,22 +19,22 @@ Current QA: 0 duplicate hotel names, 0 duplicate Place IDs, 0 malformed Place ID
 - clean destination URLs and redirects
 - canonical hotel slugs plus legacy aliases
 - traveler valuation engine with quartiles, median, confidence, current-price classification, and methodology version
-- hotel comparison pages
+- hotel comparison pages with crawlable top-250 city matchups and side-by-side price/value context
 - value-discovery and country-value pages
 - creator profiles/lists plus a clearly labeled, noindex demo @rebecca profile
-- Add Your Trip intake and admin moderation
+- Add Your Trip intake, hotel-specific contribution CTAs, campaign attribution, referral sharing, and admin moderation
 - receipt/folio verification architecture
 - affiliate-provider and booking-link abstraction
 - media-ingest and rights-review workflow
 - first-party analytics and zero-result search logging
 - GA4, Clarity, and Search Console hooks
 - privacy, terms, and review/affiliate disclosures
-- sitemap, robots.txt, llms.txt, Hotel JSON-LD
+- sitemap, robots.txt, llms.txt, Hotel/Breadcrumb/FAQ JSON-LD, city guides, and trusted-provider brand guides
 - request logging and security controls
 
-## Conservative launch flags
+## Production flags
 
-- `SUBMISSIONS_ENABLED=false`
+- `SUBMISSIONS_ENABLED=true`
 - `AUTH_MODE=disabled`
 - `VERIFICATION_UPLOADS_ENABLED=false`
 
@@ -77,3 +77,20 @@ Required production configuration:
 - optional for automatic conversion sync: `TRAVELPAYOUTS_CAMPAIGN_ID`
 
 Admin verification page: `/admin/travelpayouts`.
+
+
+## SEO distribution and first-party acquisition
+
+The top-250 hotel cohort now has an explicit internal-distribution graph:
+
+- hotel pages target hotel-name + review / price / worth-it intent without manufacturing a verdict
+- city guides link to hotels, trusted hotel brands, and local comparison pages
+- trusted Nuitee chain metadata is promoted into canonical `brand_name` with field provenance
+- brand guides link back into hotel and destination pages
+- top local comparison pairs are crawlable and included in the sitemap
+- `/contribute` runs the first-300-stay acquisition campaign
+- `/admin/contributions` tracks campaign landing sessions, starts, submissions, and hotel coverage
+- campaign/source attribution persists from outreach URL through the trip submission
+- post-submit referral sharing routes another traveler into a tracked hotel-specific contribution flow
+
+Seed acquisition targets total 300 submissions: 75 founder-network, 125 luxury-travel-creator outreach, and 100 guest referrals.

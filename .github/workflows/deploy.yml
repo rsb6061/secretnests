@@ -138,6 +138,9 @@ jobs:
           set -euo pipefail
           curl --connect-timeout 5 --max-time 20 -fsS https://secretnests.com/health | jq -e '.ok == true'
           curl --connect-timeout 5 --max-time 20 -fsS https://secretnests.com/ >/dev/null
+          curl --connect-timeout 5 --max-time 20 -fsS https://secretnests.com/brands >/dev/null
+          curl --connect-timeout 5 --max-time 20 -fsS https://secretnests.com/contribute >/dev/null
+          curl --connect-timeout 5 --max-time 20 -fsS https://secretnests.com/compare >/dev/null
 
       - name: Run bounded market-intelligence pilot
         id: pilot_run
@@ -175,6 +178,8 @@ jobs:
           npx wrangler d1 execute secretnests --remote --command="SELECT COUNT(*) AS audited,SUM(CASE WHEN mapping_status IN ('mapped','review') THEN 1 ELSE 0 END) AS mapped,SUM(CASE WHEN mapping_confidence='high' THEN 1 ELSE 0 END) AS high_confidence,SUM(CASE WHEN mapping_status='review' THEN 1 ELSE 0 END) AS needs_review,SUM(CASE WHEN metadata_status='complete' THEN 1 ELSE 0 END) AS metadata_complete,SUM(CASE WHEN review_status='complete' THEN 1 ELSE 0 END) AS reviews_available,SUM(CASE WHEN rate_audited_at IS NOT NULL THEN 1 ELSE 0 END) AS rate_audited,SUM(CASE WHEN canonical_status='complete' THEN 1 ELSE 0 END) AS canonical_complete,SUM(CASE WHEN canonical_status='complete' AND canonical_fields>0 THEN 1 ELSE 0 END) AS canonical_updated,ROUND(AVG(CASE WHEN rate_audited_at IS NOT NULL THEN rate_coverage_pct END),1) AS avg_rate_coverage FROM hotel_nuitee_audit;" --yes
           echo "=== Canonical Nuitee promotion sample ==="
           npx wrangler d1 execute secretnests --remote --command="SELECT h.name,a.canonical_fields,length(COALESCE(h.amenities_json,'[]')) AS amenities_bytes,h.city,h.country,h.hotel_category,h.external_review_source FROM hotel_nuitee_audit a JOIN hotels h ON h.id=a.hotel_id WHERE a.canonical_status='complete' AND a.canonical_fields>0 ORDER BY a.canonical_at DESC LIMIT 15;" --yes
+          echo "=== SEO/distribution surfaces ==="
+          npx wrangler d1 execute secretnests --remote --command="SELECT COUNT(*) AS branded_hotels,COUNT(DISTINCT brand_name) AS brands FROM hotels WHERE brand_name IS NOT NULL AND trim(brand_name)<>''; SELECT code,channel,target_count,status FROM contribution_campaigns ORDER BY created_at; SELECT COUNT(*) AS attributed_submissions FROM trip_submissions WHERE contribution_source IS NOT NULL OR contribution_campaign IS NOT NULL;" --yes
           echo "=== Nuitee audit errors ==="
           npx wrangler d1 execute secretnests --remote --command="SELECT p.priority_rank,h.name,a.mapping_status,a.mapping_confidence,a.mapping_stage,a.metadata_status,a.review_status,a.mapping_error,a.metadata_error,a.review_error,a.candidate_name,ROUND(a.candidate_similarity,3) AS candidate_similarity,ROUND(a.candidate_distance_km,2) AS candidate_distance_km FROM hotel_nuitee_audit a JOIN hotels h ON h.id=a.hotel_id JOIN hotel_enrichment_profiles p ON p.hotel_id=a.hotel_id WHERE a.mapping_error IS NOT NULL OR a.metadata_error IS NOT NULL OR a.review_error IS NOT NULL OR a.mapping_status IN ('failed','review') OR a.metadata_status='failed' OR a.review_status='failed' ORDER BY p.priority_rank LIMIT 40;" --yes
 
