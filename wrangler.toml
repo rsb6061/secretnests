@@ -19,7 +19,7 @@ bucket_name = "secretnests-assets"
 
 [vars]
 APP_ORIGIN = "https://secretnests.com"
-SUBMISSIONS_ENABLED = "false"
+SUBMISSIONS_ENABLED = "true"
 AUTH_MODE = "disabled"
 VERIFICATION_UPLOADS_ENABLED = "false"
 
