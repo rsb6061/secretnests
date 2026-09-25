@@ -248,6 +248,8 @@ async function addTripPage(request,env){
 <form class="card" data-autoevent="contribution_started" data-hotel-id="${attr(prefilled?.id||"")}" method="post" action="/add-your-trip" enctype="multipart/form-data" style="max-width:820px">
   <div style="display:none"><label>Website<input name="website" tabindex="-1" autocomplete="off"></label></div>
   <input type="hidden" name="hotel_id" id="hotel_id" value="${attr(prefilled?.id||"")}">
+  <input type="hidden" name="contribution_source" data-acquisition="source">
+  <input type="hidden" name="contribution_campaign" data-acquisition="campaign">
   <div style="position:relative"><label><strong>Hotel</strong><br><input id="hotel_name" name="hotel_name" required maxlength="160" autocomplete="off" value="${attr(prefilled?.name||"")}" ${prefilled?"readonly":""} placeholder="Start typing a hotel name" style="width:100%;padding:13px;margin-top:6px"></label><div id="hotel_suggestions" class="card" style="display:none;position:absolute;z-index:20;width:100%;padding:6px;max-height:260px;overflow:auto"></div></div>
   <p><label>City / destination<br><input id="city" name="city" maxlength="120" value="${attr(prefilled?.city||"")}" ${prefilled?"readonly":""} style="width:100%;padding:12px"></label></p>
   <div class="mini-grid">
@@ -328,10 +330,13 @@ async function submitTrip(request,env){
     if(file.size>8*1024*1024)return json({ok:false,error:"verification_file_too_large"},413);
     verificationStatus="pending";
   }
+  const contributionSource=clean("contribution_source",80)||null;
+  const contributionCampaign=clean("contribution_campaign",120)||null;
+  const contributionReferrer=String(request.headers.get("referer")||"").slice(0,500)||null;
   await env.DB.prepare(`INSERT INTO trip_submissions
-    (id,contact_email,hotel_name,city,stay_month,paid_nightly_rate,would_pay_again,room_type,booking_channel,notes,status,created_at,hotel_id,nights,party_type,would_return,perks_json,inclusions_json,rate_basis,verification_status)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
-    .bind(id,email||null,hotelName,clean("city",120)||null,clean("stay_month",20)||null,paid,wouldPay,clean("room_type",160)||null,clean("booking_channel",120)||null,clean("notes",3000)||null,"pending",nowIso(),hotelId,int("nights",1,90),clean("party_type",40)||null,wouldReturn,"[]",JSON.stringify(inclusions),clean("rate_basis",40)||"room_rate",verificationStatus).run();
+    (id,contact_email,hotel_name,city,stay_month,paid_nightly_rate,would_pay_again,room_type,booking_channel,notes,status,created_at,hotel_id,nights,party_type,would_return,perks_json,inclusions_json,rate_basis,verification_status,contribution_source,contribution_campaign,contribution_referrer)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+    .bind(id,email||null,hotelName,clean("city",120)||null,clean("stay_month",20)||null,paid,wouldPay,clean("room_type",160)||null,clean("booking_channel",120)||null,clean("notes",3000)||null,"pending",nowIso(),hotelId,int("nights",1,90),clean("party_type",40)||null,wouldReturn,"[]",JSON.stringify(inclusions),clean("rate_basis",40)||"room_rate",verificationStatus,contributionSource,contributionCampaign,contributionReferrer).run();
   if(verificationStatus==="pending"){
     const artifactId=crypto.randomUUID(),key="submission-verification/"+id+"/"+artifactId;
     await env.MEDIA.put(key,await file.arrayBuffer(),{httpMetadata:{contentType:file.type}});
@@ -414,12 +419,16 @@ async function recordEvent(request,env){
   if(bodyTooLarge(request,8192)) return json({ok:false,error:"payload_too_large"},413);
   const rl=await enforceRateLimit(request,env,"analytics",300,3600); if(!rl.ok)return json({ok:false,error:"rate_limited"},429);
   let body={}; try{body=await request.json()}catch{return json({ok:false,error:"invalid_json"},400)}
-  const allowed=new Set(["page_view","hotel_view","creator_view","list_view","value_view","outbound_booking_click","search","contribution_seen","contribution_cta_click","contribution_started","contribution_submitted","contribution_share"]);
+  const allowed=new Set(["page_view","hotel_view","creator_view","list_view","value_view","outbound_booking_click","search","contribution_seen","contribution_cta_click","contribution_started","contribution_submitted","contribution_share","contribution_landing_view","contribution_hotel_select"]);
   if(!allowed.has(body.name))return json({ok:false,error:"invalid_event"},400);
   try{
     const id=crypto.randomUUID();
-    await env.DB.prepare("INSERT INTO analytics_events (id,event_name,hotel_id,creator_id,list_id,path,session_id,referrer,user_agent,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)")
-      .bind(id,body.name,body.hotel_id||null,body.creator_id||null,body.list_id||null,body.path||null,body.session_id||null,request.headers.get("referer"),request.headers.get("user-agent"),nowIso()).run();
+    const metadata=JSON.stringify({
+      source:String(body.source||"").slice(0,80)||null,
+      campaign:String(body.campaign||"").slice(0,120)||null
+    });
+    await env.DB.prepare("INSERT INTO analytics_events (id,event_name,hotel_id,creator_id,list_id,path,session_id,referrer,user_agent,created_at,metadata_json) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
+      .bind(id,body.name,body.hotel_id||null,body.creator_id||null,body.list_id||null,body.path||null,body.session_id||null,request.headers.get("referer"),request.headers.get("user-agent"),nowIso(),metadata).run();
   }catch(e){console.error("analytics_event_failed",e?.message||e)}
   return json({ok:true});
 }
