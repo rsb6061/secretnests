@@ -199,6 +199,9 @@ async function hotelPage(slug, env){
     return new Response("Hotel not found",{status:404});
   }
   const v=await env.DB.prepare("SELECT * FROM hotel_value_snapshots WHERE hotel_id=? ORDER BY calculated_at DESC LIMIT 1").bind(h.id).first();
+  const latestRate=await env.DB.prepare(`SELECT ro.nightly_rate,ro.currency,ro.provider_id,ro.booking_url,ro.checkin_date,ro.checkout_date,ro.room_type,ro.rate_name,ro.taxes_fees_included,ro.observed_at,p.name provider_name
+    FROM hotel_rate_observations ro LEFT JOIN affiliate_providers p ON p.id=ro.provider_id
+    WHERE ro.hotel_id=? ORDER BY ro.observed_at DESC LIMIT 1`).bind(h.id).first();
   const media=await env.DB.prepare(`SELECT id,r2_key,source_url,attribution_text,rights_status FROM media_assets
     WHERE hotel_id=? AND rights_status IN ('owned_user_upload','hotel_authorized','licensed_api','licensed_public')
     ORDER BY CASE rights_status WHEN 'owned_user_upload' THEN 0 WHEN 'hotel_authorized' THEN 1 ELSE 2 END,created_at
@@ -208,9 +211,11 @@ async function hotelPage(slug, env){
   const comps=(await env.DB.prepare(`SELECT name,slug,city,country,price_estimate_min,price_estimate_max FROM hotels WHERE is_published=1 AND id<>? AND ((city IS NOT NULL AND city=?) OR (country IS NOT NULL AND country=?)) ORDER BY ABS(COALESCE(price_estimate_min,0)-COALESCE(?,0)),reddit_mention_count DESC LIMIT 4`).bind(h.id,h.city||"",h.country||"",h.price_estimate_min||0).all()).results||[];
   const highlights=safeJson(h.highlights_json,[]), bestFor=safeJson(h.best_for_json,[]), notIdeal=safeJson(h.not_ideal_for_json,[]);
   const location=[h.city,h.country].filter(Boolean).join(", ");
-  const valueBlock=v?`<section><h2>What travelers think it's worth</h2><div class="value"><div><div class="eyebrow">Traveler range</div><strong>${money(v.traveler_low)}–${money(v.traveler_high)}</strong></div><div><div class="eyebrow">Median would pay</div><strong>${money(v.median_would_pay)}</strong></div><div><div class="eyebrow">Current price</div><strong>${money(v.current_price)}</strong></div><div><div class="eyebrow">Sample</div><strong>${esc(v.sample_size)}</strong> stays</div></div><p><strong>Value:</strong> ${esc(v.value_classification||"insufficient data")} · <span class="muted">${esc(v.confidence||"insufficient")} confidence · ${esc(v.methodology_version||"legacy")}</span></p></section>`:`<section><h2>What travelers think it's worth</h2><p class="muted">Not enough first-party stay data yet. Add your stay to help establish the fair-value range.</p></section>`;
+  const valueBlock=v?`<section><h2>What travelers think it's worth</h2><div class="value"><div><div class="eyebrow">Traveler range</div><strong>${money(v.traveler_low)}–${money(v.traveler_high)}</strong></div><div><div class="eyebrow">Median would pay</div><strong>${money(v.median_would_pay)}</strong></div><div><div class="eyebrow">Current observed rate</div><strong>${money(latestRate?.nightly_rate??v.current_price)}</strong></div><div><div class="eyebrow">Sample</div><strong>${esc(v.sample_size)}</strong> stays</div></div><p><strong>Value:</strong> ${esc(v.value_classification||"insufficient data")} · <span class="muted">${esc(v.confidence||"insufficient")} confidence · ${esc(v.methodology_version||"legacy")}</span></p></section>`:`<section><h2>What travelers think it's worth</h2><p class="muted">Not enough first-party stay data yet. Add your stay to help establish the fair-value range.</p></section>`;
   const jsonLd={"@context":"https://schema.org","@type":"Hotel","name":h.name,"description":h.description||undefined,"url":ORIGIN+"/hotel/"+h.slug,"image":mediaUrl?(mediaUrl.startsWith("http")?mediaUrl:ORIGIN+mediaUrl):undefined,"address":h.formatted_address||h.address||undefined,"telephone":h.phone||undefined,"sameAs":h.website?[h.website]:undefined,"aggregateRating":h.google_rating?{"@type":"AggregateRating","ratingValue":h.google_rating,"reviewCount":h.google_review_count||undefined}:undefined};
-  return page(shell(`<section class="hero" data-autoevent="hotel_view" data-hotel-id="${attr(h.id)}" style="padding-bottom:28px"><div class="eyebrow">${esc(location)}</div><h1>${esc(h.name)}</h1>${mediaUrl?`<img class="hero-media" src="${attr(mediaUrl)}" alt="${attr(h.name)}">${media.attribution_text?`<div class="kicker">${esc(media.attribution_text)}</div>`:""}`:""}<p>${esc(h.description||"")}</p><div class="filters">${highlights.slice(0,5).map(x=>`<span class="pill">${esc(x)}</span>`).join("")}</div></section><div class="two"><div>${valueBlock}<section class="section"><h2>Price context</h2><p>Existing estimated range: <strong>${money(h.price_estimate_min)}–${money(h.price_estimate_max)}</strong> per night.</p>${h.booking_url?`<a class="btn" data-event="outbound_booking_click" data-hotel-id="${attr(h.id)}" href="/out/${encodeURIComponent(h.slug)}" rel="nofollow sponsored">Check booking options</a>`:""}</section><section><h2>Traveler evidence</h2><ul class="list">${evidence.map(e=>`<li>${e.price_mentioned?`<strong>${money(e.price_mentioned)}</strong> · `:""}${esc(e.trip_context||e.sentiment||"Traveler mention")} ${e.source_url?`<a href="${attr(e.source_url)}" rel="nofollow noopener">source</a>`:""}</li>`).join("")||'<li class="muted">No structured traveler evidence yet.</li>'}</ul></section></div><aside><div class="card"><h3>Best for</h3><div>${bestFor.map(x=>`<span class="pill">${esc(x)}</span>`).join("")||'<span class="muted">Not classified yet.</span>'}</div><h3>Not ideal for</h3><div>${notIdeal.map(x=>`<span class="pill">${esc(x)}</span>`).join("")||'<span class="muted">Not classified yet.</span>'}</div></div></aside></div><section class="section"><h2>Nearby / comparable alternatives</h2><div class="grid">${comps.map(c=>`<a class="card" href="/hotel/${encodeURIComponent(c.slug)}"><strong>${esc(c.name)}</strong><br><span class="muted">${esc([c.city,c.country].filter(Boolean).join(", "))} · ${money(c.price_estimate_min)}–${money(c.price_estimate_max)}</span></a>`).join("")}</div></section>`),env,{title:hotelTitle(h.name),description:metaText(h.description||`${h.name} in ${location}: traveler price context and value.`,165),canonical:"/hotel/"+encodeURIComponent(h.slug),jsonLd});
+  return page(shell(`<section class="hero" data-autoevent="hotel_view" data-hotel-id="${attr(h.id)}" style="padding-bottom:28px"><div class="eyebrow">${esc(location)}</div><h1>${esc(h.name)}</h1>${mediaUrl?`<img class="hero-media" src="${attr(mediaUrl)}" alt="${attr(h.name)}">${media.attribution_text?`<div class="kicker">${esc(media.attribution_text)}</div>`:""}`:""}<p>${esc(h.description||"")}</p><div class="filters">${highlights.slice(0,5).map(x=>`<span class="pill">${esc(x)}</span>`).join("")}</div></section><div class="two"><div>${valueBlock}<section class="section"><h2>Price context</h2><p>Estimated historical range: <strong>${money(h.price_estimate_min)}–${money(h.price_estimate_max)}</strong> per night.</p>
+${latestRate?`<div class="notice"><div class="eyebrow">Latest observed bookable rate</div><div class="price-line"><strong>${money(latestRate.nightly_rate)}</strong><span class="muted">${esc(latestRate.provider_name||latestRate.provider_id||"provider")} · observed ${esc(String(latestRate.observed_at||"").slice(0,10))}</span></div>${latestRate.checkin_date?`<p class="kicker">${esc(latestRate.checkin_date)} → ${esc(latestRate.checkout_date||"")} ${latestRate.room_type?"· "+esc(latestRate.room_type):""} ${latestRate.taxes_fees_included==null?"":latestRate.taxes_fees_included?"· taxes/fees included":"· before taxes/fees"}</p>`:""}</div>`:""}
+${(latestRate?.booking_url||h.booking_url)?`<p><a class="btn" data-event="outbound_booking_click" data-hotel-id="${attr(h.id)}" href="/out/${encodeURIComponent(h.slug)}" rel="nofollow sponsored">Check booking options</a></p>`:""}</section><section><h2>Traveler evidence</h2><ul class="list">${evidence.map(e=>`<li>${e.price_mentioned?`<strong>${money(e.price_mentioned)}</strong> · `:""}${esc(e.trip_context||e.sentiment||"Traveler mention")} ${e.source_url?`<a href="${attr(e.source_url)}" rel="nofollow noopener">source</a>`:""}</li>`).join("")||'<li class="muted">No structured traveler evidence yet.</li>'}</ul></section></div><aside><div class="card"><h3>Best for</h3><div>${bestFor.map(x=>`<span class="pill">${esc(x)}</span>`).join("")||'<span class="muted">Not classified yet.</span>'}</div><h3>Not ideal for</h3><div>${notIdeal.map(x=>`<span class="pill">${esc(x)}</span>`).join("")||'<span class="muted">Not classified yet.</span>'}</div></div></aside></div><section class="section"><h2>Nearby / comparable alternatives</h2><div class="grid">${comps.map(c=>`<a class="card" href="/hotel/${encodeURIComponent(c.slug)}"><strong>${esc(c.name)}</strong><br><span class="muted">${esc([c.city,c.country].filter(Boolean).join(", "))} · ${money(c.price_estimate_min)}–${money(c.price_estimate_max)}</span></a>`).join("")}</div></section>`),env,{title:hotelTitle(h.name),description:metaText(h.description||`${h.name} in ${location}: traveler price context and value.`,165),canonical:"/hotel/"+encodeURIComponent(h.slug),jsonLd});
 }
 
 async function listPage(handle, slug, env){
@@ -438,12 +443,15 @@ async function comparisonPage(pair,env){
   let a=null,b=null;
   for(const pos of positions){
     const as=pair.slice(0,pos), bs=pair.slice(pos+4);
-    const rows=(await env.DB.prepare("SELECT h.*,v.median_would_pay,v.traveler_low,v.traveler_high,v.sample_size,v.confidence FROM hotels h LEFT JOIN hotel_value_snapshots v ON v.id=(SELECT id FROM hotel_value_snapshots WHERE hotel_id=h.id ORDER BY calculated_at DESC LIMIT 1) WHERE h.is_published=1 AND h.slug IN (?,?)").bind(as,bs).all()).results||[];
+    const rows=(await env.DB.prepare("SELECT h.*,v.median_would_pay,v.traveler_low,v.traveler_high,v.sample_size,v.confidence,
+      (SELECT nightly_rate FROM hotel_rate_observations ro WHERE ro.hotel_id=h.id ORDER BY observed_at DESC LIMIT 1) current_observed_rate,
+      (SELECT observed_at FROM hotel_rate_observations ro WHERE ro.hotel_id=h.id ORDER BY observed_at DESC LIMIT 1) rate_observed_at
+      FROM hotels h LEFT JOIN hotel_value_snapshots v ON v.id=(SELECT id FROM hotel_value_snapshots WHERE hotel_id=h.id ORDER BY calculated_at DESC LIMIT 1) WHERE h.is_published=1 AND h.slug IN (?,?)").bind(as,bs).all()).results||[];
     a=rows.find(x=>x.slug===as); b=rows.find(x=>x.slug===bs);
     if(a&&b)break;
   }
   if(!a||!b)return new Response("Comparison not found",{status:404});
-  const card=x=>`<div class="card"><div class="eyebrow">${esc([x.city,x.country].filter(Boolean).join(", "))}</div><h2><a href="/hotel/${encodeURIComponent(x.slug)}">${esc(x.name)}</a></h2><p>Estimated rate: <strong>${money(x.price_estimate_min)}–${money(x.price_estimate_max)}</strong></p><p>Traveler assessed: <strong>${x.median_would_pay?money(x.traveler_low)+"–"+money(x.traveler_high):"not enough data"}</strong></p><p class="muted">${x.sample_size?x.sample_size+" value observations · "+(x.confidence||"")+" confidence":"First-party value sample pending"}</p></div>`;
+  const card=x=>`<div class="card"><div class="eyebrow">${esc([x.city,x.country].filter(Boolean).join(", "))}</div><h2><a href="/hotel/${encodeURIComponent(x.slug)}">${esc(x.name)}</a></h2><p>Estimated range: <strong>${money(x.price_estimate_min)}–${money(x.price_estimate_max)}</strong></p>${x.current_observed_rate?`<p>Latest observed rate: <strong>${money(x.current_observed_rate)}</strong><br><span class="kicker">${esc(String(x.rate_observed_at||"").slice(0,10))}</span></p>`:""}<p>Traveler assessed: <strong>${x.median_would_pay?money(x.traveler_low)+"–"+money(x.traveler_high):"not enough data"}</strong></p><p class="muted">${x.sample_size?x.sample_size+" value observations · "+(x.confidence||"")+" confidence":"First-party value sample pending"}</p></div>`;
   return page(shell(`<section class="hero"><div class="eyebrow">Hotel comparison</div><h1>${esc(a.name)} vs. ${esc(b.name)}</h1><p>Side-by-side price and traveler-value context. SecretNests does not declare a universal winner; the useful question is which property better fits your price and preferences.</p></section><div class="grid">${card(a)}${card(b)}</div>`),env,{title:metaText(`${a.name} vs. ${b.name} | SecretNests`,66),description:metaText(`Compare ${a.name} and ${b.name} using price context and traveler-assessed value.`,165),canonical:"/compare/"+pair});
 }
 
@@ -653,6 +661,32 @@ async function createMediaIngest(request,env){
   return json({ok:true,id,status:"pending"});
 }
 
+async function adminRatesPage(request,env){
+  const moderator=adminEmail(request,env);
+  if(!moderator)return new Response("Not found",{status:404});
+  let message="";
+  if(request.method==="POST"){
+    const form=await request.formData();
+    const raw=String(form.get("payload")||"").trim();
+    try{
+      const parsed=JSON.parse(raw);
+      const fake=new Request(request.url,{method:"POST",headers:{"content-type":"application/json","cf-access-authenticated-user-email":moderator},body:JSON.stringify(Array.isArray(parsed)?{rates:parsed}:parsed)});
+      const result=await ingestRates(fake,env); const data=await result.json();
+      message=data.ok?`Imported ${data.inserted} rate observation(s).`:`Import failed: ${data.error||"unknown"}`;
+    }catch(e){message="Import failed: invalid JSON."}
+  }
+  const recent=(await env.DB.prepare(`SELECT ro.*,h.name hotel_name,p.name provider_name FROM hotel_rate_observations ro
+    JOIN hotels h ON h.id=ro.hotel_id LEFT JOIN affiliate_providers p ON p.id=ro.provider_id
+    ORDER BY ro.observed_at DESC LIMIT 100`).all()).results||[];
+  const providers=(await env.DB.prepare("SELECT id,name,enabled FROM affiliate_providers ORDER BY name").all()).results||[];
+  const example=JSON.stringify([{hotel_id:"HOTEL_ID",provider_id:"direct",nightly_rate:725,currency:"USD",checkin_date:"2026-10-15",checkout_date:"2026-10-17",room_type:"King",taxes_fees_included:false,booking_url:"https://hotel.example/booking"}],null,2);
+  return page(shell(`<section class="hero" style="padding-bottom:20px"><div class="eyebrow">Revenue / rates</div><h1>Current-rate ingestion</h1><p>Import observed bookable rates and booking URLs. The latest observation flows onto hotel and comparison pages while preserving the historical estimated range.</p></section>
+  ${message?`<div class="notice"><strong>${esc(message)}</strong></div>`:""}
+  <div class="two"><form class="card" method="post" action="/admin/rates"><h2>Import JSON</h2><p class="muted">Use hotel IDs from D1/API. Provider IDs currently available: ${providers.map(p=>esc(p.id)).join(", ")}.</p><textarea name="payload" rows="16" style="width:100%;padding:12px;font-family:monospace">${esc(example)}</textarea><p><button class="btn">Import rates</button></p></form>
+  <div class="card"><h2>Provider layer</h2><ul class="list">${providers.map(p=>`<li><strong>${esc(p.name)}</strong> · ${esc(p.id)} · ${p.enabled?"enabled":"disabled"}</li>`).join("")}</ul><p class="muted">This endpoint is also ready for automated provider jobs at <code>POST /api/admin/rates</code>.</p></div></div>
+  <section class="section"><h2>Recent observations</h2><ul class="list">${recent.map(r=>`<li><strong>${esc(r.hotel_name)}</strong> · ${money(r.nightly_rate)} · ${esc(r.provider_name||r.provider_id||"provider")} · ${esc(String(r.observed_at||"").slice(0,16))}</li>`).join("")||'<li class="muted">No current-rate observations yet.</li>'}</ul></section>`),env,{title:"Current rates | SecretNests",canonical:"/admin/rates",robots:"noindex,nofollow"});
+}
+
 async function ingestRates(request,env){
   const moderator=adminEmail(request,env);
   if(!moderator)return new Response("Not found",{status:404});
@@ -735,6 +769,7 @@ async function route(request,env){
   if(request.method==="POST" && url.pathname==="/api/admin/verification-review")return verificationReview(request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/api/admin/media")return adminMedia(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/media-ingest")return createMediaIngest(request,env);
+  if((request.method==="GET"||request.method==="POST") && url.pathname==="/admin/rates")return adminRatesPage(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/rates")return ingestRates(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/recompute-values")return recomputeValues(request,env);
   if(request.method==="GET" && url.pathname==="/health")return json({ok:true,service:"secretnests",runtime:"cloudflare-worker"});
