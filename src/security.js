@@ -19,8 +19,8 @@ async function sha256Hex(text) {
 }
 
 export async function enforceRateLimit(request, env, namespace, limit, windowSeconds = 3600) {
-  const salt = env.RATE_LIMIT_SALT;
-  if (!salt || !env.DB) return { ok: true, degraded: true };
+  const salt = env.RATE_LIMIT_SALT || env.APP_ORIGIN || "secretnests";
+  if (!env.DB) return { ok: true, degraded: true };
   const ip = request.headers.get("cf-connecting-ip") || "unknown";
   const now = Date.now();
   const bucketStart = Math.floor(now / (windowSeconds * 1000)) * windowSeconds * 1000;
