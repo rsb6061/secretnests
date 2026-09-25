@@ -137,10 +137,17 @@ jobs:
         run: |
           set -euo pipefail
           curl --connect-timeout 5 --max-time 20 -fsS https://secretnests.com/health | jq -e '.ok == true'
-          curl --connect-timeout 5 --max-time 20 -fsS https://secretnests.com/ >/dev/null
-          curl --connect-timeout 5 --max-time 20 -fsS https://secretnests.com/brands >/dev/null
-          curl --connect-timeout 5 --max-time 20 -fsS https://secretnests.com/contribute >/dev/null
-          curl --connect-timeout 5 --max-time 20 -fsS https://secretnests.com/compare >/dev/null
+          ROUTES=( "/" "/brands" "/contribute" "/compare" )
+          for route in "${ROUTES[@]}"; do
+            ok=0
+            for attempt in 1 2 3 4 5 6 7 8; do
+              code="$(curl --connect-timeout 5 --max-time 20 -sS -o /tmp/smoke.html -w '%{http_code}' "https://secretnests.com$route" || true)"
+              if [ "$code" = "200" ]; then ok=1; break; fi
+              echo "Smoke route $route returned HTTP $code; waiting for Worker route propagation (attempt $attempt/8)."
+              sleep 2
+            done
+            test "$ok" = "1"
+          done
 
       - name: Run bounded market-intelligence pilot
         id: pilot_run
