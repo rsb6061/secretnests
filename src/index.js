@@ -339,13 +339,14 @@ async function adminSubmissionsPage(request,env){
   if(!moderator)return new Response("Not found",{status:404});
   if(request.method==="POST"){
     const form=await request.formData(),id=String(form.get("id")||""),action=String(form.get("action")||"");
-    const payload={id,action,hotel_id:String(form.get("hotel_id")||""),note:String(form.get("note")||"").slice(0,1000)};
+    const payload={id,action,hotel_id:String(form.get("hotel_id")||""),note:String(form.get("note")||"").slice(0,1000),verify_receipt:form.get("verify_receipt")==="1"};
     const fake=new Request(request.url,{method:"POST",headers:{"content-type":"application/json","cf-access-authenticated-user-email":moderator},body:JSON.stringify(payload)});
     await adminSubmissions(fake,env);
     return Response.redirect(ORIGIN+"/admin/submissions",303);
   }
   const rows=(await env.DB.prepare(`SELECT ts.*,h.name matched_name,h.slug matched_slug,
-    (SELECT COUNT(*) FROM submission_verification_artifacts sva WHERE sva.submission_id=ts.id AND sva.status='pending') verification_files
+    (SELECT COUNT(*) FROM submission_verification_artifacts sva WHERE sva.submission_id=ts.id AND sva.status='pending') verification_files,
+    (SELECT id FROM submission_verification_artifacts sva WHERE sva.submission_id=ts.id AND sva.status='pending' ORDER BY created_at LIMIT 1) verification_artifact_id
     FROM trip_submissions ts LEFT JOIN hotels h ON h.id=ts.hotel_id
     WHERE ts.status IN ('pending','matched') ORDER BY ts.created_at LIMIT 100`).all()).results||[];
   const cards=[];
@@ -362,9 +363,10 @@ async function adminSubmissionsPage(request,env){
     cards.push(`<div class="card"><div class="eyebrow">${esc(s.created_at)} · ${esc(s.verification_status||"unverified")}</div><h2>${esc(s.hotel_name)}</h2><p class="muted">${esc(s.city||"")} · stayed ${esc(s.stay_month||"—")} · ${s.nights||"—"} nights</p>
       <div class="value"><div><div class="eyebrow">Paid</div><strong>${money(s.paid_nightly_rate)}</strong></div><div><div class="eyebrow">Would pay again</div><strong>${money(s.would_pay_again)}</strong></div><div><div class="eyebrow">Would return</div><strong>${s.would_return==null?"—":s.would_return?"Yes":"No"}</strong></div><div><div class="eyebrow">Verification</div><strong>${s.verification_files||0}</strong> file(s)</div></div>
       <p><strong>Room:</strong> ${esc(s.room_type||"—")} · <strong>Booked:</strong> ${esc(s.booking_channel||"—")} · <strong>Basis:</strong> ${esc(s.rate_basis||"—")}</p>
+      ${s.verification_artifact_id?`<p><a class="btn secondary" target="_blank" rel="noopener" href="/admin/submission-verification/${encodeURIComponent(s.verification_artifact_id)}">View private receipt / folio</a> <label class="pill"><input type="checkbox" name="verify_receipt" value="1" form="mod-${attr(s.id)}"> Mark rate verified</label></p>`:""}
       <p><strong>Included:</strong> ${inclusions.length?inclusions.map(x=>`<span class="pill">${esc(x)}</span>`).join(""):"—"}</p>
       <p>${esc(s.notes||"")}</p>
-      <form method="post" action="/admin/submissions"><input type="hidden" name="id" value="${attr(s.id)}"><label>Match hotel<br><select name="hotel_id" required style="width:100%;padding:10px;margin:6px 0 10px"><option value="">Choose match</option>${options}</select></label><label>Moderator note<br><input name="note" style="width:100%;padding:10px"></label><div class="hero-actions"><button class="btn" name="action" value="approve">Approve + publish value observation</button><button class="btn secondary" name="action" value="reject">Reject</button></div></form>
+      <form id="mod-${attr(s.id)}" method="post" action="/admin/submissions"><input type="hidden" name="id" value="${attr(s.id)}"><label>Match hotel<br><select name="hotel_id" required style="width:100%;padding:10px;margin:6px 0 10px"><option value="">Choose match</option>${options}</select></label><label>Moderator note<br><input name="note" style="width:100%;padding:10px"></label><div class="hero-actions"><button class="btn" name="action" value="approve">Approve + publish value observation</button><button class="btn secondary" name="action" value="reject">Reject</button></div></form>
     </div>`);
   }
   return page(shell(`<section class="hero" style="padding-bottom:24px"><div class="eyebrow">Moderation</div><h1>Trip submission queue</h1><p>Review hotel matching, rate context, return intent, perks, and verification state before publishing.</p></section><div class="grid">${cards.join("")||'<div class="notice">No pending submissions.</div>'}</div>`),env,{title:"Trip moderation | SecretNests",canonical:"/admin/submissions",robots:"noindex,nofollow"});
@@ -528,8 +530,8 @@ async function adminSubmissions(request,env){
   await env.DB.prepare("INSERT INTO creator_profiles (id,user_id,handle,display_name,bio,taste_profile_json,is_public,is_demo,created_at,updated_at) VALUES (?,?,?,?,?,'[]',0,0,?,?) ON CONFLICT(id) DO NOTHING")
     .bind(creatorId,null,"community-intake","Community intake","Internal moderation identity for approved anonymous trip submissions.",nowIso(),nowIso()).run();
   const stayId="submission-"+submission.id;
-  await env.DB.prepare(`INSERT INTO stays (id,creator_id,hotel_id,stay_month,room_type,booking_channel,paid_nightly_rate,currency,verified,verification_method,created_at,updated_at)
-    VALUES (?,?,?,?,?,?,?,?,?,'USD',0,'community_submission',?,?,?,?) ON CONFLICT(id) DO NOTHING`)
+  await env.DB.prepare(`INSERT INTO stays (id,creator_id,hotel_id,stay_month,nights,party_type,room_type,booking_channel,paid_nightly_rate,currency,verified,verification_method,created_at,updated_at,perks_json,inclusions_json,rate_basis)
+    VALUES (?,?,?,?,?,?,?,?,?,'USD',0,'community_submission',?,?,?,?,?) ON CONFLICT(id) DO NOTHING`)
     .bind(stayId,creatorId,hotel.id,submission.stay_month,submission.nights,submission.party_type,submission.room_type,submission.booking_channel,submission.paid_nightly_rate,nowIso(),nowIso(),submission.perks_json||"[]",submission.inclusions_json||"[]",submission.rate_basis||null).run();
   if(submission.would_pay_again!=null){
     await env.DB.prepare(`INSERT INTO value_opinions (id,stay_id,creator_id,hotel_id,paid_nightly_rate,would_pay_again,currency,created_at)
@@ -538,12 +540,28 @@ async function adminSubmissions(request,env){
   }
   await env.DB.prepare("INSERT INTO trip_reports (id,stay_id,creator_id,hotel_id,title,review_text,verdict,would_return,standout_json,disappointments_json,status,published_at,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,'[]','[]','published',?,?,?) ON CONFLICT(stay_id) DO NOTHING")
     .bind("report-"+submission.id,stayId,creatorId,hotel.id,submission.hotel_name,submission.notes||null,"community_submission",submission.would_return,nowIso(),nowIso(),nowIso()).run();
+  if(body.verify_receipt){
+    await env.DB.prepare("UPDATE submission_verification_artifacts SET status='verified',redaction_status='not_required',reviewer_note=?,reviewed_at=? WHERE submission_id=? AND status='pending'")
+      .bind("Rate verified by "+moderator,nowIso(),submission.id).run();
+    await env.DB.prepare("UPDATE trip_submissions SET verification_status='verified' WHERE id=?").bind(submission.id).run();
+  }
   const verifiedArtifact=await env.DB.prepare("SELECT id FROM submission_verification_artifacts WHERE submission_id=? AND status='verified' LIMIT 1").bind(submission.id).first();
   if(verifiedArtifact)await env.DB.prepare("UPDATE stays SET verified=1,verification_method='receipt_or_folio',updated_at=? WHERE id=?").bind(nowIso(),stayId).run();
   await env.DB.prepare("UPDATE trip_submissions SET status='approved',hotel_id=?,reviewed_at=? WHERE id=?").bind(hotel.id,nowIso(),submission.id).run();
   await env.DB.prepare("INSERT INTO submission_moderation (id,submission_id,action,hotel_id,moderator_email,note,created_at) VALUES (?,?,?,?,?,?,?)").bind(crypto.randomUUID(),submission.id,"approve",hotel.id,moderator,String(body.note||"").slice(0,1000),nowIso()).run();
   const valuation=await recomputeHotelValuation(env.DB,hotel.id);
   return json({ok:true,status:"approved",stay_id:stayId,valuation});
+}
+
+async function submissionVerificationFile(id,request,env){
+  const moderator=adminEmail(request,env);
+  if(!moderator)return new Response("Not found",{status:404});
+  const row=await env.DB.prepare("SELECT id,r2_key,mime_type FROM submission_verification_artifacts WHERE id=?").bind(id).first();
+  if(!row)return new Response("Not found",{status:404});
+  const obj=await env.MEDIA.get(row.r2_key);
+  if(!obj)return new Response("Not found",{status:404});
+  const h=new Headers({"content-type":row.mime_type||obj.httpMetadata?.contentType||"application/octet-stream","cache-control":"private,no-store","content-disposition":"inline","x-content-type-options":"nosniff"});
+  return new Response(obj.body,{headers:h});
 }
 
 async function verificationUpload(request,env){
@@ -711,6 +729,7 @@ async function route(request,env){
   if(request.method==="GET" && url.pathname==="/api/hotels")return apiHotels(request,env);
   if(request.method==="POST" && url.pathname==="/api/events")return recordEvent(request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/admin/submissions")return adminSubmissionsPage(request,env);
+  const verificationFile=url.pathname.match(/^\/admin\/submission-verification\/([^/]+)$/); if(request.method==="GET"&&verificationFile)return submissionVerificationFile(decodeURIComponent(verificationFile[1]),request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/api/admin/submissions")return adminSubmissions(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/verification-upload")return verificationUpload(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/verification-review")return verificationReview(request,env);
