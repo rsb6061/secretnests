@@ -1025,7 +1025,19 @@ export default {
       ctx.waitUntil(runEnrichmentAutomation(env).then(result=>console.log(JSON.stringify({type:"enrichment_automation",...result}))).catch(e=>console.error(JSON.stringify({type:"enrichment_automation_error",message:safeLogError(e)}))));
       return;
     }
-    ctx.waitUntil(runTravelpayoutsAutomation(env).then(result=>console.log(JSON.stringify({type:"travelpayouts_automation",...result}))).catch(e=>console.error(JSON.stringify({type:"travelpayouts_automation_error",message:safeLogError(e)}))));
+    ctx.waitUntil((async()=>{
+      try{
+        const count=Number((await env.DB.prepare("SELECT COUNT(*) n FROM hotel_enrichment_profiles").first())?.n||0);
+        if(count===0){
+          const enrichment=await runEnrichmentAutomation(env);
+          console.log(JSON.stringify({type:"enrichment_bootstrap",...enrichment}));
+        }
+      }catch(e){console.error(JSON.stringify({type:"enrichment_bootstrap_error",message:safeLogError(e)}))}
+      try{
+        const result=await runTravelpayoutsAutomation(env);
+        console.log(JSON.stringify({type:"travelpayouts_automation",...result}));
+      }catch(e){console.error(JSON.stringify({type:"travelpayouts_automation_error",message:safeLogError(e)}))}
+    })());
   },
   async fetch(request,env,ctx){
     const requestId=crypto.randomUUID();
