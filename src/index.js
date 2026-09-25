@@ -1,4 +1,6 @@
 import { drainOfficialHotelQueue } from "./enrichment-worker.js";
+import { drainCurrentRateQueue } from "./rate-worker.js";
+import { drainExternalEvidenceQueue } from "./external-evidence-worker.js";
 import { refreshHotelEnrichment } from "./enrichment.js";
 import { recomputeHotelValuation } from "./value-engine.js";
 import { sameOrigin, bodyTooLarge, enforceRateLimit, adminEmail, safeLogError } from "./security.js";
@@ -209,7 +211,9 @@ async function hotelPage(slug, env){
     ORDER BY CASE rights_status WHEN 'owned_user_upload' THEN 0 WHEN 'hotel_authorized' THEN 1 ELSE 2 END,created_at
     LIMIT 1`).bind(h.id).first();
   const mediaUrl=media ? (media.r2_key ? "/media/"+encodeURIComponent(media.id) : media.source_url) : null;
-  const evidence=(await env.DB.prepare("SELECT sentiment,price_mentioned,trip_context,confidence,source_url FROM reddit_evidence WHERE hotel_id=? ORDER BY created_at DESC LIMIT 8").bind(h.id).all()).results||[];
+  const legacyEvidence=(await env.DB.prepare("SELECT 'reddit' provider,sentiment,price_mentioned,trip_context,confidence,source_url,NULL summary,created_at observed_at FROM reddit_evidence WHERE hotel_id=? ORDER BY created_at DESC LIMIT 8").bind(h.id).all()).results||[];
+  const structuredEvidence=(await env.DB.prepare("SELECT provider,sentiment,price_mentioned,trip_context,confidence,source_url,summary,observed_at FROM hotel_external_evidence WHERE hotel_id=? ORDER BY observed_at DESC LIMIT 8").bind(h.id).all()).results||[];
+  const evidence=[...structuredEvidence,...legacyEvidence].sort((a,b)=>String(b.observed_at||"").localeCompare(String(a.observed_at||""))).slice(0,8);
   const comps=(await env.DB.prepare(`SELECT name,slug,city,country,price_estimate_min,price_estimate_max FROM hotels WHERE is_published=1 AND id<>? AND ((city IS NOT NULL AND city=?) OR (country IS NOT NULL AND country=?)) ORDER BY ABS(COALESCE(price_estimate_min,0)-COALESCE(?,0)),reddit_mention_count DESC LIMIT 4`).bind(h.id,h.city||"",h.country||"",h.price_estimate_min||0).all()).results||[];
   const highlights=safeJson(h.highlights_json,[]), bestFor=safeJson(h.best_for_json,[]), notIdeal=safeJson(h.not_ideal_for_json,[]);
   const location=[h.city,h.country].filter(Boolean).join(", ");
@@ -217,7 +221,7 @@ async function hotelPage(slug, env){
   const jsonLd={"@context":"https://schema.org","@type":"Hotel","name":h.name,"description":h.description||undefined,"url":ORIGIN+"/hotel/"+h.slug,"image":mediaUrl?(mediaUrl.startsWith("http")?mediaUrl:ORIGIN+mediaUrl):undefined,"address":h.formatted_address||h.address||undefined,"telephone":h.phone||undefined,"sameAs":h.website?[h.website]:undefined,"aggregateRating":h.google_rating?{"@type":"AggregateRating","ratingValue":h.google_rating,"reviewCount":h.google_review_count||undefined}:undefined};
   return page(shell(`<section class="hero" data-autoevent="hotel_view" data-hotel-id="${attr(h.id)}" style="padding-bottom:28px"><div class="eyebrow">${esc(location)}</div><h1>${esc(h.name)}</h1>${mediaUrl?`<img class="hero-media" src="${attr(mediaUrl)}" alt="${attr(h.name)}">${media.attribution_text?`<div class="kicker">${esc(media.attribution_text)}</div>`:""}`:""}<p>${esc(h.description||"")}</p><div class="filters">${highlights.slice(0,5).map(x=>`<span class="pill">${esc(x)}</span>`).join("")}</div></section><div class="two"><div>${valueBlock}<section class="section"><h2>Price context</h2><p>Estimated historical range: <strong>${money(h.price_estimate_min)}–${money(h.price_estimate_max)}</strong> per night.</p>
 ${latestRate?`<div class="notice"><div class="eyebrow">Latest observed bookable rate</div><div class="price-line"><strong>${money(latestRate.nightly_rate)}</strong><span class="muted">${esc(latestRate.provider_name||latestRate.provider_id||"provider")} · observed ${esc(String(latestRate.observed_at||"").slice(0,10))}</span></div>${latestRate.checkin_date?`<p class="kicker">${esc(latestRate.checkin_date)} → ${esc(latestRate.checkout_date||"")} ${latestRate.room_type?"· "+esc(latestRate.room_type):""} ${latestRate.taxes_fees_included==null?"":latestRate.taxes_fees_included?"· taxes/fees included":"· before taxes/fees"}</p>`:""}</div>`:""}
-${(latestRate?.booking_url||h.booking_url)?`<p><a class="btn" data-event="outbound_booking_click" data-hotel-id="${attr(h.id)}" href="/out/${encodeURIComponent(h.slug)}" rel="nofollow sponsored">Check booking options</a></p>`:""}</section><section><h2>Traveler evidence</h2><ul class="list">${evidence.map(e=>`<li>${e.price_mentioned?`<strong>${money(e.price_mentioned)}</strong> · `:""}${esc(e.trip_context||e.sentiment||"Traveler mention")} ${e.source_url?`<a href="${attr(e.source_url)}" rel="nofollow noopener">source</a>`:""}</li>`).join("")||'<li class="muted">No structured traveler evidence yet.</li>'}</ul></section></div><aside><div class="card"><h3>Best for</h3><div>${bestFor.map(x=>`<span class="pill">${esc(x)}</span>`).join("")||'<span class="muted">Not classified yet.</span>'}</div><h3>Not ideal for</h3><div>${notIdeal.map(x=>`<span class="pill">${esc(x)}</span>`).join("")||'<span class="muted">Not classified yet.</span>'}</div></div></aside></div><section class="section"><h2>Nearby / comparable alternatives</h2><div class="grid">${comps.map(c=>`<a class="card" href="/hotel/${encodeURIComponent(c.slug)}"><strong>${esc(c.name)}</strong><br><span class="muted">${esc([c.city,c.country].filter(Boolean).join(", "))} · ${money(c.price_estimate_min)}–${money(c.price_estimate_max)}</span></a>`).join("")}</div></section>`),env,{title:hotelTitle(h.name),description:metaText(h.description||`${h.name} in ${location}: traveler price context and value.`,165),canonical:"/hotel/"+encodeURIComponent(h.slug),jsonLd});
+${(latestRate?.booking_url||h.booking_url)?`<p><a class="btn" data-event="outbound_booking_click" data-hotel-id="${attr(h.id)}" href="/out/${encodeURIComponent(h.slug)}" rel="nofollow sponsored">Check booking options</a></p>`:""}</section><section><h2>Traveler evidence</h2><ul class="list">${evidence.map(e=>`<li>${e.price_mentioned?`<strong>${money(e.price_mentioned)}</strong> · `:""}${esc(e.summary||e.trip_context||e.sentiment||"Traveler mention")} ${e.source_url?`<a href="${attr(e.source_url)}" rel="nofollow noopener">source</a>`:""}</li>`).join("")||'<li class="muted">No structured traveler evidence yet.</li>'}</ul></section></div><aside><div class="card"><h3>Best for</h3><div>${bestFor.map(x=>`<span class="pill">${esc(x)}</span>`).join("")||'<span class="muted">Not classified yet.</span>'}</div><h3>Not ideal for</h3><div>${notIdeal.map(x=>`<span class="pill">${esc(x)}</span>`).join("")||'<span class="muted">Not classified yet.</span>'}</div></div></aside></div><section class="section"><h2>Nearby / comparable alternatives</h2><div class="grid">${comps.map(c=>`<a class="card" href="/hotel/${encodeURIComponent(c.slug)}"><strong>${esc(c.name)}</strong><br><span class="muted">${esc([c.city,c.country].filter(Boolean).join(", "))} · ${money(c.price_estimate_min)}–${money(c.price_estimate_max)}</span></a>`).join("")}</div></section>`),env,{title:hotelTitle(h.name),description:metaText(h.description||`${h.name} in ${location}: traveler price context and value.`,165),canonical:"/hotel/"+encodeURIComponent(h.slug),jsonLd});
 }
 
 async function listPage(handle, slug, env){
@@ -945,6 +949,20 @@ async function adminDrainEnrichment(request,env){
   return json(out);
 }
 
+async function adminDrainRates(request,env){
+  const moderator=adminEmail(request,env);
+  if(!moderator)return new Response("Not found",{status:404});
+  const out=await drainCurrentRateQueue(env,{limit:Math.min(Math.max(Number(new URL(request.url).searchParams.get("limit")||6),1),20)});
+  return json(out);
+}
+
+async function adminDrainEvidence(request,env){
+  const moderator=adminEmail(request,env);
+  if(!moderator)return new Response("Not found",{status:404});
+  const out=await drainExternalEvidenceQueue(env,{limit:Math.min(Math.max(Number(new URL(request.url).searchParams.get("limit")||2),1),5)});
+  return json(out);
+}
+
 async function adminEnrichmentPage(request,env){
   const moderator=adminEmail(request,env);
   if(!moderator)return new Response("Not found",{status:404});
@@ -992,7 +1010,8 @@ async function adminEnrichmentPage(request,env){
     <div><strong>${gap(summary?.missing_media)}</strong><span class="muted">need licensed hero</span></div>
     <div><strong>${gap(summary?.missing_first_party)}</strong><span class="muted">need first-party stays</span></div>
   </div>
-  <section class="section"><form method="post"><button class="btn" name="action" value="refresh">Rebuild top 250 + enrichment queue</button></form></section>
+  <section class="section"><form method="post"><button class="btn" name="action" value="refresh">Rebuild top 250 + enrichment queue</button></form>
+  <p class="muted">Automated workers: official-site facts, Booking.com Demand live-rate observations when configured, and provenance-backed independent web evidence when OpenAI search is configured.</p></section>
   <section class="section"><div class="section-head"><div><div class="eyebrow">Priority cohort</div><h2>Top 250 hotels</h2></div><span class="muted">Ranked from existing demand/value signals; completeness is a separate measure.</span></div>
     <div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr><th style="text-align:left;padding:10px;border-bottom:1px solid #ddd">#</th><th style="text-align:left;padding:10px;border-bottom:1px solid #ddd">Hotel</th><th style="text-align:right;padding:10px;border-bottom:1px solid #ddd">Priority</th><th style="text-align:right;padding:10px;border-bottom:1px solid #ddd">Complete</th><th style="text-align:left;padding:10px;border-bottom:1px solid #ddd">Missing</th></tr></thead><tbody>
     ${top.map(h=>`<tr><td style="padding:10px;border-bottom:1px solid #eee">${h.priority_rank}</td><td style="padding:10px;border-bottom:1px solid #eee"><a href="/hotel/${encodeURIComponent(h.slug)}"><strong>${esc(h.name)}</strong></a><br><span class="kicker">${esc([h.city,h.country].filter(Boolean).join(", "))}</span></td><td style="text-align:right;padding:10px;border-bottom:1px solid #eee">${Number(h.priority_score||0).toFixed(0)}</td><td style="text-align:right;padding:10px;border-bottom:1px solid #eee"><strong>${Number(h.completeness_score||0).toFixed(0)}%</strong></td><td style="padding:10px;border-bottom:1px solid #eee">${safeJson(h.missing_json,[]).map(x=>`<span class="pill">${esc(x.replaceAll("_"," "))}</span>`).join("")||'<span class="value-badge good">complete</span>'}</td></tr>`).join("")||'<tr><td colspan="5" style="padding:20px">Run the ranking to initialize the cohort.</td></tr>'}
@@ -1007,6 +1026,16 @@ async function runEnrichmentAutomation(env){
   const ranking=await refreshHotelEnrichment(env.DB);
   const official=await drainOfficialHotelQueue(env,{limit:8});
   return {ok:true,ranking,official};
+}
+
+async function runMarketIntelligenceAutomation(env){
+  const rates=await drainCurrentRateQueue(env,{limit:6});
+  return {ok:true,rates};
+}
+
+async function runExternalEvidenceAutomation(env){
+  const evidence=await drainExternalEvidenceQueue(env,{limit:1});
+  return {ok:true,evidence};
 }
 
 async function runTravelpayoutsAutomation(env){
@@ -1072,6 +1101,8 @@ async function route(request,env){
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/api/admin/media")return adminMedia(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/media-ingest")return createMediaIngest(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/enrichment/drain")return adminDrainEnrichment(request,env);
+  if(request.method==="POST" && url.pathname==="/api/admin/enrichment/drain-rates")return adminDrainRates(request,env);
+  if(request.method==="POST" && url.pathname==="/api/admin/enrichment/drain-evidence")return adminDrainEvidence(request,env);
   if(request.method==="GET" && url.pathname==="/api/admin/enrichment/next")return adminEnrichmentNext(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/enrichment/apply")return adminEnrichmentApply(request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/admin/enrichment")return adminEnrichmentPage(request,env);
@@ -1098,7 +1129,10 @@ export default {
       return;
     }
     if(controller.cron==="7,22,37,52 * * * *"){
-      ctx.waitUntil(drainOfficialHotelQueue(env,{limit:8}).then(result=>console.log(JSON.stringify({type:"official_enrichment_drain",...result}))).catch(e=>console.error(JSON.stringify({type:"official_enrichment_drain_error",message:safeLogError(e)}))));
+      ctx.waitUntil(Promise.allSettled([
+        drainOfficialHotelQueue(env,{limit:8}),
+        runExternalEvidenceAutomation(env)
+      ]).then(results=>console.log(JSON.stringify({type:"enrichment_drain",results:results.map(x=>x.status==="fulfilled"?x.value:{ok:false,error:safeLogError(x.reason)})}))).catch(e=>console.error(JSON.stringify({type:"enrichment_drain_error",message:safeLogError(e)}))));
       return;
     }
     ctx.waitUntil((async()=>{
@@ -1113,6 +1147,10 @@ export default {
         const result=await runTravelpayoutsAutomation(env);
         console.log(JSON.stringify({type:"travelpayouts_automation",...result}));
       }catch(e){console.error(JSON.stringify({type:"travelpayouts_automation_error",message:safeLogError(e)}))}
+      try{
+        const result=await runMarketIntelligenceAutomation(env);
+        console.log(JSON.stringify({type:"rate_automation",...result}));
+      }catch(e){console.error(JSON.stringify({type:"rate_automation_error",message:safeLogError(e)}))}
     })());
   },
   async fetch(request,env,ctx){
