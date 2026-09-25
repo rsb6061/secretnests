@@ -223,46 +223,151 @@ async function listPage(handle, slug, env){
 async function addTripPage(env){
   const enabled=String(env.SUBMISSIONS_ENABLED||"false").toLowerCase()==="true";
   const body=enabled
-    ? `<section class="hero" style="padding-bottom:26px"><div class="eyebrow">Add Your Trip</div><h1>Turn a hotel stay into useful price intelligence.</h1><p>Tell us what you paid, what you would pay again, and the room context. Submissions enter a review queue before publication.</p></section>
-<form class="card" method="post" action="/add-your-trip" style="max-width:760px">
+    ? `<section class="hero" style="padding-bottom:22px"><div class="eyebrow">Add Your Trip</div><h1>What did the hotel cost — and what was it worth?</h1><p>The useful signal is not a 1–5 star score. It is the price you actually paid, the price you'd happily pay again, and the context around that stay.</p></section>
+<form class="card" method="post" action="/add-your-trip" enctype="multipart/form-data" style="max-width:820px">
   <div style="display:none"><label>Website<input name="website" tabindex="-1" autocomplete="off"></label></div>
-  <p><label>Hotel name<br><input name="hotel_name" required maxlength="160" style="width:100%;padding:12px"></label></p>
-  <p><label>City / destination<br><input name="city" maxlength="120" style="width:100%;padding:12px"></label></p>
-  <p><label>Stay month<br><input name="stay_month" type="month" style="width:100%;padding:12px"></label></p>
-  <div class="two"><p><label>What you paid per night<br><input name="paid_nightly_rate" type="number" min="0" max="100000" step="0.01" style="width:100%;padding:12px"></label></p><p><label>What you'd happily pay again<br><input name="would_pay_again" type="number" min="0" max="100000" step="0.01" style="width:100%;padding:12px"></label></p></div>
-  <p><label>Room type<br><input name="room_type" maxlength="160" style="width:100%;padding:12px"></label></p>
-  <p><label>Booking channel<br><input name="booking_channel" maxlength="120" placeholder="Direct, Amex FHR, Chase, Booking.com, advisor…" style="width:100%;padding:12px"></label></p>
-  <p><label>Anything travelers should know<br><textarea name="notes" maxlength="3000" rows="6" style="width:100%;padding:12px"></textarea></label></p>
-  <p><label>Email for follow-up (optional)<br><input name="contact_email" type="email" maxlength="254" style="width:100%;padding:12px"></label></p>
-  <button class="btn" type="submit">Submit stay</button>
-</form>`
-    : `<section class="hero" style="padding-bottom:26px"><div class="eyebrow">Add Your Trip</div><h1>Turn a hotel stay into useful price intelligence.</h1><p>SecretNests is designed to capture what you paid, what you would pay again, room context, and whether you would return.</p></section><div class="notice"><strong>Creator submissions are staged but not open yet.</strong><p>The Cloudflare-native submission flow is built and can be enabled with <code>SUBMISSIONS_ENABLED=true</code> after the production database is live. No Floot authentication is required.</p></div>`;
+  <input type="hidden" name="hotel_id" id="hotel_id">
+  <div style="position:relative"><label><strong>Hotel</strong><br><input id="hotel_name" name="hotel_name" required maxlength="160" autocomplete="off" placeholder="Start typing a hotel name" style="width:100%;padding:13px;margin-top:6px"></label><div id="hotel_suggestions" class="card" style="display:none;position:absolute;z-index:20;width:100%;padding:6px;max-height:260px;overflow:auto"></div></div>
+  <p><label>City / destination<br><input id="city" name="city" maxlength="120" style="width:100%;padding:12px"></label></p>
+  <div class="mini-grid">
+    <p><label>Stay month<br><input name="stay_month" type="month" style="width:100%;padding:12px"></label></p>
+    <p><label>Nights<br><input name="nights" type="number" min="1" max="90" step="1" style="width:100%;padding:12px"></label></p>
+  </div>
+  <div class="mini-grid">
+    <p><label><strong>What you paid per night</strong><br><input name="paid_nightly_rate" type="number" min="0" max="100000" step="0.01" required style="width:100%;padding:12px"></label></p>
+    <p><label><strong>What you'd happily pay again</strong><br><input name="would_pay_again" type="number" min="0" max="100000" step="0.01" required style="width:100%;padding:12px"></label></p>
+  </div>
+  <p class="muted">Use the same basis for both numbers. If your paid rate included taxes/fees, compare it with an all-in would-pay-again number.</p>
+  <p><label>Rate basis<br><select name="rate_basis" style="width:100%;padding:12px"><option value="room_rate">Room rate before taxes/fees</option><option value="all_in">All-in nightly cost including taxes/fees</option></select></label></p>
+  <div class="mini-grid">
+    <p><label>Room type<br><input name="room_type" maxlength="160" placeholder="Deluxe King, Ocean View Suite…" style="width:100%;padding:12px"></label></p>
+    <p><label>Booking channel<br><input name="booking_channel" maxlength="120" placeholder="Direct, Amex FHR, Chase, advisor…" style="width:100%;padding:12px"></label></p>
+  </div>
+  <p><label>Party type<br><select name="party_type" style="width:100%;padding:12px"><option value="">Choose one</option><option>Solo</option><option>Couple</option><option>Family</option><option>Friends</option><option>Business</option></select></label></p>
+  <fieldset style="border:0;padding:0;margin:20px 0"><legend><strong>Would you return at the right price?</strong></legend><label style="margin-right:18px"><input type="radio" name="would_return" value="1" required> Yes</label><label><input type="radio" name="would_return" value="0"> No</label></fieldset>
+  <fieldset style="border:0;padding:0;margin:20px 0"><legend><strong>Included / perks</strong></legend>
+    <label class="pill"><input type="checkbox" name="inclusions" value="Breakfast"> Breakfast</label>
+    <label class="pill"><input type="checkbox" name="inclusions" value="Property credit"> Property credit</label>
+    <label class="pill"><input type="checkbox" name="inclusions" value="Upgrade"> Upgrade</label>
+    <label class="pill"><input type="checkbox" name="inclusions" value="Airport transfer"> Airport transfer</label>
+    <label class="pill"><input type="checkbox" name="inclusions" value="Parking"> Parking</label>
+    <label class="pill"><input type="checkbox" name="inclusions" value="Half board / meals"> Half board / meals</label>
+    <label class="pill"><input type="checkbox" name="inclusions" value="All-inclusive"> All-inclusive</label>
+  </fieldset>
+  <p><label>Other perks or inclusions<br><input name="other_perks" maxlength="500" placeholder="e.g. $200 spa credit, guaranteed 4pm checkout" style="width:100%;padding:12px"></label></p>
+  <p><label>What should another traveler know?<br><textarea name="notes" maxlength="3000" rows="6" placeholder="What made it worth—or not worth—the rate?" style="width:100%;padding:12px"></textarea></label></p>
+  <div class="notice"><strong>Optional stay verification</strong><p class="muted">Upload a receipt or folio to help us verify the paid rate. PDF/JPG/PNG/WebP, max 8 MB. Verification files are private and are never shown on hotel pages.</p><input name="verification_file" type="file" accept=".pdf,image/jpeg,image/png,image/webp"></div>
+  <p><label>Email for moderation/follow-up<br><input name="contact_email" type="email" maxlength="254" style="width:100%;padding:12px"></label></p>
+  <p><button class="btn" type="submit">Submit stay</button></p>
+</form>
+<script>(function(){
+  var input=document.getElementById('hotel_name'),box=document.getElementById('hotel_suggestions'),hid=document.getElementById('hotel_id'),city=document.getElementById('city'),timer;
+  function hide(){box.style.display='none';box.innerHTML=''}
+  input.addEventListener('input',function(){hid.value='';clearTimeout(timer);var q=input.value.trim();if(q.length<2){hide();return}timer=setTimeout(function(){fetch('/api/hotel-suggest?q='+encodeURIComponent(q)).then(r=>r.json()).then(d=>{var rows=d.hotels||[];if(!rows.length){hide();return}box.innerHTML=rows.map(h=>'<button type="button" data-id="'+h.id+'" data-name="'+h.name.replace(/"/g,'&quot;')+'" data-city="'+(h.city||'').replace(/"/g,'&quot;')+'" style="display:block;width:100%;text-align:left;border:0;background:#fff;padding:10px;cursor:pointer"><strong>'+h.name+'</strong><br><span class="kicker">'+[h.city,h.country].filter(Boolean).join(', ')+'</span></button>').join('');box.style.display='block';box.querySelectorAll('button').forEach(b=>b.onclick=function(){input.value=this.dataset.name;hid.value=this.dataset.id;if(!city.value)city.value=this.dataset.city;hide()})}).catch(hide)},180)});
+  document.addEventListener('click',e=>{if(!box.contains(e.target)&&e.target!==input)hide()});
+})();</script>`
+    : `<section class="hero"><div class="eyebrow">Add Your Trip</div><h1>Turn a hotel stay into useful price intelligence.</h1><p>Creator submissions are temporarily closed.</p></section>`;
   return page(shell(body),env,{title:"Add Your Trip | SecretNests",canonical:"/add-your-trip"});
 }
 
 async function submitTrip(request,env){
   if(String(env.SUBMISSIONS_ENABLED||"false").toLowerCase()!=="true") return json({ok:false,error:"submissions_disabled"},503);
   if(!sameOrigin(request,ORIGIN)) return json({ok:false,error:"origin_rejected"},403);
-  if(bodyTooLarge(request,65536)) return json({ok:false,error:"payload_too_large"},413);
+  if(bodyTooLarge(request,9*1024*1024)) return json({ok:false,error:"payload_too_large"},413);
   const rl=await enforceRateLimit(request,env,"trip_submission",10,3600); if(!rl.ok)return json({ok:false,error:"rate_limited"},429);
   const form=await request.formData();
   if(form.get("website")) return Response.redirect(ORIGIN+"/add-your-trip?submitted=1",303);
   const clean=(name,max=3000)=>String(form.get(name)||"").trim().slice(0,max);
   const hotelName=clean("hotel_name",160);
   if(!hotelName) return json({ok:false,error:"hotel_name_required"},400);
-  const num=(name)=>{const raw=clean(name,32); if(!raw)return null; const v=Number(raw); return Number.isFinite(v)&&v>=0&&v<=100000?v:null};
+  const num=(name)=>{const raw=clean(name,32);if(!raw)return null;const v=Number(raw);return Number.isFinite(v)&&v>=0&&v<=100000?v:null};
+  const int=(name,min,max)=>{const raw=clean(name,16);if(!raw)return null;const v=Number(raw);return Number.isInteger(v)&&v>=min&&v<=max?v:null};
+  const paid=num("paid_nightly_rate"), wouldPay=num("would_pay_again");
+  if(paid==null||wouldPay==null)return json({ok:false,error:"paid_and_would_pay_required"},400);
   const email=clean("contact_email",254);
   if(email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ok:false,error:"invalid_email"},400);
+  let hotelId=clean("hotel_id",100)||null;
+  if(hotelId){
+    const found=await env.DB.prepare("SELECT id FROM hotels WHERE id=? AND is_published=1").bind(hotelId).first();
+    if(!found)hotelId=null;
+  }
+  if(!hotelId){
+    const exact=await env.DB.prepare("SELECT id FROM hotels WHERE is_published=1 AND lower(name)=lower(?) ORDER BY CASE WHEN lower(COALESCE(city,''))=lower(?) THEN 0 ELSE 1 END LIMIT 1").bind(hotelName,clean("city",120)).first();
+    hotelId=exact?.id||null;
+  }
+  const inclusions=form.getAll("inclusions").map(x=>String(x).trim()).filter(Boolean).slice(0,20);
+  const other=clean("other_perks",500); if(other)inclusions.push(other);
+  const wouldReturn=clean("would_return",2)==="1"?1:0;
   const id=crypto.randomUUID();
+  const file=form.get("verification_file");
+  let verificationStatus="unverified";
+  if(file&&typeof file.arrayBuffer==="function"&&file.size>0){
+    const allowed=new Set(["application/pdf","image/jpeg","image/png","image/webp"]);
+    if(!allowed.has(file.type))return json({ok:false,error:"unsupported_verification_file"},415);
+    if(file.size>8*1024*1024)return json({ok:false,error:"verification_file_too_large"},413);
+    verificationStatus="pending";
+  }
   await env.DB.prepare(`INSERT INTO trip_submissions
-    (id,contact_email,hotel_name,city,stay_month,paid_nightly_rate,would_pay_again,room_type,booking_channel,notes,status,created_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`)
-    .bind(id,email||null,hotelName,clean("city",120)||null,clean("stay_month",20)||null,num("paid_nightly_rate"),num("would_pay_again"),clean("room_type",160)||null,clean("booking_channel",120)||null,clean("notes",3000)||null,"pending",nowIso()).run();
-  return page(shell(`<section class="hero"><div class="eyebrow">Trip received</div><h1>Thanks. Your stay is in the review queue.</h1><p>We’ll use the price and context to improve SecretNests value intelligence after review.</p><p><a class="btn" href="/">Back to SecretNests</a></p></section>`),env,{title:"Trip received | SecretNests",canonical:"/add-your-trip"});
+    (id,contact_email,hotel_name,city,stay_month,paid_nightly_rate,would_pay_again,room_type,booking_channel,notes,status,created_at,hotel_id,nights,party_type,would_return,perks_json,inclusions_json,rate_basis,verification_status)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+    .bind(id,email||null,hotelName,clean("city",120)||null,clean("stay_month",20)||null,paid,wouldPay,clean("room_type",160)||null,clean("booking_channel",120)||null,clean("notes",3000)||null,"pending",nowIso(),hotelId,int("nights",1,90),clean("party_type",40)||null,wouldReturn,"[]",JSON.stringify(inclusions),clean("rate_basis",40)||"room_rate",verificationStatus).run();
+  if(verificationStatus==="pending"){
+    const artifactId=crypto.randomUUID(),key="submission-verification/"+id+"/"+artifactId;
+    await env.MEDIA.put(key,await file.arrayBuffer(),{httpMetadata:{contentType:file.type}});
+    await env.DB.prepare("INSERT INTO submission_verification_artifacts (id,submission_id,r2_key,mime_type,file_size,status,redaction_status,created_at) VALUES (?,?,?,?,?,'pending','pending',?)")
+      .bind(artifactId,id,key,file.type,file.size,nowIso()).run();
+  }
+  return page(shell(`<section class="hero"><div class="eyebrow">Trip received</div><h1>Your stay is in the review queue.</h1><p>We captured the paid rate, your would-pay-again price, return intent, and stay context.${verificationStatus==="pending"?" Your verification file is stored privately for review.":""}</p><div class="hero-actions"><a class="btn" href="/">Back to SecretNests</a><a class="btn secondary" href="/add-your-trip">Add another stay</a></div></section>`),env,{title:"Trip received | SecretNests",canonical:"/add-your-trip",robots:"noindex,follow"});
 }
 
 async function aboutPage(env){
   return page(shell(`<section class="hero"><div class="eyebrow">How it works</div><h1>A hotel can be excellent and still not be worth the rate.</h1><p>SecretNests separates quality from value. Travelers record actual paid prices and the price they would happily pay again; those observations can be aggregated into a traveler-assessed fair-value range.</p></section><div class="grid"><div class="card"><h3>1. Stay</h3><p>Log the hotel, date, room context, booking channel and what you paid.</p></div><div class="card"><h3>2. Value it</h3><p>Say what you would pay again and when the hotel becomes hard to justify.</p></div><div class="card"><h3>3. Publish taste</h3><p>Build lists and a public travel portfolio other travelers can follow.</p></div></div>`),env,{title:"How SecretNests works",canonical:"/about"});
+}
+
+async function hotelSuggest(request,env){
+  const url=new URL(request.url),q=(url.searchParams.get("q")||"").trim().slice(0,120);
+  if(q.length<2)return json({ok:true,hotels:[]});
+  const rows=(await env.DB.prepare(`SELECT id,name,slug,city,country FROM hotels WHERE is_published=1
+    AND (lower(name) LIKE lower(?) OR lower(COALESCE(city,'')) LIKE lower(?))
+    ORDER BY CASE WHEN lower(name)=lower(?) THEN 0 WHEN lower(name) LIKE lower(?) THEN 1 ELSE 2 END,reddit_mention_count DESC,google_rating DESC LIMIT 10`)
+    .bind("%"+q+"%","%"+q+"%",q,q+"%").all()).results||[];
+  return json({ok:true,hotels:rows});
+}
+
+async function adminSubmissionsPage(request,env){
+  const moderator=adminEmail(request,env);
+  if(!moderator)return new Response("Not found",{status:404});
+  if(request.method==="POST"){
+    const form=await request.formData(),id=String(form.get("id")||""),action=String(form.get("action")||"");
+    const payload={id,action,hotel_id:String(form.get("hotel_id")||""),note:String(form.get("note")||"").slice(0,1000)};
+    const fake=new Request(request.url,{method:"POST",headers:{"content-type":"application/json","cf-access-authenticated-user-email":moderator},body:JSON.stringify(payload)});
+    await adminSubmissions(fake,env);
+    return Response.redirect(ORIGIN+"/admin/submissions",303);
+  }
+  const rows=(await env.DB.prepare(`SELECT ts.*,h.name matched_name,h.slug matched_slug,
+    (SELECT COUNT(*) FROM submission_verification_artifacts sva WHERE sva.submission_id=ts.id AND sva.status='pending') verification_files
+    FROM trip_submissions ts LEFT JOIN hotels h ON h.id=ts.hotel_id
+    WHERE ts.status IN ('pending','matched') ORDER BY ts.created_at LIMIT 100`).all()).results||[];
+  const cards=[];
+  for(const s of rows){
+    let candidates=[];
+    if(!s.hotel_id){
+      candidates=(await env.DB.prepare(`SELECT id,name,city,country FROM hotels WHERE is_published=1 AND
+        (lower(name) LIKE lower(?) OR (lower(COALESCE(city,''))=lower(?) AND lower(name) LIKE lower(?)))
+        ORDER BY CASE WHEN lower(name)=lower(?) THEN 0 ELSE 1 END,reddit_mention_count DESC LIMIT 6`)
+        .bind("%"+s.hotel_name+"%",s.city||"",String(s.hotel_name||"").split(" ").slice(0,2).join(" ")+"%",s.hotel_name).all()).results||[];
+    }
+    const inclusions=safeJson(s.inclusions_json,[]);
+    const options=(s.hotel_id?[{id:s.hotel_id,name:s.matched_name,city:s.city,country:""}]:candidates).map(h=>`<option value="${attr(h.id)}">${esc(h.name)}${h.city?" — "+esc(h.city):""}</option>`).join("");
+    cards.push(`<div class="card"><div class="eyebrow">${esc(s.created_at)} · ${esc(s.verification_status||"unverified")}</div><h2>${esc(s.hotel_name)}</h2><p class="muted">${esc(s.city||"")} · stayed ${esc(s.stay_month||"—")} · ${s.nights||"—"} nights</p>
+      <div class="value"><div><div class="eyebrow">Paid</div><strong>${money(s.paid_nightly_rate)}</strong></div><div><div class="eyebrow">Would pay again</div><strong>${money(s.would_pay_again)}</strong></div><div><div class="eyebrow">Would return</div><strong>${s.would_return==null?"—":s.would_return?"Yes":"No"}</strong></div><div><div class="eyebrow">Verification</div><strong>${s.verification_files||0}</strong> file(s)</div></div>
+      <p><strong>Room:</strong> ${esc(s.room_type||"—")} · <strong>Booked:</strong> ${esc(s.booking_channel||"—")} · <strong>Basis:</strong> ${esc(s.rate_basis||"—")}</p>
+      <p><strong>Included:</strong> ${inclusions.length?inclusions.map(x=>`<span class="pill">${esc(x)}</span>`).join(""):"—"}</p>
+      <p>${esc(s.notes||"")}</p>
+      <form method="post" action="/admin/submissions"><input type="hidden" name="id" value="${attr(s.id)}"><label>Match hotel<br><select name="hotel_id" required style="width:100%;padding:10px;margin:6px 0 10px"><option value="">Choose match</option>${options}</select></label><label>Moderator note<br><input name="note" style="width:100%;padding:10px"></label><div class="hero-actions"><button class="btn" name="action" value="approve">Approve + publish value observation</button><button class="btn secondary" name="action" value="reject">Reject</button></div></form>
+    </div>`);
+  }
+  return page(shell(`<section class="hero" style="padding-bottom:24px"><div class="eyebrow">Moderation</div><h1>Trip submission queue</h1><p>Review hotel matching, rate context, return intent, perks, and verification state before publishing.</p></section><div class="grid">${cards.join("")||'<div class="notice">No pending submissions.</div>'}</div>`),env,{title:"Trip moderation | SecretNests",canonical:"/admin/submissions",robots:"noindex,nofollow"});
 }
 
 async function apiHotels(request,env){
@@ -404,7 +509,7 @@ async function adminSubmissions(request,env){
   const moderator=adminEmail(request,env);
   if(!moderator)return new Response("Not found",{status:404});
   if(request.method==="GET"){
-    const rows=(await env.DB.prepare("SELECT id,contact_email,hotel_name,city,stay_month,paid_nightly_rate,would_pay_again,room_type,booking_channel,notes,status,created_at FROM trip_submissions WHERE status IN ('pending','matched') ORDER BY created_at LIMIT 200").all()).results||[];
+    const rows=(await env.DB.prepare("SELECT id,contact_email,hotel_name,city,stay_month,paid_nightly_rate,would_pay_again,room_type,booking_channel,notes,status,created_at,hotel_id,nights,party_type,would_return,perks_json,inclusions_json,rate_basis,verification_status FROM trip_submissions WHERE status IN ('pending','matched') ORDER BY created_at LIMIT 200").all()).results||[];
     return json({ok:true,submissions:rows});
   }
   if(bodyTooLarge(request,32768))return json({ok:false,error:"payload_too_large"},413);
@@ -424,14 +529,18 @@ async function adminSubmissions(request,env){
     .bind(creatorId,null,"community-intake","Community intake","Internal moderation identity for approved anonymous trip submissions.",nowIso(),nowIso()).run();
   const stayId="submission-"+submission.id;
   await env.DB.prepare(`INSERT INTO stays (id,creator_id,hotel_id,stay_month,room_type,booking_channel,paid_nightly_rate,currency,verified,verification_method,created_at,updated_at)
-    VALUES (?,?,?,?,?,?,?,'USD',0,'community_submission',?,?) ON CONFLICT(id) DO NOTHING`)
-    .bind(stayId,creatorId,hotel.id,submission.stay_month,submission.room_type,submission.booking_channel,submission.paid_nightly_rate,nowIso(),nowIso()).run();
+    VALUES (?,?,?,?,?,?,?,?,?,'USD',0,'community_submission',?,?,?,?) ON CONFLICT(id) DO NOTHING`)
+    .bind(stayId,creatorId,hotel.id,submission.stay_month,submission.nights,submission.party_type,submission.room_type,submission.booking_channel,submission.paid_nightly_rate,nowIso(),nowIso(),submission.perks_json||"[]",submission.inclusions_json||"[]",submission.rate_basis||null).run();
   if(submission.would_pay_again!=null){
     await env.DB.prepare(`INSERT INTO value_opinions (id,stay_id,creator_id,hotel_id,paid_nightly_rate,would_pay_again,currency,created_at)
       VALUES (?,?,?,?,?,?,'USD',?) ON CONFLICT(id) DO UPDATE SET would_pay_again=excluded.would_pay_again`)
       .bind("value-"+submission.id,stayId,creatorId,hotel.id,submission.paid_nightly_rate,submission.would_pay_again,nowIso()).run();
   }
-  await env.DB.prepare("UPDATE trip_submissions SET status='approved',reviewed_at=? WHERE id=?").bind(nowIso(),submission.id).run();
+  await env.DB.prepare("INSERT INTO trip_reports (id,stay_id,creator_id,hotel_id,title,review_text,verdict,would_return,standout_json,disappointments_json,status,published_at,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,'[]','[]','published',?,?,?) ON CONFLICT(stay_id) DO NOTHING")
+    .bind("report-"+submission.id,stayId,creatorId,hotel.id,submission.hotel_name,submission.notes||null,"community_submission",submission.would_return,nowIso(),nowIso(),nowIso()).run();
+  const verifiedArtifact=await env.DB.prepare("SELECT id FROM submission_verification_artifacts WHERE submission_id=? AND status='verified' LIMIT 1").bind(submission.id).first();
+  if(verifiedArtifact)await env.DB.prepare("UPDATE stays SET verified=1,verification_method='receipt_or_folio',updated_at=? WHERE id=?").bind(nowIso(),stayId).run();
+  await env.DB.prepare("UPDATE trip_submissions SET status='approved',hotel_id=?,reviewed_at=? WHERE id=?").bind(hotel.id,nowIso(),submission.id).run();
   await env.DB.prepare("INSERT INTO submission_moderation (id,submission_id,action,hotel_id,moderator_email,note,created_at) VALUES (?,?,?,?,?,?,?)").bind(crypto.randomUUID(),submission.id,"approve",hotel.id,moderator,String(body.note||"").slice(0,1000),nowIso()).run();
   const valuation=await recomputeHotelValuation(env.DB,hotel.id);
   return json({ok:true,status:"approved",stay_id:stayId,valuation});
@@ -526,6 +635,29 @@ async function createMediaIngest(request,env){
   return json({ok:true,id,status:"pending"});
 }
 
+async function ingestRates(request,env){
+  const moderator=adminEmail(request,env);
+  if(!moderator)return new Response("Not found",{status:404});
+  if(bodyTooLarge(request,512*1024))return json({ok:false,error:"payload_too_large"},413);
+  let body={};try{body=await request.json()}catch{return json({ok:false,error:"invalid_json"},400)}
+  const rows=Array.isArray(body.rates)?body.rates:[body];
+  let inserted=0;
+  for(const r of rows.slice(0,500)){
+    const rate=Number(r.nightly_rate); if(!r.hotel_id||!Number.isFinite(rate)||rate<=0)continue;
+    const hotel=await env.DB.prepare("SELECT id FROM hotels WHERE id=?").bind(r.hotel_id).first();if(!hotel)continue;
+    await env.DB.prepare(`INSERT INTO hotel_rate_observations (id,hotel_id,provider_id,nightly_rate,currency,checkin_date,checkout_date,room_type,rate_name,taxes_fees_included,booking_url,metadata_json,observed_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(crypto.randomUUID(),r.hotel_id,r.provider_id||null,rate,r.currency||"USD",r.checkin_date||null,r.checkout_date||null,r.room_type||null,r.rate_name||null,r.taxes_fees_included==null?null:r.taxes_fees_included?1:0,r.booking_url||null,JSON.stringify(r.metadata||{}),r.observed_at||nowIso()).run();
+    if(r.booking_url&&r.provider_id){
+      await env.DB.prepare("INSERT INTO hotel_booking_links (id,hotel_id,provider_id,destination_url,priority,enabled,metadata_json,created_at,updated_at) VALUES (?,?,?,?,50,1,'{}',?,?) ON CONFLICT(hotel_id,provider_id,destination_url) DO UPDATE SET enabled=1,updated_at=excluded.updated_at")
+        .bind(crypto.randomUUID(),r.hotel_id,r.provider_id,r.booking_url,nowIso(),nowIso()).run();
+    }
+    const snapshot=await env.DB.prepare("SELECT id FROM hotel_value_snapshots WHERE hotel_id=? ORDER BY calculated_at DESC LIMIT 1").bind(r.hotel_id).first();
+    if(snapshot)await env.DB.prepare("UPDATE hotel_value_snapshots SET current_price=?,calculated_at=? WHERE id=?").bind(rate,nowIso(),snapshot.id).run();
+    inserted++;
+  }
+  return json({ok:true,inserted});
+}
+
 async function recomputeValues(request,env){
   const moderator=adminEmail(request,env);
   if(!moderator)return new Response("Not found",{status:404});
@@ -575,13 +707,16 @@ async function route(request,env){
   const value=url.pathname.match(/^\/value\/([^/]+)$/); if(request.method==="GET"&&value)return valueCollection(decodeURIComponent(value[1]),env);
   if(request.method==="GET" && url.pathname==="/compare")return compareLanding(env);
   const compare=url.pathname.match(/^\/compare\/(.+)$/); if(request.method==="GET"&&compare)return comparisonPage(decodeURIComponent(compare[1]),env);
+  if(request.method==="GET" && url.pathname==="/api/hotel-suggest")return hotelSuggest(request,env);
   if(request.method==="GET" && url.pathname==="/api/hotels")return apiHotels(request,env);
   if(request.method==="POST" && url.pathname==="/api/events")return recordEvent(request,env);
+  if((request.method==="GET"||request.method==="POST") && url.pathname==="/admin/submissions")return adminSubmissionsPage(request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/api/admin/submissions")return adminSubmissions(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/verification-upload")return verificationUpload(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/verification-review")return verificationReview(request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/api/admin/media")return adminMedia(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/media-ingest")return createMediaIngest(request,env);
+  if(request.method==="POST" && url.pathname==="/api/admin/rates")return ingestRates(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/recompute-values")return recomputeValues(request,env);
   if(request.method==="GET" && url.pathname==="/health")return json({ok:true,service:"secretnests",runtime:"cloudflare-worker"});
   if(request.method==="GET" && url.pathname==="/sitemap.xml")return sitemap(env);
