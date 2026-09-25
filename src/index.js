@@ -169,15 +169,27 @@ async function destinationPage(countrySlug,citySlug,env){
   const places=(await env.DB.prepare("SELECT DISTINCT city,country FROM hotels WHERE is_published=1 AND city IS NOT NULL AND city<>''").all()).results||[];
   const place=places.find(x=>slugify(x.country)===countrySlug&&slugify(x.city)===citySlug);
   if(!place)return new Response("Destination not found",{status:404});
-  const rows=(await env.DB.prepare(`SELECT h.name,h.slug,h.city,h.country,h.description,h.price_estimate_min,h.price_estimate_max,h.google_rating,h.reddit_mention_count,
+  const rows=(await env.DB.prepare(`SELECT h.name,h.slug,h.city,h.country,h.brand_name,h.description,h.price_estimate_min,h.price_estimate_max,h.google_rating,h.reddit_mention_count,
     v.median_would_pay,v.traveler_low,v.traveler_high,v.sample_size,v.confidence,v.value_classification
     FROM hotels h LEFT JOIN hotel_value_snapshots v ON v.id=(SELECT id FROM hotel_value_snapshots WHERE hotel_id=h.id ORDER BY calculated_at DESC LIMIT 1)
     WHERE h.is_published=1 AND lower(h.city)=lower(?) AND lower(h.country)=lower(?)
     ORDER BY CASE WHEN COALESCE(v.sample_size,0)>0 THEN 0 ELSE 1 END,COALESCE(v.sample_size,0) DESC,h.reddit_mention_count DESC,h.google_rating DESC,h.name`).bind(place.city,place.country).all()).results||[];
   const canonical="/destinations/"+slugify(place.country)+"/"+slugify(place.city);
-  return page(shell(`<section class="hero" style="padding-bottom:24px"><div class="eyebrow">${esc(place.country)}</div><h1>Luxury hotels in ${esc(place.city)}</h1><p>Compare estimated nightly rates with traveler-assessed value where first-party observations exist.</p><div class="hero-actions"><a class="btn secondary" href="/compare">Compare hotels</a><a class="btn secondary" href="/add-your-trip">Add a stay</a></div></section><div class="grid">${rows.map(h=>hotelCard(h)).join("")}</div>`),env,{title:`Best-value luxury hotels in ${place.city} | SecretNests`,description:`Luxury hotels in ${place.city}, ${place.country}: traveler value context, price ranges, and hotel comparisons.`,canonical});
+  const priced=rows.filter(x=>x.price_estimate_min!=null||x.price_estimate_max!=null);
+  const lows=priced.map(x=>Number(x.price_estimate_min??x.price_estimate_max)).filter(Number.isFinite);
+  const highs=priced.map(x=>Number(x.price_estimate_max??x.price_estimate_min)).filter(Number.isFinite);
+  const typicalLow=lows.length?Math.round(lows.reduce((a,b)=>a+b,0)/lows.length):null;
+  const typicalHigh=highs.length?Math.round(highs.reduce((a,b)=>a+b,0)/highs.length):null;
+  const firstParty=rows.filter(x=>Number(x.sample_size||0)>0).length;
+  const brandCounts=[...rows.reduce((m,x)=>{if(x.brand_name)m.set(x.brand_name,(m.get(x.brand_name)||0)+1);return m},new Map())].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).slice(0,10);
+  const pairs=buildComparisonPairs(rows,{maxPairs:8,perGroup:5});
+  const jsonLd={"@context":"https://schema.org","@type":"CollectionPage","name":"Luxury hotels in "+place.city,"url":ORIGIN+canonical,"about":{"@type":"City","name":place.city},"mainEntity":{"@type":"ItemList","itemListElement":rows.slice(0,20).map((x,i)=>({"@type":"ListItem","position":i+1,"url":ORIGIN+"/hotel/"+x.slug,"name":x.name}))}};
+  return page(shell(`<section class="hero" style="padding-bottom:24px"><div class="eyebrow">${esc(place.country)}</div><h1>Best luxury hotels in ${esc(place.city)}: prices & value</h1><p>Compare ${rows.length} SecretNests hotels in ${esc(place.city)} by estimated nightly price, traveler-assessed value where first-party stays exist, and direct hotel-to-hotel comparisons.</p><div class="hero-actions"><a class="btn secondary" href="/compare">Compare hotels</a><a class="btn secondary" href="/contribute">Add a stay</a></div></section>
+  <section class="proof"><div><strong>${rows.length}</strong><span class="muted">hotels</span></div><div><strong>${typicalLow!=null&&typicalHigh!=null?money(typicalLow)+"–"+money(typicalHigh):"—"}</strong><span class="muted">average estimated range</span></div><div><strong>${firstParty}</strong><span class="muted">with first-party value data</span></div><div><strong>${brandCounts.length}</strong><span class="muted">represented brands</span></div></section>
+  ${brandCounts.length?`<section class="section"><div class="section-head"><div><div class="eyebrow">Brands in ${esc(place.city)}</div><h2>Browse hotel brands</h2></div></div><div class="seo-links">${brandCounts.map(([name,count])=>`<a class="pill" href="/brands/${brandSlug(name)}">${esc(name)} · ${count}</a>`).join("")}</div></section>`:""}
+  <section class="section"><div class="section-head"><div><div class="eyebrow">Hotel guide</div><h2>Luxury hotels in ${esc(place.city)}</h2></div><span class="muted">First-party fair value is shown only where submitted stay data exists.</span></div><div class="grid">${rows.map(h=>hotelCard(h)).join("")}</div></section>
+  ${pairs.length?`<section class="section"><div class="section-head"><div><div class="eyebrow">Direct comparisons</div><h2>Popular ${esc(place.city)} hotel matchups</h2></div></div><div class="grid">${pairs.map(p=>`<a class="card" href="${attr(p.path)}"><strong>${esc(p.a.name)} vs. ${esc(p.b.name)}</strong><p class="muted">Compare price context, traveler value and hotel facts side by side.</p></a>`).join("")}</div></section>`:""}`),env,{title:`Best luxury hotels in ${place.city}: prices & value | SecretNests`,description:`Compare ${rows.length} luxury hotels in ${place.city}, ${place.country} by estimated rates, traveler value data and hotel-to-hotel comparisons.`,canonical,jsonLd});
 }
-
 async function legacyDestinationRedirect(request,env){
   const u=new URL(request.url), city=(u.searchParams.get("city")||"").trim(), country=(u.searchParams.get("country")||"").trim();
   if(!city||!country)return new Response("Destination not found",{status:404});
