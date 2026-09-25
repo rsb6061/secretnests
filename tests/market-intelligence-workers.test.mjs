@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { rateWindows, matchBookingCandidate, extractBookerRate } from "../src/rate-worker.js";
 import { citationUrls } from "../src/external-evidence-worker.js";
 import { matchSerpHotelCandidate, extractSerpHotelRate, reviewGroups } from "../src/serpapi.js";
-import { matchNuiteeCandidate, extractNuiteeRate, summarizeNuiteeSentiment, extractNuiteeMetadata } from "../src/nuitee.js";
+import { matchNuiteeCandidate, extractNuiteeRate, summarizeNuiteeSentiment, extractNuiteeMetadata, nuiteeNameVariants } from "../src/nuitee.js";
 import { nuiteeCoverageWindows } from "../src/nuitee-top250-worker.js";
 
 test("rateWindows creates two valid two-night future windows",()=>{
@@ -159,4 +159,38 @@ test("Nuitee coverage windows are three standardized two-night weekends",()=>{
     assert.equal(new Date(w.checkin+"T00:00:00Z").getUTCDay(),5);
     assert.equal((new Date(w.checkout+"T00:00:00Z")-new Date(w.checkin+"T00:00:00Z"))/86400000,2);
   }
+});
+
+
+test("Nuitee matcher accepts exact hotel names with resort-centroid coordinate drift",()=>{
+  const hotel={name:"Four Seasons Resort Punta Mita",lat:20.7720,lng:-105.5140};
+  const match=matchNuiteeCandidate(hotel,[
+    {id:"lp-fs",name:"Four Seasons Resort Punta Mita",latitude:20.7870,longitude:-105.5140},
+    {id:"lp-other",name:"Four Seasons Resort Tamarindo",latitude:20.7721,longitude:-105.5141}
+  ]);
+  assert.equal(match.id,"lp-fs");
+  assert.equal(match.confidence,"high");
+});
+
+test("Nuitee matcher accepts strong shortened luxury-hotel names when geography agrees",()=>{
+  const hotel={name:"Four Seasons Peninsula Papagayo, Costa Rica",lat:10.6415,lng:-85.6540};
+  const match=matchNuiteeCandidate(hotel,[
+    {id:"lp-pap",name:"Four Seasons Peninsula Papagayo",latitude:10.6420,longitude:-85.6541}
+  ]);
+  assert.equal(match.id,"lp-pap");
+  assert.ok(["high","medium"].includes(match.confidence));
+});
+
+test("Nuitee matcher rejects same-brand property in the wrong geography",()=>{
+  const hotel={name:"Aman Tokyo",lat:35.6852,lng:139.7634};
+  const match=matchNuiteeCandidate(hotel,[
+    {id:"lp-kyoto",name:"Aman Kyoto",latitude:35.0116,longitude:135.7681}
+  ]);
+  assert.equal(match,null);
+});
+
+test("Nuitee name variants remove location and generic hotel boilerplate",()=>{
+  const variants=nuiteeNameVariants({name:"Four Seasons Hotel George V, Paris",city:"Paris",country:"France"});
+  assert.ok(variants.some(v=>/Four Seasons.*George V/i.test(v)));
+  assert.ok(variants.length>=2);
 });
