@@ -9,9 +9,7 @@ const q = v => v == null ? "NULL" : "'" + String(v).replaceAll("'","''") + "'";
 const j = v => q(JSON.stringify(v ?? []));
 const n = v => v == null || v === "" ? "NULL" : Number(v);
 
-const sql = [
-  "BEGIN TRANSACTION;",
-  ...rows.map(r => `INSERT INTO reddit_evidence (
+const sql = [  ...rows.map(r => `INSERT INTO reddit_evidence (
     id,post_id,hotel_id,hotel_name_raw,sentiment,best_for_json,avoid_if_json,tradeoffs_json,
     regret_signal,price_mentioned,trip_context,confidence,source_url,created_at
   ) VALUES (
@@ -27,9 +25,7 @@ const sql = [
     price_mentioned=excluded.price_mentioned,
     trip_context=excluded.trip_context,
     confidence=excluded.confidence,
-    source_url=excluded.source_url;`),
-  "COMMIT;"
-];
+    source_url=excluded.source_url;`),];
 
 fs.mkdirSync(".generated",{recursive:true});
 fs.writeFileSync(".generated/reddit-evidence.sql",sql.join("\n"));
