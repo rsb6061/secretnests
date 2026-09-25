@@ -1,3 +1,4 @@
+import { drainOfficialHotelQueue } from "./enrichment-worker.js";
 import { refreshHotelEnrichment } from "./enrichment.js";
 import { recomputeHotelValuation } from "./value-engine.js";
 import { sameOrigin, bodyTooLarge, enforceRateLimit, adminEmail, safeLogError } from "./security.js";
@@ -937,6 +938,13 @@ async function adminEnrichmentApply(request,env){
   return json({ok:true,status:"complete",hotel_id:q.hotel_id,fields_updated:updates.length});
 }
 
+async function adminDrainEnrichment(request,env){
+  const moderator=adminEmail(request,env);
+  if(!moderator)return new Response("Not found",{status:404});
+  const out=await drainOfficialHotelQueue(env,{limit:Math.min(Math.max(Number(new URL(request.url).searchParams.get("limit")||8),1),20)});
+  return json(out);
+}
+
 async function adminEnrichmentPage(request,env){
   const moderator=adminEmail(request,env);
   if(!moderator)return new Response("Not found",{status:404});
@@ -996,7 +1004,9 @@ async function adminEnrichmentPage(request,env){
 }
 
 async function runEnrichmentAutomation(env){
-  return refreshHotelEnrichment(env.DB);
+  const ranking=await refreshHotelEnrichment(env.DB);
+  const official=await drainOfficialHotelQueue(env,{limit:8});
+  return {ok:true,ranking,official};
 }
 
 async function runTravelpayoutsAutomation(env){
@@ -1061,6 +1071,7 @@ async function route(request,env){
   if(request.method==="POST" && url.pathname==="/api/admin/verification-review")return verificationReview(request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/api/admin/media")return adminMedia(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/media-ingest")return createMediaIngest(request,env);
+  if(request.method==="POST" && url.pathname==="/api/admin/enrichment/drain")return adminDrainEnrichment(request,env);
   if(request.method==="GET" && url.pathname==="/api/admin/enrichment/next")return adminEnrichmentNext(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/enrichment/apply")return adminEnrichmentApply(request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/admin/enrichment")return adminEnrichmentPage(request,env);
