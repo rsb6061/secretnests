@@ -878,6 +878,65 @@ async function recomputeValues(request,env){
   return json({ok:true,recomputed:out.length});
 }
 
+async function adminEnrichmentNext(request,env){
+  const moderator=adminEmail(request,env);
+  if(!moderator)return new Response("Not found",{status:404});
+  const url=new URL(request.url);
+  const task=(url.searchParams.get("task")||"").trim();
+  const limit=Math.min(Math.max(Number(url.searchParams.get("limit")||20),1),100);
+  let rows;
+  if(task){
+    rows=(await env.DB.prepare(`SELECT q.id queue_id,q.task_type,q.priority,q.source_hint,q.attempts,h.*
+      FROM hotel_enrichment_queue q JOIN hotels h ON h.id=q.hotel_id
+      WHERE q.status='queued' AND q.task_type=? ORDER BY q.priority,q.updated_at LIMIT ?`).bind(task,limit).all()).results||[];
+  }else{
+    rows=(await env.DB.prepare(`SELECT q.id queue_id,q.task_type,q.priority,q.source_hint,q.attempts,h.*
+      FROM hotel_enrichment_queue q JOIN hotels h ON h.id=q.hotel_id
+      WHERE q.status='queued' ORDER BY q.priority,q.updated_at LIMIT ?`).bind(limit).all()).results||[];
+  }
+  return json({ok:true,tasks:rows});
+}
+
+async function adminEnrichmentApply(request,env){
+  const moderator=adminEmail(request,env);
+  if(!moderator)return new Response("Not found",{status:404});
+  if(bodyTooLarge(request,256*1024))return json({ok:false,error:"payload_too_large"},413);
+  let body={};try{body=await request.json()}catch{return json({ok:false,error:"invalid_json"},400)}
+  const q=await env.DB.prepare("SELECT * FROM hotel_enrichment_queue WHERE id=?").bind(body.queue_id||"").first();
+  if(!q)return json({ok:false,error:"queue_item_not_found"},404);
+  if(body.status==="failed"){
+    await env.DB.prepare("UPDATE hotel_enrichment_queue SET status='failed',attempts=attempts+1,last_error=?,updated_at=? WHERE id=?")
+      .bind(String(body.error||"unknown").slice(0,1000),nowIso(),q.id).run();
+    return json({ok:true,status:"failed"});
+  }
+  const fields=body.fields&&typeof body.fields==="object"?body.fields:{};
+  const allowed=new Set(["city","region","country","lat","lng","address","formatted_address","website","phone","hotel_category","description","highlights_json","best_for_json","not_ideal_for_json","price_estimate_min","price_estimate_max","booking_url"]);
+  const updates=[],values=[];
+  for(const [key,value] of Object.entries(fields)){
+    if(!allowed.has(key))continue;
+    updates.push(key+"=?");
+    values.push(["highlights_json","best_for_json","not_ideal_for_json"].includes(key)&&Array.isArray(value)?JSON.stringify(value):value);
+  }
+  if(updates.length){
+    values.push(nowIso(),q.hotel_id);
+    await env.DB.prepare("UPDATE hotels SET "+updates.join(",")+",updated_at=? WHERE id=?").bind(...values).run();
+  }
+  const source=body.source&&typeof body.source==="object"?body.source:{};
+  for(const key of Object.keys(fields)){
+    if(!allowed.has(key))continue;
+    await env.DB.prepare(`INSERT INTO hotel_field_provenance
+      (id,hotel_id,field_name,source_type,source_url,source_label,confidence,observed_at,verified_at,metadata_json,created_at,updated_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+      ON CONFLICT(hotel_id,field_name,source_type,source_url) DO UPDATE SET
+        source_label=excluded.source_label,confidence=excluded.confidence,observed_at=excluded.observed_at,
+        verified_at=excluded.verified_at,metadata_json=excluded.metadata_json,updated_at=excluded.updated_at`)
+      .bind(crypto.randomUUID(),q.hotel_id,key,String(source.type||"unknown").slice(0,80),source.url||null,source.label||null,
+        source.confidence||null,source.observed_at||nowIso(),body.verified?nowIso():null,JSON.stringify(source.metadata||{}),nowIso(),nowIso()).run();
+  }
+  await env.DB.prepare("UPDATE hotel_enrichment_queue SET status='complete',attempts=attempts+1,last_error=NULL,locked_at=NULL,updated_at=? WHERE id=?").bind(nowIso(),q.id).run();
+  return json({ok:true,status:"complete",hotel_id:q.hotel_id,fields_updated:updates.length});
+}
+
 async function adminEnrichmentPage(request,env){
   const moderator=adminEmail(request,env);
   if(!moderator)return new Response("Not found",{status:404});
@@ -1002,6 +1061,8 @@ async function route(request,env){
   if(request.method==="POST" && url.pathname==="/api/admin/verification-review")return verificationReview(request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/api/admin/media")return adminMedia(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/media-ingest")return createMediaIngest(request,env);
+  if(request.method==="GET" && url.pathname==="/api/admin/enrichment/next")return adminEnrichmentNext(request,env);
+  if(request.method==="POST" && url.pathname==="/api/admin/enrichment/apply")return adminEnrichmentApply(request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/admin/enrichment")return adminEnrichmentPage(request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/admin/travelpayouts")return adminTravelpayoutsPage(request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/admin/rates")return adminRatesPage(request,env);
