@@ -1,4 +1,5 @@
 import { refreshHotelEnrichment } from "./enrichment.js";
+import { findSerpHotelProperty, fetchSerpHotelReviews, reviewGroups } from "./serpapi.js";
 
 const nowIso=()=>new Date().toISOString();
 const clamp=(n,min,max)=>Math.min(Math.max(Number(n)||min,min),max);
@@ -129,7 +130,7 @@ Rules:
 
 async function claimTasks(db,limit,mode="pilot"){
   const pilot=String(mode||"pilot").toLowerCase()!=="full";
-  const rows=(await db.prepare(`SELECT q.id queue_id,q.status queue_status,q.attempts,q.priority,h.id hotel_id,h.name,h.city,h.country,h.website
+  const rows=(await db.prepare(`SELECT q.id queue_id,q.status queue_status,q.attempts,q.priority,h.id hotel_id,h.name,h.city,h.country,h.website,h.lat,h.lng
     FROM hotel_enrichment_queue q
     JOIN hotels h ON h.id=q.hotel_id
     JOIN hotel_enrichment_profiles p ON p.hotel_id=h.id AND p.cohort='priority_250'
@@ -152,46 +153,174 @@ async function finish(db,id,status,error=null){
     .bind(status,error?String(error).slice(0,1000):null,nowIso(),id).run();
 }
 
-async function writeSignal(db,hotelId,signal,meta){
+async function writeSignal(db,hotelId,signal,meta,provider="openai_web_search"){
   const url=safeUrl(signal.source_url); if(!url)return 0;
   const id=crypto.randomUUID(),now=nowIso();
   const result=await db.prepare(`INSERT INTO hotel_external_evidence
     (id,hotel_id,provider,source_url,source_domain,source_title,evidence_type,sentiment,summary,attributes_json,best_for_json,avoid_if_json,tradeoffs_json,price_mentioned,trip_context,confidence,observed_at,metadata_json,created_at,updated_at)
-    VALUES (?,?,'openai_web_search',?,?,?,'traveler_experience',?,?,?,?,?,?,?,?,?,?,?, ?,?)
+    VALUES (?,?,?, ?,?,?,'traveler_experience',?,?,?,?,?,?,?,?,?,?,?, ?,?)
     ON CONFLICT(hotel_id,provider,source_url) DO UPDATE SET
       source_title=excluded.source_title,sentiment=excluded.sentiment,summary=excluded.summary,
       attributes_json=excluded.attributes_json,best_for_json=excluded.best_for_json,avoid_if_json=excluded.avoid_if_json,
       tradeoffs_json=excluded.tradeoffs_json,price_mentioned=excluded.price_mentioned,trip_context=excluded.trip_context,
       confidence=excluded.confidence,observed_at=excluded.observed_at,metadata_json=excluded.metadata_json,updated_at=excluded.updated_at`)
-    .bind(id,hotelId,signal.source_url,url.hostname,signal.source_title,signal.sentiment,signal.summary,
+    .bind(id,hotelId,provider,signal.source_url,url.hostname,signal.source_title,signal.sentiment,signal.summary,
       JSON.stringify(signal.attributes||[]),JSON.stringify(signal.best_for||[]),JSON.stringify(signal.avoid_if||[]),JSON.stringify(signal.tradeoffs||[]),
       signal.price_mentioned==null?null:Number(signal.price_mentioned),signal.trip_context||null,signal.confidence||"low",now,JSON.stringify(meta||{}),now,now).run();
   await db.prepare(`INSERT INTO hotel_field_provenance
     (id,hotel_id,field_name,source_type,source_url,source_label,confidence,observed_at,verified_at,metadata_json,created_at,updated_at)
-    VALUES (?,?,'external_evidence','openai_web_search',?,?,?,?,NULL,?,?,?)
+    VALUES (?,?,'external_evidence',?,?,?,?,?,NULL,?,?,?)
     ON CONFLICT(hotel_id,field_name,source_type,source_url) DO UPDATE SET
       source_label=excluded.source_label,confidence=excluded.confidence,observed_at=excluded.observed_at,
       metadata_json=excluded.metadata_json,updated_at=excluded.updated_at`)
-    .bind(crypto.randomUUID(),hotelId,signal.source_url,signal.source_title||url.hostname,signal.confidence||"low",now,
-      JSON.stringify({provider:"openai_web_search"}),now,now).run();
+    .bind(crypto.randomUUID(),hotelId,provider,signal.source_url,signal.source_title||url.hostname,signal.confidence||"low",now,
+      JSON.stringify({provider}),now,now).run();
   return Number(result.meta?.changes||0)>0?1:0;
 }
 
+
+function evidenceWindow(base=new Date()){
+  const checkin=new Date(base);checkin.setUTCDate(checkin.getUTCDate()+21);
+  const checkout=new Date(checkin);checkout.setUTCDate(checkout.getUTCDate()+2);
+  return {checkin:checkin.toISOString().slice(0,10),checkout:checkout.toISOString().slice(0,10),nights:2};
+}
+
+async function serpMapping(db,hotelId){
+  return db.prepare("SELECT * FROM hotel_provider_mappings WHERE hotel_id=? AND provider='serpapi_google_hotels' AND status='active'").bind(hotelId).first();
+}
+
+async function ensureSerpMapping(env,hotel){
+  let mapping=await serpMapping(env.DB,hotel.id);
+  if(mapping)return {ok:true,property_token:mapping.provider_hotel_id};
+  const found=await findSerpHotelProperty(env,hotel,evidenceWindow(),null);
+  if(!found.ok)return found;
+  const now=nowIso();
+  await env.DB.prepare(`INSERT INTO hotel_provider_mappings
+    (id,hotel_id,provider,provider_hotel_id,status,confidence,source_url,metadata_json,created_at,updated_at)
+    VALUES (?,?,'serpapi_google_hotels',?,'active',?,NULL,?,?,?)
+    ON CONFLICT(hotel_id,provider) DO UPDATE SET provider_hotel_id=excluded.provider_hotel_id,status='active',
+      confidence=excluded.confidence,metadata_json=excluded.metadata_json,updated_at=excluded.updated_at`)
+    .bind(crypto.randomUUID(),hotel.id,found.match.id,found.match.confidence||"medium",
+      JSON.stringify({matched_name:found.match.name,similarity:found.match.similarity,distance_km:found.match.distance}),now,now).run();
+  return {ok:true,property_token:found.match.id};
+}
+
+function workersEvidenceSchema(){
+  return {
+    type:"object",
+    properties:{
+      signals:{
+        type:"array",
+        items:{
+          type:"object",
+          properties:{
+            source_group_id:{type:"string"},
+            sentiment:{type:"string",enum:["positive","mixed","neutral","negative"]},
+            summary:{type:"string"},
+            attributes:{type:"array",items:{type:"string"}},
+            best_for:{type:"array",items:{type:"string"}},
+            avoid_if:{type:"array",items:{type:"string"}},
+            tradeoffs:{type:"array",items:{type:"string"}},
+            price_mentioned:{anyOf:[{type:"number"},{type:"null"}]},
+            trip_context:{type:"string"},
+            confidence:{type:"string",enum:["high","medium","low"]}
+          },
+          required:["source_group_id","sentiment","summary","attributes","best_for","avoid_if","tradeoffs","price_mentioned","trip_context","confidence"],
+          additionalProperties:false
+        }
+      }
+    },
+    required:["signals"],
+    additionalProperties:false
+  };
+}
+
+async function researchHotelWithSerp(env,hotel){
+  if(!String(env.SERPAPI_API_KEY||"").trim())return {ok:false,error:"serpapi_not_configured"};
+  if(!env.AI||typeof env.AI.run!=="function")return {ok:false,error:"workers_ai_not_configured"};
+  const mapping=await ensureSerpMapping(env,hotel);
+  if(!mapping.ok)return mapping;
+  const reviewResult=await fetchSerpHotelReviews(env,mapping.property_token);
+  if(!reviewResult.ok)return reviewResult;
+  const groups=reviewGroups(reviewResult.reviews,hotel,{maxReviews:10,maxGroups:4});
+  if(!groups.length)return {ok:false,error:"serpapi_reviews_no_citable_groups"};
+  const model=String(env.WORKERS_AI_EVIDENCE_MODEL||"@cf/meta/llama-3.3-70b-instruct-fp8-fast");
+  const input=groups.map(g=>({source_group_id:g.id,source:g.source,source_url:g.source_url,reviews:g.reviews}));
+  const prompt=`Hotel: ${hotel.name}
+Location: ${[hotel.city,hotel.country].filter(Boolean).join(", ")}
+
+Below are recent traveler reviews grouped by their verifiable source URL. Convert them into concise structured traveler evidence.
+Rules:
+- Return at most one signal per source_group_id.
+- Use only facts explicitly supported by the supplied reviews.
+- Paraphrase; never quote or closely reproduce review wording.
+- Do not estimate SecretNests fair value or willingness-to-pay.
+- Only include price_mentioned when a review explicitly states a numeric price.
+- Treat disagreement across reviews as mixed sentiment/tradeoffs rather than choosing a side.
+- Do not output names of reviewers.
+- source_group_id must exactly match one of the supplied IDs.
+
+Evidence groups:
+${JSON.stringify(input)}`;
+  let result;
+  try{
+    result=await env.AI.run(model,{
+      messages:[
+        {role:"system",content:"You structure independent hotel traveler evidence conservatively. Never invent facts."},
+        {role:"user",content:prompt}
+      ],
+      response_format:{type:"json_schema",json_schema:workersEvidenceSchema()},
+      temperature:0.1,
+      max_tokens:1200
+    });
+  }catch(e){return {ok:false,error:"workers_ai_"+String(e?.message||e).slice(0,700)}}
+  const raw=result?.response??result;
+  let parsed;
+  try{parsed=typeof raw==="string"?JSON.parse(raw):raw}catch{return {ok:false,error:"workers_ai_invalid_json"}}
+  const byId=new Map(groups.map(g=>[g.id,g])),signals=[];
+  for(const x of Array.isArray(parsed?.signals)?parsed.signals.slice(0,4):[]){
+    const group=byId.get(String(x.source_group_id||""));if(!group)continue;
+    signals.push({
+      source_url:group.source_url,
+      source_title:(group.source||"Traveler reviews")+" traveler reviews",
+      sentiment:x.sentiment,
+      summary:String(x.summary||"").slice(0,700),
+      attributes:Array.isArray(x.attributes)?x.attributes.slice(0,12):[],
+      best_for:Array.isArray(x.best_for)?x.best_for.slice(0,8):[],
+      avoid_if:Array.isArray(x.avoid_if)?x.avoid_if.slice(0,8):[],
+      tradeoffs:Array.isArray(x.tradeoffs)?x.tradeoffs.slice(0,8):[],
+      price_mentioned:x.price_mentioned==null?null:Number(x.price_mentioned),
+      trip_context:String(x.trip_context||"").slice(0,250),
+      confidence:x.confidence||"low",
+      source_group_id:group.id,
+      source:group.source
+    });
+  }
+  return {ok:true,signals,model,search_id:reviewResult.search_id,property_token:mapping.property_token};
+}
+
 export async function drainExternalEvidenceQueue(env,{limit=2}={}){
-  if(!String(env.OPENAI_API_KEY||"").trim())return {ok:false,skipped:true,reason:"openai_not_configured"};
+  const useSerp=Boolean(String(env.SERPAPI_API_KEY||"").trim()&&env.AI&&typeof env.AI.run==="function");
+  const useOpenAI=Boolean(String(env.OPENAI_API_KEY||"").trim());
+  if(!useSerp&&!useOpenAI)return {ok:false,skipped:true,reason:"evidence_provider_not_configured",providers:["serpapi_workers_ai","openai_web_search"]};
+  const provider=useSerp?"serpapi_workers_ai":"openai_web_search";
   const runId=crypto.randomUUID(),started=nowIso();
-  await env.DB.prepare("INSERT INTO hotel_evidence_sync_runs (id,provider,status,started_at) VALUES (?,'openai_web_search','running',?)").bind(runId,started).run();
+  await env.DB.prepare("INSERT INTO hotel_evidence_sync_runs (id,provider,status,started_at) VALUES (?,?, 'running',?)").bind(runId,provider,started).run();
   const mode=String(env.MARKET_INTELLIGENCE_MODE||"pilot").toLowerCase()==="full"?"full":"pilot";
   const tasks=await claimTasks(env.DB,limit,mode);
   let written=0,failures=0;
   try{
     for(const t of tasks){
       try{
-        const research=await researchHotel(env,{name:t.name,city:t.city,country:t.country,website:t.website});
+        const hotel={id:t.hotel_id,name:t.name,city:t.city,country:t.country,website:t.website,lat:t.lat,lng:t.lng};
+        const research=useSerp?await researchHotelWithSerp(env,hotel):await researchHotel(env,hotel);
         if(!research.ok){await finish(env.DB,t.queue_id,"failed",research.error);failures++;continue}
         let hotelWritten=0;
         for(const signal of research.signals){
-          hotelWritten+=await writeSignal(env.DB,t.hotel_id,signal,{model:research.model,response_id:research.response_id});
+          const meta=useSerp
+            ?{model:research.model,serpapi_search_id:research.search_id,provider_hotel_id:research.property_token,source_group_id:signal.source_group_id,source:signal.source}
+            :{model:research.model,response_id:research.response_id};
+          hotelWritten+=await writeSignal(env.DB,t.hotel_id,signal,meta,provider);
         }
         if(hotelWritten>0){written+=hotelWritten;await finish(env.DB,t.queue_id,"complete")}
         else{await finish(env.DB,t.queue_id,"failed","no_citable_independent_evidence");failures++}
@@ -200,7 +329,7 @@ export async function drainExternalEvidenceQueue(env,{limit=2}={}){
     await refreshHotelEnrichment(env.DB);
     await env.DB.prepare("UPDATE hotel_evidence_sync_runs SET status='success',hotels_claimed=?,evidence_written=?,failures=?,finished_at=? WHERE id=?")
       .bind(tasks.length,written,failures,nowIso(),runId).run();
-    return {ok:true,mode,claimed:tasks.length,evidence_written:written,failures};
+    return {ok:true,provider,mode,claimed:tasks.length,evidence_written:written,failures};
   }catch(e){
     await env.DB.prepare("UPDATE hotel_evidence_sync_runs SET status='failed',hotels_claimed=?,evidence_written=?,failures=?,note=?,finished_at=? WHERE id=?")
       .bind(tasks.length,written,failures,String(e?.message||e).slice(0,1000),nowIso(),runId).run();

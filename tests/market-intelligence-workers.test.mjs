@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { rateWindows, matchBookingCandidate, extractBookerRate } from "../src/rate-worker.js";
 import { citationUrls } from "../src/external-evidence-worker.js";
+import { matchSerpHotelCandidate, extractSerpHotelRate, reviewGroups } from "../src/serpapi.js";
 
 test("rateWindows creates two valid two-night future windows",()=>{
   const windows=rateWindows(new Date("2026-09-25T12:00:00Z"));
@@ -52,4 +53,37 @@ test("citationUrls accepts only normalized URLs actually returned by web search"
   assert.ok(urls.has("https://example.com/review"));
   assert.ok(urls.has("https://travel.example/story"));
   assert.equal(urls.size,2);
+});
+
+test("SerpApi hotel matching requires name and geography agreement",()=>{
+  const hotel={name:"Aman Tokyo",lat:35.6852,lng:139.7634};
+  const match=matchSerpHotelCandidate(hotel,[
+    {name:"Aman Tokyo",property_token:"tok-good",gps_coordinates:{latitude:35.6851,longitude:139.7635}},
+    {name:"Aman Kyoto",property_token:"tok-bad",gps_coordinates:{latitude:35.6852,longitude:139.7634}}
+  ]);
+  assert.equal(match.id,"tok-good");
+  assert.equal(match.confidence,"high");
+});
+
+test("SerpApi rate extraction keeps inclusive and pre-tax price context",()=>{
+  const rate=extractSerpHotelRate({
+    rate_per_night:{extracted_lowest:525,extracted_before_taxes_fees:470},
+    total_rate:{extracted_lowest:1050},
+    prices:[{source:"Hotel site",rate_per_night:{extracted_lowest:525}}]
+  },2,"USD");
+  assert.equal(rate.nightly_rate,525);
+  assert.equal(rate.raw_total,1050);
+  assert.equal(rate.before_taxes_fees,470);
+  assert.equal(rate.taxes_fees_included,true);
+  assert.equal(rate.price_sources[0].source,"Hotel site");
+});
+
+test("reviewGroups keeps verifiable source URLs and does not persist reviewer identity",()=>{
+  const groups=reviewGroups([
+    {source:"Google",rating:5,date:"today",snippet:"Excellent service and a quiet room with a comfortable bed.",user:{name:"Person"}},
+    {source:"Tripadvisor",link:"https://www.tripadvisor.com/ShowUserReviews-abc",rating:3,date:"today",snippet:"Great location but the room felt dated and noisy at night.",user:{name:"Other"}}
+  ],{name:"Example Hotel",city:"Paris",country:"France"});
+  assert.equal(groups.length,2);
+  assert.match(groups[0].source_url,/google\.com\/travel\/hotels/);
+  assert.equal("user" in groups[0].reviews[0],false);
 });

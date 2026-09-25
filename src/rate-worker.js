@@ -1,5 +1,6 @@
 import { refreshHotelEnrichment } from "./enrichment.js";
 import { recomputeHotelValuation } from "./value-engine.js";
+import { findSerpHotelProperty, extractSerpHotelRate } from "./serpapi.js";
 
 const nowIso=()=>new Date().toISOString();
 const clamp=(n,min,max)=>Math.min(Math.max(Number(n)||min,min),max);
@@ -236,7 +237,7 @@ async function finish(db,id,status,error=null){
     .bind(status,error?String(error).slice(0,1000):null,nowIso(),id).run();
 }
 
-export async function drainCurrentRateQueue(env,{limit=6}={}){
+async function drainBookingCurrentRateQueue(env,{limit=6}={}){
   const cfg=bookingConfig(env);
   if(!cfg.token||!cfg.affiliateId)return {ok:false,skipped:true,reason:"booking_demand_not_configured"};
   await env.DB.prepare("UPDATE affiliate_providers SET enabled=1,updated_at=? WHERE id='booking_demand'").bind(nowIso()).run();
@@ -288,4 +289,79 @@ export async function drainCurrentRateQueue(env,{limit=6}={}){
       .bind(tasks.length,observations,mappings,failures,String(e?.message||e).slice(0,1000),nowIso(),runId).run();
     throw e;
   }
+}
+
+
+async function getSerpMapping(db,hotelId){
+  return db.prepare("SELECT * FROM hotel_provider_mappings WHERE hotel_id=? AND provider='serpapi_google_hotels' AND status='active'").bind(hotelId).first();
+}
+
+async function saveSerpMapping(db,hotelId,match){
+  const now=nowIso();
+  await db.prepare(`INSERT INTO hotel_provider_mappings
+    (id,hotel_id,provider,provider_hotel_id,status,confidence,source_url,metadata_json,created_at,updated_at)
+    VALUES (?,?,'serpapi_google_hotels',?,'active',?,NULL,?,?,?)
+    ON CONFLICT(hotel_id,provider) DO UPDATE SET provider_hotel_id=excluded.provider_hotel_id,status='active',
+      confidence=excluded.confidence,metadata_json=excluded.metadata_json,updated_at=excluded.updated_at`)
+    .bind(crypto.randomUUID(),hotelId,match.id,match.confidence||"medium",
+      JSON.stringify({matched_name:match.name,similarity:match.similarity,distance_km:match.distance}),now,now).run();
+}
+
+async function drainSerpCurrentRateQueue(env,{limit=6}={}){
+  if(!String(env.SERPAPI_API_KEY||"").trim())return {ok:false,skipped:true,reason:"serpapi_not_configured"};
+  await env.DB.prepare("UPDATE affiliate_providers SET enabled=1,updated_at=? WHERE id='serpapi_google_hotels'").bind(nowIso()).run();
+  const runId=crypto.randomUUID(),started=nowIso(),mode=String(env.MARKET_INTELLIGENCE_MODE||"pilot").toLowerCase()==="full"?"full":"pilot";
+  await env.DB.prepare("INSERT INTO hotel_rate_sync_runs (id,provider,status,started_at) VALUES (?,'serpapi_google_hotels','running',?)").bind(runId,started).run();
+  const tasks=await claimTasks(env.DB,limit,mode);
+  let observations=0,mappings=0,failures=0;
+  try{
+    const windows=rateWindows();
+    for(const t of tasks){
+      try{
+        let mapping=await getSerpMapping(env.DB,t.hotel_id),hotelWritten=0,lastError=null;
+        for(const window of windows){
+          const found=await findSerpHotelProperty(env,{name:t.name,city:t.city,country:t.country,lat:t.lat,lng:t.lng},window,mapping?.provider_hotel_id||null);
+          if(!found.ok){lastError=found.error;continue}
+          if(!mapping||String(mapping.provider_hotel_id)!==String(found.match.id)){
+            await saveSerpMapping(env.DB,t.hotel_id,found.match);
+            mapping={provider_hotel_id:found.match.id};
+            mappings++;
+          }
+          const rate=extractSerpHotelRate(found.match.item,window.nights,String(env.RATE_CURRENCY||"USD"));
+          if(!rate){lastError="serpapi_hotel_rate_missing";continue}
+          await env.DB.prepare(`INSERT INTO hotel_rate_observations
+            (id,hotel_id,provider_id,nightly_rate,currency,checkin_date,checkout_date,room_type,rate_name,taxes_fees_included,booking_url,metadata_json,observed_at)
+            VALUES (?,?,'serpapi_google_hotels',?,?,?,?,?,?,?,?,?,?)`)
+            .bind(crypto.randomUUID(),t.hotel_id,rate.nightly_rate,rate.currency,window.checkin,window.checkout,rate.room_type,rate.rate_name,
+              rate.taxes_fees_included==null?null:rate.taxes_fees_included?1:0,null,
+              JSON.stringify({provider_hotel_id:found.match.id,rate_basis:window.basis,raw_total:rate.raw_total,before_taxes_fees:rate.before_taxes_fees,
+                nights:window.nights,price_sources:rate.price_sources,serpapi_search_id:found.search_id}),
+              nowIso()).run();
+          hotelWritten++;observations++;
+        }
+        if(hotelWritten){
+          const latest=await env.DB.prepare("SELECT nightly_rate FROM hotel_rate_observations WHERE hotel_id=? AND provider_id='serpapi_google_hotels' ORDER BY observed_at DESC LIMIT 1").bind(t.hotel_id).first();
+          await recomputeHotelValuation(env.DB,t.hotel_id,latest?.nightly_rate??null);
+          await finish(env.DB,t.queue_id,"complete");
+        }else{
+          await finish(env.DB,t.queue_id,"failed",lastError||"no_serpapi_rate_observation_written");failures++;
+        }
+      }catch(e){await finish(env.DB,t.queue_id,"failed",e?.message||e);failures++}
+    }
+    await refreshHotelEnrichment(env.DB);
+    await env.DB.prepare("UPDATE hotel_rate_sync_runs SET status='success',hotels_claimed=?,observations_written=?,mappings_created=?,failures=?,finished_at=? WHERE id=?")
+      .bind(tasks.length,observations,mappings,failures,nowIso(),runId).run();
+    return {ok:true,provider:"serpapi_google_hotels",mode,claimed:tasks.length,observations_written:observations,mappings_created:mappings,failures};
+  }catch(e){
+    await env.DB.prepare("UPDATE hotel_rate_sync_runs SET status='failed',hotels_claimed=?,observations_written=?,mappings_created=?,failures=?,note=?,finished_at=? WHERE id=?")
+      .bind(tasks.length,observations,mappings,failures,String(e?.message||e).slice(0,1000),nowIso(),runId).run();
+    throw e;
+  }
+}
+
+export async function drainCurrentRateQueue(env,{limit=6}={}){
+  if(String(env.SERPAPI_API_KEY||"").trim())return drainSerpCurrentRateQueue(env,{limit});
+  const cfg=bookingConfig(env);
+  if(cfg.token&&cfg.affiliateId)return drainBookingCurrentRateQueue(env,{limit});
+  return {ok:false,skipped:true,reason:"rate_provider_not_configured",providers:["serpapi_google_hotels","booking_demand"]};
 }
