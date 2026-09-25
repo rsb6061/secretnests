@@ -1097,6 +1097,10 @@ export default {
       ctx.waitUntil(runEnrichmentAutomation(env).then(result=>console.log(JSON.stringify({type:"enrichment_automation",...result}))).catch(e=>console.error(JSON.stringify({type:"enrichment_automation_error",message:safeLogError(e)}))));
       return;
     }
+    if(controller.cron==="47 * * * *"){
+      ctx.waitUntil(drainOfficialHotelQueue(env,{limit:8}).then(result=>console.log(JSON.stringify({type:"official_enrichment_drain",...result}))).catch(e=>console.error(JSON.stringify({type:"official_enrichment_drain_error",message:safeLogError(e)}))));
+      return;
+    }
     ctx.waitUntil((async()=>{
       try{
         const count=Number((await env.DB.prepare("SELECT COUNT(*) n FROM hotel_enrichment_profiles").first())?.n||0);
