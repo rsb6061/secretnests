@@ -28,6 +28,7 @@ test("matchBookingCandidate prefers exact nearby property",()=>{
 test("extractBookerRate normalizes total stay price into nightly price",()=>{
   const payload={data:[{
     currency:{booker:"USD"},
+    url:{web:"https://www.booking.com/hotel/example.html?aid=123"},
     products:[{
       name:"Flexible",
       room:{name:"King"},
@@ -39,6 +40,7 @@ test("extractBookerRate normalizes total stay price into nightly price",()=>{
   assert.equal(rate.currency,"USD");
   assert.equal(rate.room_type,"King");
   assert.equal(rate.taxes_fees_included,true);
+  assert.match(rate.booking_url,/booking\\.com/);
 });
 
 test("citationUrls accepts only normalized URLs actually returned by web search",()=>{
