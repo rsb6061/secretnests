@@ -129,8 +129,11 @@ jobs:
           set -euo pipefail
           TOKEN="$(openssl rand -hex 32)"
           echo "::add-mask::$TOKEN"
-          printf '%s' "$TOKEN" | npx wrangler versions secret put PRODUCTION_ACTIVATION_TOKEN --message "Rotate release pilot token"
-          npx wrangler versions deploy --yes --message "Activate release pilot token"
+          VERSION_OUTPUT="$(printf '%s' "$TOKEN" | npx wrangler versions secret put PRODUCTION_ACTIVATION_TOKEN --message "Rotate release pilot token")"
+          echo "$VERSION_OUTPUT"
+          VERSION_ID="$(printf '%s\n' "$VERSION_OUTPUT" | sed -nE 's/.*Created version ([0-9a-f-]{36}) with secret.*/\1/p' | tail -n1)"
+          test -n "$VERSION_ID"
+          npx wrangler versions deploy --version-id "$VERSION_ID" --percentage 100 --yes --message "Activate release pilot token"
           echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
 
       - name: Production smoke test
