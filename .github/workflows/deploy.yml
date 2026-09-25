@@ -70,7 +70,7 @@ jobs:
 
       - name: Verify market-intelligence schema
         run: |
-          npx wrangler d1 execute secretnests --remote --command="SELECT COUNT(*) AS mappings FROM hotel_provider_mappings; SELECT COUNT(*) AS evidence FROM hotel_external_evidence; SELECT COUNT(*) AS rate_runs FROM hotel_rate_sync_runs; SELECT COUNT(*) AS evidence_runs FROM hotel_evidence_sync_runs;" --yes
+          npx wrangler d1 execute secretnests --remote --command="SELECT COUNT(*) AS mappings FROM hotel_provider_mappings; SELECT COUNT(*) AS evidence FROM hotel_external_evidence; SELECT COUNT(*) AS rate_runs FROM hotel_rate_sync_runs; SELECT COUNT(*) AS evidence_runs FROM hotel_evidence_sync_runs; SELECT COUNT(*) AS nuitee_audits FROM hotel_nuitee_audit; SELECT COUNT(*) AS provider_metadata FROM hotel_provider_metadata;" --yes
 
       - name: Dry-run Worker
         run: npx wrangler deploy --dry-run --outdir .wrangler-dry
@@ -171,6 +171,8 @@ jobs:
           npx wrangler d1 execute secretnests --remote --command="SELECT h.name,ROUND(r.nightly_rate,2) AS nightly_rate,r.currency,r.checkin_date,r.checkout_date,r.room_type,r.taxes_fees_included,r.observed_at FROM hotel_rate_observations r JOIN hotels h ON h.id=r.hotel_id WHERE r.provider_id IN ('nuitee_connect','nuitee_sandbox','serpapi_google_hotels','booking_demand') ORDER BY r.observed_at DESC LIMIT 20;" --yes
           echo "=== Recent external evidence ==="
           npx wrangler d1 execute secretnests --remote --command="SELECT h.name,e.source_domain,e.sentiment,e.confidence,substr(e.summary,1,180) AS summary,e.observed_at FROM hotel_external_evidence e JOIN hotels h ON h.id=e.hotel_id ORDER BY e.observed_at DESC LIMIT 20;" --yes
+          echo "=== Nuitee top-250 audit ==="
+          npx wrangler d1 execute secretnests --remote --command="SELECT COUNT(*) AS audited,SUM(CASE WHEN mapping_status IN (\'mapped\',\'review\') THEN 1 ELSE 0 END) AS mapped,SUM(CASE WHEN mapping_confidence=\'high\' THEN 1 ELSE 0 END) AS high_confidence,SUM(CASE WHEN mapping_status=\'review\' THEN 1 ELSE 0 END) AS needs_review,SUM(CASE WHEN metadata_status=\'complete\' THEN 1 ELSE 0 END) AS metadata_complete,SUM(CASE WHEN review_status=\'complete\' THEN 1 ELSE 0 END) AS reviews_available,SUM(CASE WHEN rate_audited_at IS NOT NULL THEN 1 ELSE 0 END) AS rate_audited,ROUND(AVG(CASE WHEN rate_audited_at IS NOT NULL THEN rate_coverage_pct END),1) AS avg_rate_coverage FROM hotel_nuitee_audit;" --yes
 
       - name: Release summary
         if: always()
