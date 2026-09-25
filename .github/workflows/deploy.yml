@@ -140,10 +140,12 @@ jobs:
 
       - name: Production smoke test
         shell: bash
+        env:
+          AUTH0_LOGIN_DOMAIN: ${{ secrets.AUTH0_LOGIN_DOMAIN }}
         run: |
           set -euo pipefail
           curl --connect-timeout 5 --max-time 20 -fsS https://secretnests.com/health | jq -e '.ok == true'
-          ROUTES=( "/" "/brands" "/contribute" "/compare" )
+          ROUTES=( "/" "/brands" "/contribute" "/compare" "/add-your-trip" )
           for route in "${ROUTES[@]}"; do
             ok=0
             for attempt in 1 2 3 4 5 6 7 8; do
@@ -154,6 +156,28 @@ jobs:
             done
             test "$ok" = "1"
           done
+
+          test -n "$AUTH0_LOGIN_DOMAIN"
+          curl --connect-timeout 5 --max-time 20 -sS -D /tmp/sn-auth.headers -o /dev/null \
+            'https://secretnests.com/login?return_to=%2Fadd-your-trip'
+          grep -Eq '^HTTP/[^ ]+ 302' /tmp/sn-auth.headers
+          AUTH_LOCATION="$(awk 'BEGIN{IGNORECASE=1}/^location:/{sub(/^[^:]*:[[:space:]]*/,"");sub(/\r$/,"");print;exit}' /tmp/sn-auth.headers)"
+          test -n "$AUTH_LOCATION"
+          case "$AUTH_LOCATION" in
+            "https://$AUTH0_LOGIN_DOMAIN/authorize"*) ;;
+            *) echo "::error::SecretNests login did not redirect to the configured Auth0 authorize endpoint."; cat /tmp/sn-auth.headers; exit 1 ;;
+          esac
+
+          curl --connect-timeout 5 --max-time 20 -sS -D /tmp/auth0-google.headers -o /tmp/auth0-google.body "$AUTH_LOCATION"
+          AUTH0_STATUS="$(awk 'NR==1{print $2}' /tmp/auth0-google.headers)"
+          GOOGLE_LOCATION="$(awk 'BEGIN{IGNORECASE=1}/^location:/{sub(/^[^:]*:[[:space:]]*/,"");sub(/\r$/,"");print;exit}' /tmp/auth0-google.headers)"
+          if [ "$AUTH0_STATUS" = "302" ] || [ "$AUTH0_STATUS" = "303" ]; then
+            echo "$GOOGLE_LOCATION" | grep -Eq '^https://accounts\.google\.com/'
+          else
+            echo "::error::Auth0 Google connection did not redirect to Google. HTTP $AUTH0_STATUS"
+            head -c 1000 /tmp/auth0-google.body || true
+            exit 1
+          fi
 
       - name: Run bounded market-intelligence pilot
         id: pilot_run
