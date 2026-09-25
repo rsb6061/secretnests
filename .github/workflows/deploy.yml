@@ -179,6 +179,17 @@ jobs:
             exit 1
           fi
 
+          GOOGLE_STATUS="$(curl --connect-timeout 5 --max-time 20 -sS -o /tmp/google-auth.body -w '%{http_code}' "$GOOGLE_LOCATION" || true)"
+          if [ "$GOOGLE_STATUS" = "400" ] || grep -Eqi 'redirect_uri_mismatch|Error 400' /tmp/google-auth.body; then
+            echo "::error::Google rejected the Auth0 callback/redirect URI configuration."
+            head -c 1500 /tmp/google-auth.body || true
+            exit 1
+          fi
+          case "$GOOGLE_STATUS" in
+            200|302|303) ;;
+            *) echo "::error::Google OAuth endpoint returned unexpected HTTP $GOOGLE_STATUS"; exit 1 ;;
+          esac
+
       - name: Run bounded market-intelligence pilot
         id: pilot_run
         shell: bash
