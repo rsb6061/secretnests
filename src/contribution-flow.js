@@ -1,6 +1,7 @@
 import { currentCreator, authConfigured } from "./auth.js";
 import { parseContribution } from "./contribution-parser.js";
 import { sameOrigin, bodyTooLarge, enforceRateLimit } from "./security.js";
+import { recomputeHotelValuation } from "./value-engine.js";
 
 const safeJson=(v,fallback={})=>{try{return JSON.parse(v||"")}catch{return fallback}};
 const nowIso=()=>new Date().toISOString();
@@ -58,7 +59,7 @@ export async function addTripPage(request,env,ui){
     const stayPeriod=explicitStayPeriod(draft.raw_text)||parsed.stay_period||parsed.stay_month||"";
     const tripType=parsed.trip_context||parsed.party_type||"";
     const assetHtml=assets.length?'<div class="review-section"><div class="review-section-title">Uploads</div><ul class="list">'+assets.map(a=>'<li>'+ui.esc(a.original_name||"Upload")+' · '+ui.esc(roleLabel(a.asset_role))+'</li>').join("")+'</ul></div>':"";
-    const authNote=user?'<p class="muted review-auth">Signed in as <a href="/@'+encodeURIComponent(user.handle)+'"><strong>@'+ui.esc(user.handle)+'</strong></a>. This stay will be attached to your traveler profile after moderation.</p>':'<p class="muted review-auth">You will sign in with Google before publishing. Your draft is already saved.</p>';
+    const authNote=user?'<p class="muted review-auth">Signed in as <a href="/@'+encodeURIComponent(user.handle)+'"><strong>@'+ui.esc(user.handle)+'</strong></a>. If the hotel match is clear, this stay publishes immediately.</p>':'<p class="muted review-auth">You will sign in with Google before publishing. Your draft is already saved.</p>';
     const reviewCss=`<style>
       .review-form{max-width:900px;padding:24px}
       .review-form h2{margin:0 0 8px}
@@ -206,6 +207,54 @@ export async function createTripDraft(request,env,ui){
   return Response.redirect(ui.ORIGIN+"/add-your-trip?draft="+encodeURIComponent(id),303);
 }
 
+export async function materializeFirstPartySubmission(env,submission,creator){
+  if(!submission?.creator_id||!submission?.hotel_id)return {published:false,reason:"needs_hotel_match"};
+  const hotel=await env.DB.prepare("SELECT id,name,slug FROM hotels WHERE id=? AND is_published=1 LIMIT 1").bind(submission.hotel_id).first();
+  if(!hotel)return {published:false,reason:"needs_hotel_match"};
+
+  const parsed=safeJson(submission.parsed_json,{});
+  const stayId="submission-"+submission.id;
+  const created=submission.created_at||nowIso();
+  await env.DB.prepare(`INSERT INTO stays
+    (id,creator_id,hotel_id,stay_month,nights,party_type,trip_context,promotion,room_type,booking_channel,paid_nightly_rate,currency,verified,verification_method,created_at,updated_at,perks_json,inclusions_json,rate_basis)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,'USD',0,'first_party_submission',?,?,?,?,?)
+    ON CONFLICT(id) DO UPDATE SET
+      stay_month=excluded.stay_month,nights=excluded.nights,party_type=excluded.party_type,
+      trip_context=excluded.trip_context,promotion=excluded.promotion,room_type=excluded.room_type,
+      booking_channel=excluded.booking_channel,paid_nightly_rate=excluded.paid_nightly_rate,
+      inclusions_json=excluded.inclusions_json,rate_basis=excluded.rate_basis,updated_at=excluded.updated_at`)
+    .bind(stayId,submission.creator_id,hotel.id,submission.stay_month,submission.nights,submission.party_type,
+      submission.trip_context||parsed.trip_context||null,submission.promotion||parsed.promotion||null,
+      submission.room_type,submission.booking_channel,submission.paid_nightly_rate,created,nowIso(),
+      submission.perks_json||"[]",submission.inclusions_json||"[]",submission.rate_basis||null).run();
+
+  if(submission.would_pay_again!=null){
+    await env.DB.prepare(`INSERT INTO value_opinions
+      (id,stay_id,creator_id,hotel_id,paid_nightly_rate,would_pay_again,currency,created_at)
+      VALUES (?,?,?,?,?,?,'USD',?)
+      ON CONFLICT(id) DO UPDATE SET paid_nightly_rate=excluded.paid_nightly_rate,would_pay_again=excluded.would_pay_again`)
+      .bind("value-"+submission.id,stayId,submission.creator_id,hotel.id,submission.paid_nightly_rate,submission.would_pay_again,created).run();
+  }
+
+  await env.DB.prepare(`INSERT INTO trip_reports
+    (id,stay_id,creator_id,hotel_id,title,review_text,verdict,would_return,standout_json,disappointments_json,status,published_at,created_at,updated_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,'published',?,?,?)
+    ON CONFLICT(stay_id) DO UPDATE SET
+      review_text=excluded.review_text,would_return=excluded.would_return,
+      standout_json=excluded.standout_json,disappointments_json=excluded.disappointments_json,
+      status='published',published_at=COALESCE(trip_reports.published_at,excluded.published_at),updated_at=excluded.updated_at`)
+    .bind("report-"+submission.id,stayId,submission.creator_id,hotel.id,submission.hotel_name,
+      submission.notes||submission.raw_text||null,"first_party_submission",submission.would_return,
+      JSON.stringify(parsed.standouts||[]),JSON.stringify(parsed.drawbacks||[]),nowIso(),created,nowIso()).run();
+
+  await env.DB.prepare("UPDATE trip_submissions SET status='approved',reviewed_at=? WHERE id=?")
+    .bind(nowIso(),submission.id).run();
+
+  const mediaPromoted=await promoteDraftMedia(env,submission,submission.creator_id,hotel.id,creator?.display_name||creator?.handle||null);
+  const valuation=submission.would_pay_again!=null?await recomputeHotelValuation(env.DB,hotel.id):null;
+  return {published:true,hotel,stayId,mediaPromoted,valuation};
+}
+
 export async function publishTripDraft(request,env,ui){
   if(!sameOrigin(request,ui.ORIGIN))return new Response("Origin rejected.",{status:403});
   if(bodyTooLarge(request,128*1024))return new Response("Payload too large.",{status:413});
@@ -255,15 +304,18 @@ export async function publishTripDraft(request,env,ui){
   }
   await env.DB.prepare("UPDATE contribution_drafts SET creator_id=?,status='submitted',parsed_json=?,updated_at=? WHERE id=?")
     .bind(user.creator_id,JSON.stringify(finalParsed),created,draft.id).run();
-  const matched=hotelId?await env.DB.prepare("SELECT id,name,slug FROM hotels WHERE id=? LIMIT 1").bind(hotelId).first():null;
-  const snapshot=hotelId&&wouldPay!=null?await env.DB.prepare("SELECT median_would_pay,sample_size FROM hotel_value_snapshots WHERE hotel_id=? ORDER BY calculated_at DESC LIMIT 1").bind(hotelId).first():null;
+  const submission=await env.DB.prepare("SELECT * FROM trip_submissions WHERE id=? LIMIT 1").bind(id).first();
+  const publication=hotelId?await materializeFirstPartySubmission(env,submission,user):{published:false,reason:"needs_hotel_match"};
+  const matched=publication.published?publication.hotel:(hotelId?await env.DB.prepare("SELECT id,name,slug FROM hotels WHERE id=? LIMIT 1").bind(hotelId).first():null);
+  const snapshot=publication.published&&hotelId&&wouldPay!=null?await env.DB.prepare("SELECT median_would_pay,sample_size FROM hotel_value_snapshots WHERE hotel_id=? ORDER BY calculated_at DESC LIMIT 1").bind(hotelId).first():null;
   const pct=paid!=null&&paid>0&&wouldPay!=null?Math.round((wouldPay-paid)/paid*100):null;
   const comparison=pct==null?"":pct===0?"the same as you paid":pct>0?pct+"% more than you paid":Math.abs(pct)+"% less than you paid";
   const hotelUrl=matched?"/hotel/"+encodeURIComponent(matched.slug):"/@"+encodeURIComponent(user.handle);
   const valueSummary=wouldPay!=null?'<div class="review-section"><div class="review-section-title">Your value take</div><div class="review-grid"><div><div class="kicker">You paid</div><strong>'+(paid!=null?ui.money(paid)+" / night":"Not provided")+'</strong></div><div><div class="kicker">You would pay again</div><strong>'+ui.money(wouldPay)+(comparison?" · "+ui.esc(comparison):"")+'</strong></div></div>'+(snapshot?.sample_size?'<p class="muted">Current traveler median: '+ui.money(snapshot.median_would_pay)+'</p>':"")+'</div>':"";
+  const live=Boolean(publication.published);
   const body=
-    '<section class="hero" data-autoevent="contribution_submitted" data-hotel-id="'+ui.attr(hotelId||"")+'"><div class="eyebrow">Trip received</div><h1>Your stay is submitted.</h1><p>Your review is in moderation before it appears publicly.'+(wouldPay!=null?" Your value take will be added to the hotel’s traveler-value data after approval.":"")+(hasReceipt?" Your receipt / folio remains private.":"")+'</p></section>'+
-    '<div class="card" style="max-width:900px"><div class="eyebrow">'+(matched?ui.esc(matched.name):ui.esc(hotelName))+'</div><p style="font-size:17px;line-height:1.6">'+ui.esc(reviewText||draft.raw_text)+'</p>'+valueSummary+'<p class="muted">When approved, this stay is attributed to <a href="/@'+encodeURIComponent(user.handle)+'"><strong>@'+ui.esc(user.handle)+'</strong></a>.</p><div class="hero-actions"><a class="btn" href="'+ui.attr(hotelUrl)+'">'+(matched?"Back to hotel":"View my profile")+'</a><a class="btn secondary" href="/add-your-trip">Add another stay</a></div></div>';
+    '<section class="hero" data-autoevent="contribution_submitted" data-hotel-id="'+ui.attr(hotelId||"")+'"><div class="eyebrow">'+(live?"Stay published":"Trip received")+'</div><h1>'+(live?"Your stay is live.":"Your stay is submitted.")+'</h1><p>'+(live?"It is now part of "+ui.esc(matched?.name||hotelName)+" and your traveler profile.":"We could not confidently match the hotel, so this one needs a quick review before it appears publicly.")+(hasReceipt?" Your receipt / folio remains private and can be verified separately.":"")+'</p></section>'+
+    '<div class="card" style="max-width:900px"><div class="eyebrow">'+(matched?ui.esc(matched.name):ui.esc(hotelName))+'</div><p style="font-size:17px;line-height:1.6">'+ui.esc(reviewText||draft.raw_text)+'</p>'+valueSummary+'<p class="muted">'+(live?"Published by ":"Submitted by ")+'<a href="/@'+encodeURIComponent(user.handle)+'"><strong>@'+ui.esc(user.handle)+'</strong></a>.</p><div class="hero-actions">'+(live&&matched?'<a class="btn" href="/hotel/'+encodeURIComponent(matched.slug)+'">View hotel →</a>':'')+'<a class="btn secondary" href="/@'+encodeURIComponent(user.handle)+'">View my profile</a><a class="btn secondary" href="/add-your-trip">Add another stay</a></div></div>';
   return ui.page(ui.shell(body),env,{title:"Trip received | SecretNests",canonical:"/add-your-trip",robots:"noindex,follow"});
 }
 
