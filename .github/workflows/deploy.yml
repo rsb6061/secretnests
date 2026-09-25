@@ -8,12 +8,17 @@ on:
         required: true
         type: choice
         options:
+          - release
           - bootstrap
           - deploy
           - migrate-db
           - seed-legacy-hotels
           - seed-reddit-evidence
           - seed-demo
+  workflow_run:
+    workflows: ["SecretNests CI"]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: read
@@ -24,13 +29,18 @@ concurrency:
 
 jobs:
   run:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      RELEASE_ACTION: ${{ github.event_name == 'workflow_run' && 'release' || inputs.action }}
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
       - uses: actions/setup-node@v4
         with:
@@ -50,81 +60,123 @@ jobs:
         run: |
           set -euo pipefail
 
-          LIST="$(curl -fsS             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN"             "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/d1/database")"
+          LIST="$(curl --connect-timeout 5 --max-time 30 -fsS \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/d1/database")"
 
           DB_ID="$(echo "$LIST" | jq -r '.result[] | select(.name=="secretnests") | .uuid' | head -n1)"
 
           if [ -z "$DB_ID" ] || [ "$DB_ID" = "null" ]; then
             echo "Creating D1 database secretnests..."
-            CREATED="$(curl -fsS -X POST               -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN"               -H "Content-Type: application/json"               --data '{"name":"secretnests"}'               "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/d1/database")"
-
+            CREATED="$(curl --connect-timeout 5 --max-time 30 -fsS -X POST \
+              -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+              -H "Content-Type: application/json" \
+              --data '{"name":"secretnests"}' \
+              "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/d1/database")"
             echo "$CREATED" | jq -e '.success == true' >/dev/null
             DB_ID="$(echo "$CREATED" | jq -r '.result.uuid')"
-          else
-            echo "D1 database already exists."
           fi
 
           test -n "$DB_ID"
           test "$DB_ID" != "null"
           echo "database_id=$DB_ID" >> "$GITHUB_OUTPUT"
-
-          # Never commit an environment-specific UUID. Patch the checked-out
-          # config only for this Actions run.
-          sed -i "s/REPLACE_WITH_D1_DATABASE_ID/$DB_ID/g" wrangler.toml
+          sed -i -E 's/database_id = "[^"]+"/database_id = "'"$DB_ID"'"/' wrangler.toml
 
       - name: Find or create R2 bucket
-        if: inputs.action == 'bootstrap'
+        if: env.RELEASE_ACTION == 'bootstrap'
         shell: bash
         run: |
           set -euo pipefail
-          if npx wrangler r2 bucket list | grep -q "secretnests-media"; then
-            echo "R2 bucket secretnests-media already exists."
+          if npx wrangler r2 bucket list | grep -q "secretnests-assets"; then
+            echo "R2 bucket secretnests-assets already exists."
           else
-            echo "Creating R2 bucket secretnests-media..."
-            npx wrangler r2 bucket create secretnests-media
+            npx wrangler r2 bucket create secretnests-assets
           fi
 
       - name: Apply D1 migrations
-        if: inputs.action == 'bootstrap' || inputs.action == 'migrate-db'
+        if: env.RELEASE_ACTION == 'release' || env.RELEASE_ACTION == 'bootstrap' || env.RELEASE_ACTION == 'migrate-db'
         run: npx wrangler d1 migrations apply secretnests --remote --yes
 
+      - name: Verify market intelligence schema
+        if: env.RELEASE_ACTION == 'release' || env.RELEASE_ACTION == 'bootstrap' || env.RELEASE_ACTION == 'migrate-db'
+        run: |
+          npx wrangler d1 execute secretnests --remote --command="SELECT COUNT(*) AS mappings FROM hotel_provider_mappings; SELECT COUNT(*) AS evidence FROM hotel_external_evidence; SELECT COUNT(*) AS rate_runs FROM hotel_rate_sync_runs; SELECT COUNT(*) AS evidence_runs FROM hotel_evidence_sync_runs;" --yes
+
       - name: Build legacy hotel seed
-        if: inputs.action == 'bootstrap' || inputs.action == 'seed-legacy-hotels'
+        if: env.RELEASE_ACTION == 'bootstrap' || env.RELEASE_ACTION == 'seed-legacy-hotels'
         run: node scripts/build-legacy-hotel-seed.mjs
 
       - name: Seed legacy hotels
-        if: inputs.action == 'bootstrap' || inputs.action == 'seed-legacy-hotels'
+        if: env.RELEASE_ACTION == 'bootstrap' || env.RELEASE_ACTION == 'seed-legacy-hotels'
         run: npx wrangler d1 execute secretnests --remote --file=.generated/legacy-hotels.sql --yes
 
       - name: Build Reddit evidence seed
-        if: inputs.action == 'bootstrap' || inputs.action == 'seed-reddit-evidence'
+        if: env.RELEASE_ACTION == 'bootstrap' || env.RELEASE_ACTION: 'seed-reddit-evidence'
         run: node scripts/build-reddit-evidence-seed.mjs
 
       - name: Seed Reddit evidence
-        if: inputs.action == 'bootstrap' || inputs.action == 'seed-reddit-evidence'
+        if: env.RELEASE_ACTION == 'bootstrap' || env.RELEASE_ACTION == 'seed-reddit-evidence'
         run: npx wrangler d1 execute secretnests --remote --file=.generated/reddit-evidence.sql --yes
 
       - name: Build demo creator seed
-        if: inputs.action == 'bootstrap' || inputs.action == 'seed-demo'
+        if: env.RELEASE_ACTION == 'bootstrap' || env.RELEASE_ACTION == 'seed-demo'
         run: node scripts/build-demo-seed.mjs
 
       - name: Seed demo creator
-        if: inputs.action == 'bootstrap' || inputs.action == 'seed-demo'
+        if: env.RELEASE_ACTION == 'bootstrap' || env.RELEASE_ACTION == 'seed-demo'
         run: npx wrangler d1 execute secretnests --remote --file=.generated/demo.sql --yes
 
       - name: Dry-run Worker
-        if: inputs.action == 'bootstrap' || inputs.action == 'deploy'
+        if: env.RELEASE_ACTION == 'release' || env.RELEASE_ACTION == 'bootstrap' || env.RELEASE_ACTION == 'deploy'
         run: npx wrangler deploy --dry-run --outdir .wrangler-dry
 
       - name: Deploy Worker
-        if: inputs.action == 'bootstrap' || inputs.action == 'deploy'
+        if: env.RELEASE_ACTION == 'release' || env.RELEASE_ACTION == 'bootstrap' || env.RELEASE_ACTION == 'deploy'
         run: npx wrangler deploy
 
-      - name: Bootstrap summary
-        if: inputs.action == 'bootstrap'
+      - name: Sync optional market-intelligence secrets
+        if: env.RELEASE_ACTION == 'release' || env.RELEASE_ACTION == 'bootstrap' || env.RELEASE_ACTION == 'deploy'
+        shell: bash
+        env:
+          BOOKING_DEMAND_API_TOKEN: ${{ secrets.BOOKING_DEMAND_API_TOKEN }}
+          BOOKING_DEMAND_AFFILIATE_ID: ${{ secrets.BOOKING_DEMAND_AFFILIATE_ID }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          echo "SecretNests Cloudflare bootstrap complete."
+          set -euo pipefail
+          configured=0
+          if [ -n "$BOOKING_DEMAND_API_TOKEN" ]; then
+            printf '%s' "$BOOKING_DEMAND_API_TOKEN" | npx wrangler secret put BOOKING_DEMAND_API_TOKEN
+            configured=$((configured+1))
+          else
+            echo "::notice::BOOKING_DEMAND_API_TOKEN is not configured in GitHub Actions."
+          fi
+          if [ -n "$BOOKING_DEMAND_AFFILIATE_ID" ]; then
+            printf '%s' "$BOOKING_DEMAND_AFFILIATE_ID" | npx wrangler secret put BOOKING_DEMAND_AFFILIATE_ID
+            configured=$((configured+1))
+          else
+            echo "::notice::BOOKING_DEMAND_AFFILIATE_ID is not configured in GitHub Actions."
+          fi
+          if [ -n "$OPENAI_API_KEY" ]; then
+            printf '%s' "$OPENAI_API_KEY" | npx wrangler secret put OPENAI_API_KEY
+            configured=$((configured+1))
+          else
+            echo "::notice::OPENAI_API_KEY is not configured in GitHub Actions."
+          fi
+          echo "Synced $configured of 3 optional market-intelligence secrets."
+          npx wrangler secret list || true
+
+      - name: Production smoke test
+        if: env.RELEASE_ACTION == 'release' || env.RELEASE_ACTION == 'bootstrap' || env.RELEASE_ACTION == 'deploy'
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --connect-timeout 5 --max-time 20 -fsS https://secretnests.com/health | jq -e '.ok == true'
+          curl --connect-timeout 5 --max-time 20 -fsS https://secretnests.com/ >/dev/null
+
+      - name: Release summary
+        if: always()
+        run: |
+          echo "SecretNests action: $RELEASE_ACTION"
+
           echo "D1 database: secretnests"
-          echo "D1 database id: ${{ steps.d1.outputs.database_id }}"
-          echo "R2 bucket: secretnests-media"
           echo "Worker: secretnests"
