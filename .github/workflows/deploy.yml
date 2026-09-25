@@ -42,7 +42,7 @@ jobs:
         with:
           node-version: 22
 
-      - run: npm ci
+      - run: npm install
       - run: npm run check
 
       - name: Resolve Cloudflare account from API token
@@ -254,4 +254,4 @@ jobs:
         run: |
           echo "D1 database: secretnests"
           echo "Worker: secretnests"
-          echo "Market intelligence mode: pilot (top 10 only)"
+          echo "Market intelligence pilot: manual opt-in only"
