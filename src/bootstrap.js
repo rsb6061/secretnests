@@ -10,9 +10,23 @@ export async function handleBootstrap(request,env){
   const stage=url.pathname.slice("/__bootstrap/".length);
   try{
     if(stage==="schema"){
-      const exists=await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='hotels'").first();
-      if(!exists) await env.DB.exec(SCHEMA_SQL);
-      return json({ok:true,stage:"schema",already:Boolean(exists)});
+      const statements=SCHEMA_SQL
+        .split(";")
+        .map(s=>s.trim())
+        .filter(Boolean)
+        .filter(s=>!/^PRAGMA\s+foreign_keys\s*=\s*ON$/i.test(s));
+      let applied=0, skipped=0;
+      for(const sql of statements){
+        try{
+          await env.DB.prepare(sql).run();
+          applied++;
+        }catch(e){
+          const msg=String(e?.message||e);
+          if(/duplicate column name/i.test(msg)){ skipped++; continue; }
+          throw e;
+        }
+      }
+      return json({ok:true,stage:"schema",applied,skipped});
     }
     const hm=stage.match(/^hotels-(\d+)$/);
     if(hm) return json(await seedHotelPart(env,Number(hm[1])));
