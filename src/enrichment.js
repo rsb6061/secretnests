@@ -95,7 +95,8 @@ export async function refreshHotelEnrichment(db){
         };
         for(const taskType of Object.keys(taskHints)){
           const missing=x.complete.missing.includes(taskType);
-          const priority=Math.max(1,rank+(taskType==="current_rate"?0:taskType==="booking_link"?10:taskType==="licensed_hero"?20:40));
+          const taskWeight={facts_core:0,city_review:5,booking_link:10,licensed_hero:20,current_rate:30,external_evidence:40,first_party_value:50}[taskType]??60;
+          const priority=Math.max(1,rank+taskWeight);
           queueStatements.push(db.prepare(`INSERT INTO hotel_enrichment_queue
             (id,hotel_id,task_type,status,priority,source_hint,created_at,updated_at)
             VALUES (?,?,?,?,?,?,?,?)
