@@ -60,3 +60,20 @@ Current main passed the full local Cloudflare-native CI suite in GitHub Actions 
 6. Populate real booking providers/links beyond the single legacy booking URL.
 7. Rotate/restrict the legacy Google Places key that appeared in old private Git history.
 8. Run production parity checks, then remove Floot hosting/DNS dependencies.
+
+
+## Travelpayouts production automation
+
+Travelpayouts is wired as the booking monetization/attribution layer. The Worker now:
+- generates partner links server-side with click-specific SubIDs
+- seeds up to 200 missing hotel booking links per hourly run
+- tracks outbound clicks in D1
+- can reconcile bookings/commission from the Travelpayouts statistics API
+- syncs the prior 35 days automatically when `TRAVELPAYOUTS_CAMPAIGN_ID` is configured
+
+Required production configuration:
+- secret: `TRAVELPAYOUTS_API_TOKEN`
+- vars/secrets: `TRAVELPAYOUTS_PARTNER_ID`, `TRAVELPAYOUTS_PROJECT_ID`
+- optional for automatic conversion sync: `TRAVELPAYOUTS_CAMPAIGN_ID`
+
+Admin verification page: `/admin/travelpayouts`.
