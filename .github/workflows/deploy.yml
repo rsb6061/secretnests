@@ -111,7 +111,7 @@ jobs:
         run: npx wrangler d1 execute secretnests --remote --file=.generated/legacy-hotels.sql --yes
 
       - name: Build Reddit evidence seed
-        if: env.RELEASE_ACTION == 'bootstrap' || env.RELEASE_ACTION: 'seed-reddit-evidence'
+        if: env.RELEASE_ACTION == 'bootstrap' || env.RELEASE_ACTION == 'seed-reddit-evidence'
         run: node scripts/build-reddit-evidence-seed.mjs
 
       - name: Seed Reddit evidence
