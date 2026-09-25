@@ -14,7 +14,7 @@ function normalizeUrl(v){
 
 function blockedSource(v,domains=[]){
   const u=safeUrl(v); if(!u)return true;
-  const host=u.hostname.toLowerCase().replace(/^www\\./,"");
+  const host=u.hostname.toLowerCase().replace(/^www\./,"");
   return domains.some(d=>host===d||host.endsWith("."+d));
 }
 
