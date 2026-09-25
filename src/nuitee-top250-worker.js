@@ -196,7 +196,9 @@ async function mappingBatch(env,limit){
     JOIN hotels h ON h.id=p.hotel_id
     LEFT JOIN hotel_nuitee_audit a ON a.hotel_id=h.id
     WHERE p.cohort='priority_250' AND (
-      a.hotel_id IS NULL OR a.mapping_status='pending' OR a.metadata_status='pending'
+      a.hotel_id IS NULL
+      OR a.mapping_status='pending'
+      OR (a.mapping_status IN ('mapped','review') AND a.metadata_status='pending')
     )
     ORDER BY p.priority_rank LIMIT ?`).bind(clamp(limit,1,40)).all()).results||[];
   const results=await chunks(rows,2,row=>processMappingHotel(env,row));
