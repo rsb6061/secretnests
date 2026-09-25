@@ -205,7 +205,7 @@ async function hotelPage(slug, env){
   const v=await env.DB.prepare("SELECT * FROM hotel_value_snapshots WHERE hotel_id=? ORDER BY calculated_at DESC LIMIT 1").bind(h.id).first();
   const latestRate=await env.DB.prepare(`SELECT ro.nightly_rate,ro.currency,ro.provider_id,ro.booking_url,ro.checkin_date,ro.checkout_date,ro.room_type,ro.rate_name,ro.taxes_fees_included,ro.observed_at,p.name provider_name
     FROM hotel_rate_observations ro LEFT JOIN affiliate_providers p ON p.id=ro.provider_id
-    WHERE ro.hotel_id=? ORDER BY ro.observed_at DESC LIMIT 1`).bind(h.id).first();
+    WHERE ro.hotel_id=? AND ro.provider_id<>'nuitee_sandbox' ORDER BY ro.observed_at DESC LIMIT 1`).bind(h.id).first();
   const media=await env.DB.prepare(`SELECT id,r2_key,source_url,attribution_text,rights_status FROM media_assets
     WHERE hotel_id=? AND rights_status IN ('owned_user_upload','hotel_authorized','licensed_api','licensed_public')
     ORDER BY CASE rights_status WHEN 'owned_user_upload' THEN 0 WHEN 'hotel_authorized' THEN 1 ELSE 2 END,created_at
