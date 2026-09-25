@@ -69,8 +69,18 @@ async function upsertAudit(db,hotelId,patch={}){
     .bind(hotelId,row.provider_hotel_id,row.environment,row.mapping_status,row.mapping_confidence,row.name_similarity,row.distance_km,
       row.metadata_status,row.metadata_fields,row.review_status,row.rate_windows_tested,row.rate_windows_with_inventory,row.rate_coverage_pct,
       row.last_error,row.mapped_at,row.metadata_at,row.review_at,row.rate_audited_at,now).run();
-}
 
+  const diagnostics=["mapping_error","metadata_error","review_error","candidate_provider_hotel_id","candidate_name",
+    "candidate_similarity","candidate_distance_km","mapping_stage"];
+  const sets=[],values=[];
+  for(const key of diagnostics){
+    if(Object.prototype.hasOwnProperty.call(patch,key)){sets.push(key+"=?");values.push(patch[key]??null)}
+  }
+  if(sets.length){
+    values.push(now,hotelId);
+    await db.prepare("UPDATE hotel_nuitee_audit SET "+sets.join(",")+",updated_at=? WHERE hotel_id=?").bind(...values).run();
+  }
+}
 async function saveMapping(db,hotelId,match,environment){
   const now=nowIso(),status=match.confidence==="high"?"mapped":"review";
   await db.prepare(`INSERT INTO hotel_provider_mappings
@@ -79,10 +89,11 @@ async function saveMapping(db,hotelId,match,environment){
     ON CONFLICT(hotel_id,provider) DO UPDATE SET provider_hotel_id=excluded.provider_hotel_id,status='active',
       confidence=excluded.confidence,metadata_json=excluded.metadata_json,updated_at=excluded.updated_at`)
     .bind(crypto.randomUUID(),hotelId,match.id,match.confidence||"medium",
-      JSON.stringify({matched_name:match.name,similarity:match.similarity,distance_km:match.distance,environment}),now,now).run();
+      JSON.stringify({matched_name:match.name,similarity:match.similarity,distance_km:match.distance,environment,mapping_stage:match.stage||null}),now,now).run();
   await upsertAudit(db,hotelId,{
     provider_hotel_id:match.id,environment,mapping_status:status,mapping_confidence:match.confidence||"medium",
-    name_similarity:match.similarity,distance_km:match.distance,last_error:null,mapped_at:now
+    name_similarity:match.similarity,distance_km:match.distance,last_error:null,mapping_error:null,mapping_stage:match.stage||null,
+    candidate_provider_hotel_id:null,candidate_name:null,candidate_similarity:null,candidate_distance_km:null,mapped_at:now
   });
 }
 
@@ -135,7 +146,7 @@ async function saveMetadata(db,hotel,providerId,metadata,environment,confidence)
       .bind(crypto.randomUUID(),hotel.id,field,environment==="sandbox"?"nuitee_sandbox":"nuitee_connect",sourceUrl,
         "Nuitee Connect",confidence||"medium",now,JSON.stringify({value,provider_hotel_id:providerId,environment}),now,now).run();
   }
-  await upsertAudit(db,hotel.id,{metadata_status:"complete",metadata_fields:metadataFieldCount(metadata),metadata_at:now,last_error:null});
+  await upsertAudit(db,hotel.id,{metadata_status:"complete",metadata_fields:metadataFieldCount(metadata),metadata_at:now,metadata_error:null});
   return updates.length;
 }
 
@@ -147,7 +158,12 @@ async function processMappingHotel(env,row){
     if(!providerId){
       const found=await findNuiteeHotel(env,row);
       if(!found.ok){
-        await upsertAudit(env.DB,row.id,{environment,mapping_status:"failed",last_error:found.error});
+        await upsertAudit(env.DB,row.id,{
+          environment,mapping_status:"failed",last_error:found.error,mapping_error:found.error,
+          candidate_provider_hotel_id:found.candidate?.id||null,candidate_name:found.candidate?.name||null,
+          candidate_similarity:found.candidate?.similarity??null,candidate_distance_km:found.candidate?.distance??null,
+          mapping_stage:found.candidate?.stage||null
+        });
         return {mapped:0,metadata:0,failed:1};
       }
       await saveMapping(env.DB,row.id,found.match,environment);
@@ -156,19 +172,20 @@ async function processMappingHotel(env,row){
       let meta={};try{meta=JSON.parse(mapping.metadata_json||"{}")}catch{}
       await upsertAudit(env.DB,row.id,{
         provider_hotel_id:providerId,environment,mapping_status:confidence==="high"?"mapped":"review",mapping_confidence:confidence,
-        name_similarity:meta.similarity??null,distance_km:meta.distance_km??null,mapped_at:mapping.updated_at||nowIso(),last_error:null
+        name_similarity:meta.similarity??null,distance_km:meta.distance_km??null,mapped_at:mapping.updated_at||nowIso(),mapping_error:null,
+        mapping_stage:meta.mapping_stage??null
       });
     }
     const details=await fetchNuiteeHotelDetails(env,providerId);
     if(!details.ok){
-      await upsertAudit(env.DB,row.id,{metadata_status:"failed",last_error:details.error});
+      await upsertAudit(env.DB,row.id,{metadata_status:"failed",metadata_error:details.error,last_error:details.error});
       return {mapped:1,metadata:0,failed:1};
     }
     const metadata=extractNuiteeMetadata(details.data);
     await saveMetadata(env.DB,row,providerId,metadata,environment,confidence);
     return {mapped:1,metadata:1,failed:0};
   }catch(e){
-    await upsertAudit(env.DB,row.id,{last_error:String(e?.message||e).slice(0,800)});
+    await upsertAudit(env.DB,row.id,{mapping_error:String(e?.message||e).slice(0,800),last_error:String(e?.message||e).slice(0,800)});
     return {mapped:0,metadata:0,failed:1};
   }
 }
@@ -182,7 +199,7 @@ async function mappingBatch(env,limit){
       a.hotel_id IS NULL OR a.mapping_status='pending' OR a.metadata_status='pending'
     )
     ORDER BY p.priority_rank LIMIT ?`).bind(clamp(limit,1,40)).all()).results||[];
-  const results=await chunks(rows,4,row=>processMappingHotel(env,row));
+  const results=await chunks(rows,2,row=>processMappingHotel(env,row));
   return {
     claimed:rows.length,
     mapped:results.reduce((n,x)=>n+x.mapped,0),
@@ -205,7 +222,7 @@ async function saveReviewEvidence(env,row,signal,environment){
     .bind(crypto.randomUUID(),row.hotel_id,provider,url,"api.liteapi.travel",signal.source_title,signal.sentiment,signal.summary,
       JSON.stringify(signal.attributes||[]),JSON.stringify(signal.best_for||[]),JSON.stringify(signal.avoid_if||[]),JSON.stringify(signal.tradeoffs||[]),
       null,signal.trip_context,signal.confidence,now,JSON.stringify({provider_hotel_id:row.provider_hotel_id,environment,categories:signal.categories||[]}),now,now).run();
-  await upsertAudit(env.DB,row.hotel_id,{review_status:"complete",review_at:now,last_error:null});
+  await upsertAudit(env.DB,row.hotel_id,{review_status:"complete",review_at:now,review_error:null});
 }
 
 async function reviewBatch(env,limit){
@@ -214,16 +231,16 @@ async function reviewBatch(env,limit){
     FROM hotel_nuitee_audit a JOIN hotel_enrichment_profiles p ON p.hotel_id=a.hotel_id
     WHERE p.cohort='priority_250' AND a.mapping_status IN ('mapped','review') AND a.review_status='pending'
     ORDER BY p.priority_rank LIMIT ?`).bind(clamp(limit,1,20)).all()).results||[];
-  const results=await chunks(rows,4,async row=>{
+  const results=await chunks(rows,2,async row=>{
     try{
       const reviews=await fetchNuiteeReviews(env,row.provider_hotel_id);
-      if(!reviews.ok){await upsertAudit(env.DB,row.hotel_id,{review_status:"failed",last_error:reviews.error});return {written:0,failed:1}}
+      if(!reviews.ok){await upsertAudit(env.DB,row.hotel_id,{review_status:"failed",review_error:reviews.error,last_error:reviews.error});return {written:0,failed:1}}
       const signal=summarizeNuiteeSentiment(reviews.data,row.provider_hotel_id);
-      if(!signal){await upsertAudit(env.DB,row.hotel_id,{review_status:"unavailable",review_at:nowIso(),last_error:null});return {written:0,failed:0}}
+      if(!signal){await upsertAudit(env.DB,row.hotel_id,{review_status:"unavailable",review_at:nowIso(),review_error:null});return {written:0,failed:0}}
       await saveReviewEvidence(env,row,signal,environment);
       return {written:1,failed:0};
     }catch(e){
-      await upsertAudit(env.DB,row.hotel_id,{review_status:"failed",last_error:String(e?.message||e).slice(0,800)});
+      await upsertAudit(env.DB,row.hotel_id,{review_status:"failed",review_error:String(e?.message||e).slice(0,800),last_error:String(e?.message||e).slice(0,800)});
       return {written:0,failed:1};
     }
   });
@@ -262,7 +279,7 @@ async function rateCoverageBatch(env,limit){
   const auditedAt=nowIso();
   for(const row of rows){
     const c=counts.get(row.hotel_id),pct=c.tested?Math.round(c.withRate/c.tested*100):0;
-    await upsertAudit(env.DB,row.hotel_id,{rate_windows_tested:c.tested,rate_windows_with_inventory:c.withRate,rate_coverage_pct:pct,rate_audited_at:auditedAt,last_error:null});
+    await upsertAudit(env.DB,row.hotel_id,{rate_windows_tested:c.tested,rate_windows_with_inventory:c.withRate,rate_coverage_pct:pct,rate_audited_at:auditedAt});
   }
   return {claimed:rows.length,windows:nuiteeCoverageWindows().length,observations,failures};
 }
@@ -313,6 +330,8 @@ export async function resetNuiteeAuditHotel(db,hotelId){
   await db.prepare(`INSERT INTO hotel_nuitee_audit (hotel_id,mapping_status,metadata_status,review_status,updated_at)
     VALUES (?,'pending','pending','pending',?)
     ON CONFLICT(hotel_id) DO UPDATE SET mapping_status='pending',metadata_status='pending',review_status='pending',
-      rate_audited_at=NULL,last_error=NULL,updated_at=excluded.updated_at`).bind(hotelId,nowIso()).run();
+      rate_audited_at=NULL,last_error=NULL,mapping_error=NULL,metadata_error=NULL,review_error=NULL,
+      candidate_provider_hotel_id=NULL,candidate_name=NULL,candidate_similarity=NULL,candidate_distance_km=NULL,mapping_stage=NULL,
+      updated_at=excluded.updated_at`).bind(hotelId,nowIso()).run();
   return {ok:true,hotel_id:hotelId};
 }
