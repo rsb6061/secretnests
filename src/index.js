@@ -511,6 +511,12 @@ async function route(request,env){
   if(request.method==="POST" && url.pathname==="/api/admin/media-ingest")return createMediaIngest(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/recompute-values")return recomputeValues(request,env);
   if(request.method==="GET" && url.pathname==="/health")return json({ok:true,service:"secretnests",runtime:"cloudflare-worker"});
+  if(request.method==="GET" && url.pathname==="/health/data"){
+    const hotels=Number((await env.DB.prepare("SELECT COUNT(*) n FROM hotels").first())?.n||0);
+    const reddit=Number((await env.DB.prepare("SELECT COUNT(*) n FROM reddit_evidence").first())?.n||0);
+    const creators=Number((await env.DB.prepare("SELECT COUNT(*) n FROM creator_profiles").first())?.n||0);
+    return json({ok:hotels===1066&&reddit===143,hotels,reddit_evidence:reddit,creators});
+  }
   if(request.method==="GET" && url.pathname==="/sitemap.xml")return sitemap(env);
   const media=url.pathname.match(/^\/media\/([^/]+)$/); if(request.method==="GET"&&media)return mediaAsset(decodeURIComponent(media[1]),env);
   const out=url.pathname.match(/^\/out\/([^/]+)$/); if(request.method==="GET"&&out)return outbound(decodeURIComponent(out[1]),request,env);
