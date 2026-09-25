@@ -7,6 +7,8 @@ import { nuiteeAdminBody } from "./nuitee-admin.js";
 import { recomputeHotelValuation } from "./value-engine.js";
 import { sameOrigin, bodyTooLarge, enforceRateLimit, adminEmail, safeLogError } from "./security.js";
 import { buildComparisonPairs, hotelSeoCopy, brandSlug } from "./seo-discovery.js";
+import { beginAuth, finishAuth, authMe, logout } from "./auth.js";
+import * as contributionFlow from "./contribution-flow.js";
 
 const ORIGIN = "https://secretnests.com";
 
@@ -800,8 +802,7 @@ async function contributePage(request,env){
   const qs=[source?"src="+encodeURIComponent(source):"",campaign?"campaign="+encodeURIComponent(campaign):""].filter(Boolean).join("&");
   const suffix=qs?"&"+qs:"";
   const progress=Math.min(100,Math.round(submitted/target*100));
-  return page(shell(`<section class="hero" data-autoevent="contribution_landing_view"><div class="eyebrow">Build the traveler value map</div><h1>Tell us what your hotel stay was actually worth.</h1><p>SecretNests is building its first 300 real stay observations. Share the nightly price you paid, what you'd happily pay again, and whether you'd return. Positive and negative takes are equally useful.</p><div class="hero-actions"><a class="btn" href="/add-your-trip${qs?"?"+qs:""}">Add any stay</a><a class="btn secondary" href="#priority-hotels">See hotels that need data</a></div></section>
-  <section class="proof"><div><strong>${submitted}</strong><span class="muted">submitted stays</span></div><div><strong>${published}</strong><span class="muted">published first-party stays</span></div><div><strong>${target}</strong><span class="muted">first milestone</span></div><div><strong>${progress}%</strong><span class="muted">submission progress</span></div></section>
+  return page(shell(`<section class="hero" data-autoevent="contribution_landing_view"><div class="eyebrow">Build the traveler value map</div><h1>Tell us what your hotel stay was actually worth.</h1><p>SecretNests is building its first 300 real stay observations. Share the nightly price you paid, what you'd happily pay again, and whether you'd return. Positive and negative takes are equally useful.</p><div class="hero-actions"><a class="btn" href="/add-your-trip${qs?"?"+qs:""}">Add any stay</a></div></section>
   <section class="section"><div class="section-head"><div><div class="eyebrow">Why contribute</div><h2>Two numbers are more useful than another star rating.</h2></div></div><div class="acquisition-grid"><div class="card"><h3>What you paid</h3><p>The real nightly rate, with room and booking context.</p></div><div class="card"><h3>What you'd pay again</h3><p>Your own price threshold for repeating the stay.</p></div><div class="card"><h3>Would you return?</h3><p>A clean repeat-intent signal, independent of affiliate economics.</p></div></div></section>
   <section class="section" id="priority-hotels"><div class="section-head"><div><div class="eyebrow">Priority data gaps</div><h2>Stayed at one of these?</h2></div><span class="muted">These are high-priority SecretNests hotels without a published first-party value sample yet.</span></div><div class="grid">${targets.map(h=>`<a class="card" data-event="contribution_hotel_select" data-hotel-id="${attr(h.id)}" href="/add-your-trip?hotel=${encodeURIComponent(h.slug)}${suffix}"><div class="eyebrow">Priority #${h.priority_rank}</div><h3>${esc(h.name)}</h3><p class="muted">${esc([h.city,h.country].filter(Boolean).join(", "))} · ${Number(h.submission_count||0)} pending/submitted</p><strong>Add your stay →</strong></a>`).join("")||'<div class="notice">The current priority cohort already has first-party coverage.</div>'}</div></section>
   <section class="section"><div class="notice"><strong>No pay-for-positive-review system.</strong><p>Contributions can be favorable, mixed, or negative. Affiliate revenue and creator economics are kept separate from review sentiment and value opinions.</p></div></section>`),env,{title:"Contribute a hotel stay | SecretNests",description:"Share what you paid for a hotel, what you would pay again, and whether you would return. Help build SecretNests traveler-assessed hotel value data.",canonical:"/contribute"});
@@ -1812,8 +1813,13 @@ async function route(request,env){
   if(request.method==="GET" && /^\/destination\//.test(url.pathname))return legacyDestinationRedirect(request,env);
   if(request.method==="GET" && url.pathname==="/creators")return creatorsPage(env);
   if(request.method==="GET" && url.pathname==="/contribute")return contributePage(request,env);
-  if(request.method==="GET" && url.pathname==="/add-your-trip")return addTripPage(request,env);
-  if(request.method==="POST" && url.pathname==="/add-your-trip")return submitTrip(request,env);
+  if(request.method==="GET" && url.pathname==="/login")return beginAuth(request,env,ORIGIN);
+  if(request.method==="GET" && url.pathname==="/auth/callback")return finishAuth(request,env,ORIGIN);
+  if(request.method==="GET" && url.pathname==="/api/auth/me")return authMe(request,env);
+  if(request.method==="GET" && url.pathname==="/logout")return logout(request,env,ORIGIN);
+  if(request.method==="GET" && url.pathname==="/add-your-trip")return contributionFlow.addTripPage(request,env,{page,shell,esc,attr,money,ORIGIN});
+  if(request.method==="POST" && url.pathname==="/add-your-trip")return contributionFlow.createTripDraft(request,env,{page,shell,esc,attr,money,ORIGIN});
+  if(request.method==="POST" && url.pathname==="/add-your-trip/publish")return contributionFlow.publishTripDraft(request,env,{page,shell,esc,attr,money,ORIGIN});
   if(request.method==="GET" && url.pathname==="/about")return aboutPage(env);
   if(request.method==="GET" && url.pathname==="/privacy")return legalPage("privacy",env);
   if(request.method==="GET" && url.pathname==="/terms")return legalPage("terms",env);
