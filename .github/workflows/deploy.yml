@@ -84,6 +84,10 @@ jobs:
           BOOKING_DEMAND_API_TOKEN: ${{ secrets.BOOKING_DEMAND_API_TOKEN }}
           BOOKING_DEMAND_AFFILIATE_ID: ${{ secrets.BOOKING_DEMAND_AFFILIATE_ID }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          AUTH0_LOGIN_DOMAIN: ${{ secrets.AUTH0_LOGIN_DOMAIN }}
+          AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
+          AUTH0_CLIENT_ID: ${{ secrets.AUTH0_CLIENT_ID }}
+          AUTH0_CLIENT_SECRET: ${{ secrets.AUTH0_CLIENT_SECRET }}
         run: |
           set -euo pipefail
           TOKEN="$(openssl rand -hex 32)"
@@ -97,6 +101,10 @@ jobs:
             --arg booking_token "$BOOKING_DEMAND_API_TOKEN" \
             --arg booking_affiliate "$BOOKING_DEMAND_AFFILIATE_ID" \
             --arg openai "$OPENAI_API_KEY" \
+            --arg auth0_login_domain "$AUTH0_LOGIN_DOMAIN" \
+            --arg auth0_domain "$AUTH0_DOMAIN" \
+            --arg auth0_client_id "$AUTH0_CLIENT_ID" \
+            --arg auth0_client_secret "$AUTH0_CLIENT_SECRET" \
             '{
               PRODUCTION_ACTIVATION_TOKEN: $activation
             }
@@ -104,7 +112,11 @@ jobs:
             + (if $serpapi != "" then {SERPAPI_API_KEY:$serpapi} else {} end)
             + (if $booking_token != "" then {BOOKING_DEMAND_API_TOKEN:$booking_token} else {} end)
             + (if $booking_affiliate != "" then {BOOKING_DEMAND_AFFILIATE_ID:$booking_affiliate} else {} end)
-            + (if $openai != "" then {OPENAI_API_KEY:$openai} else {} end)' \
+            + (if $openai != "" then {OPENAI_API_KEY:$openai} else {} end)
+            + (if $auth0_login_domain != "" then {AUTH0_LOGIN_DOMAIN:$auth0_login_domain} else {} end)
+            + (if $auth0_domain != "" then {AUTH0_DOMAIN:$auth0_domain} else {} end)
+            + (if $auth0_client_id != "" then {AUTH0_CLIENT_ID:$auth0_client_id} else {} end)
+            + (if $auth0_client_secret != "" then {AUTH0_CLIENT_SECRET:$auth0_client_secret} else {} end)' \
             > /tmp/secretnests-secrets.json
           chmod 600 /tmp/secretnests-secrets.json
 
@@ -114,6 +126,10 @@ jobs:
           [ -n "$BOOKING_DEMAND_API_TOKEN" ] && configured=$((configured+1)) || true
           [ -n "$BOOKING_DEMAND_AFFILIATE_ID" ] && configured=$((configured+1)) || true
           [ -n "$OPENAI_API_KEY" ] && configured=$((configured+1)) || true
+          [ -n "$AUTH0_LOGIN_DOMAIN" ] && configured=$((configured+1)) || true
+          [ -n "$AUTH0_DOMAIN" ] && configured=$((configured+1)) || true
+          [ -n "$AUTH0_CLIENT_ID" ] && configured=$((configured+1)) || true
+          [ -n "$AUTH0_CLIENT_SECRET" ] && configured=$((configured+1)) || true
           echo "Prepared activation token plus $configured configured optional provider secret(s) for one atomic deploy."
 
       - name: Deploy Worker with secrets
