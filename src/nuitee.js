@@ -13,37 +13,73 @@ function config(env){
 
 export function nuiteeEnvironment(env){return config(env).environment;}
 
-async function request(env,path,{method="GET",query=null,body=null,timeoutMs=18000}={}){
+const sleep=(ms)=>new Promise(resolve=>setTimeout(resolve,ms));
+
+async function request(env,path,{method="GET",query=null,body=null,timeoutMs=18000,retries=2}={}){
   const cfg=config(env);
   if(!cfg.key)return {ok:false,status:0,error:"nuitee_not_configured"};
   const u=new URL(cfg.baseUrl+path);
   for(const [k,v] of Object.entries(query||{}))if(v!==undefined&&v!==null&&v!=="")u.searchParams.set(k,String(v));
-  const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),timeoutMs);
-  try{
-    const r=await fetch(u.toString(),{
-      method,
-      headers:{"X-API-Key":cfg.key,"accept":"application/json",...(body?{"content-type":"application/json"}:{})},
-      body:body?JSON.stringify(body):undefined,
-      signal:ctl.signal
-    });
-    let data={};try{data=await r.json()}catch{}
-    if(!r.ok)return {ok:false,status:r.status,error:String(data?.error?.message||data?.message||data?.error||("http_"+r.status)).slice(0,800),data};
-    return {ok:true,status:r.status,data};
-  }catch(e){
-    return {ok:false,status:0,error:String(e?.name==="AbortError"?"timeout":e?.message||e).slice(0,800)};
-  }finally{clearTimeout(timer)}
+  const bodyText=body?JSON.stringify(body):undefined;
+  let last=null;
+  for(let attempt=0;attempt<=retries;attempt++){
+    const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),timeoutMs);
+    try{
+      const r=await fetch(u.toString(),{
+        method,
+        headers:{"X-API-Key":cfg.key,"accept":"application/json",...(body?{"content-type":"application/json"}:{})},
+        body:bodyText,
+        signal:ctl.signal
+      });
+      let data={};try{data=await r.json()}catch{}
+      if(r.ok)return {ok:true,status:r.status,data,attempts:attempt+1};
+      const error=String(data?.error?.message||data?.message||data?.error||("http_"+r.status)).slice(0,800);
+      last={ok:false,status:r.status,error,data,attempts:attempt+1};
+      if(![429,500,502,503,504].includes(r.status)||attempt>=retries)return last;
+      const retryAfter=Number(r.headers.get("retry-after"));
+      await sleep(Number.isFinite(retryAfter)&&retryAfter>0?Math.min(retryAfter*1000,3000):350+attempt*650);
+    }catch(e){
+      last={ok:false,status:0,error:String(e?.name==="AbortError"?"timeout":e?.message||e).slice(0,800),attempts:attempt+1};
+      if(attempt>=retries)return last;
+      await sleep(350+attempt*650);
+    }finally{clearTimeout(timer)}
+  }
+  return last||{ok:false,status:0,error:"nuitee_request_failed"};
 }
 
 function norm(v=""){
   return String(v).normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLowerCase()
     .replace(/&/g," and ").replace(/[^a-z0-9]+/g," ").trim();
 }
-function words(v){return new Set(norm(v).split(/\s+/).filter(Boolean).filter(x=>x!=="the"));}
+const GENERIC_NAME_WORDS=new Set(["a","an","the","hotel","hotels","resort","resorts","residence","residences","spa","at","by","and"]);
+function words(v,{core=false}={}){
+  return new Set(norm(v).split(/\s+/).filter(Boolean).filter(x=>!core||!GENERIC_NAME_WORDS.has(x)));
+}
+function tokenSimilarity(a,b,{core=false}={}){
+  const A=words(a,{core}),B=words(b,{core});
+  if(!A.size||!B.size)return 0;
+  const inter=[...A].filter(x=>B.has(x)).length,union=new Set([...A,...B]).size;
+  const jac=union?inter/union:0,containment=inter/Math.min(A.size,B.size);
+  return Math.max(jac,containment*0.92);
+}
 export function nameSimilarity(a,b){
   const na=norm(a),nb=norm(b);if(!na||!nb)return 0;if(na===nb)return 1;
-  const A=words(a),B=words(b),inter=[...A].filter(x=>B.has(x)).length,union=new Set([...A,...B]).size;
-  const jac=union?inter/union:0,containment=Math.min(A.size,B.size)?inter/Math.min(A.size,B.size):0;
-  return Math.max(jac,containment*0.9);
+  return Math.max(tokenSimilarity(a,b),tokenSimilarity(a,b,{core:true}));
+}
+export function nuiteeNameVariants(hotel){
+  const raw=String(hotel?.name||"").trim();
+  const variants=[raw];
+  const suffixes=[hotel?.city,hotel?.country].map(x=>norm(x)).filter(Boolean);
+  let n=norm(raw);
+  for(const suffix of suffixes){
+    if(n.endsWith(" "+suffix))n=n.slice(0,-suffix.length).trim();
+  }
+  const cleaned=n.split(" ").filter(x=>!["a","an","the","hotel","resort","resorts","residence","residences","spa","at","by"].includes(x)).join(" ");
+  if(n&&n!==norm(raw))variants.push(n);
+  if(cleaned&&cleaned!==norm(raw)&&cleaned!==n)variants.push(cleaned);
+  const comma=raw.split(",")[0]?.trim();
+  if(comma&&norm(comma)!==norm(raw))variants.push(comma);
+  return [...new Set(variants.map(x=>String(x||"").trim()).filter(Boolean))].slice(0,4);
 }
 export function haversineKm(aLat,aLng,bLat,bLng){
   const vals=[aLat,aLng,bLat,bLng].map(Number);if(vals.some(x=>!Number.isFinite(x)))return null;
@@ -62,32 +98,82 @@ function coords(x){
   const l=x?.location||x?.coordinates||x?.gps_coordinates||{};
   return {lat:Number(x?.latitude??l?.latitude??l?.lat),lng:Number(x?.longitude??l?.longitude??l?.lng)};
 }
-export function matchNuiteeCandidate(hotel,items=[]){
-  const ranked=items.map(item=>{
+export function rankNuiteeCandidates(hotel,items=[]){
+  return items.map(item=>{
     const id=hotelId(item),name=String(item?.name??item?.hotelName??"").trim(),c=coords(item);
     const distance=haversineKm(hotel.lat,hotel.lng,c.lat,c.lng),similarity=nameSimilarity(hotel.name,name);
-    const score=similarity-(distance==null?0.12:Math.min(distance/4,0.3));
-    return {item,id,name,similarity,distance,score};
+    const exact=norm(hotel.name)===norm(name);
+    const distancePenalty=distance==null?0.06:Math.min(distance/25,0.28);
+    const score=similarity+(exact?0.22:0)-distancePenalty;
+    return {item,id,name,similarity,distance,score,exact,stage:item?.__nuitee_stage||null};
   }).filter(x=>x.id&&x.name).sort((a,b)=>b.score-a.score);
-  const best=ranked[0];if(!best)return null;
-  const accepted=best.similarity>=0.7||(best.similarity>=0.52&&best.distance!=null&&best.distance<=0.2);
-  if(!accepted)return null;
-  return {...best,confidence:best.similarity>=0.84&&(best.distance==null||best.distance<=0.3)?"high":"medium"};
+}
+function confidenceForCandidate(best){
+  if(!best)return null;
+  const d=best.distance;
+  if(best.exact&&(d==null||d<=5))return "high";
+  if(best.similarity>=0.94&&(d==null||d<=3))return "high";
+  if(best.exact&&(d==null||d<=20))return "medium";
+  if(best.similarity>=0.86&&(d==null||d<=10))return "medium";
+  if(best.similarity>=0.76&&d!=null&&d<=3)return "medium";
+  if(best.similarity>=0.66&&d!=null&&d<=0.75)return "medium";
+  return null;
+}
+export function matchNuiteeCandidate(hotel,items=[]){
+  const best=rankNuiteeCandidates(hotel,items)[0]||null;
+  if(!best)return null;
+  const confidence=confidenceForCandidate(best);
+  return confidence?{...best,confidence}:null;
+}
+function withStage(items,stage){
+  return (items||[]).map(item=>({...item,__nuitee_stage:stage}));
 }
 
 export async function findNuiteeHotel(env,hotel){
-  const q={hotelName:hotel.name,limit:50,language:"en",timeout:6};
-  if(Number.isFinite(Number(hotel.lat))&&Number.isFinite(Number(hotel.lng))){
-    q.latitude=Number(hotel.lat);q.longitude=Number(hotel.lng);q.radius=3000;
-  }else{
-    if(hotel.city)q.cityName=hotel.city;
-    if(/^[A-Za-z]{2}$/.test(String(hotel.country||"")))q.countryCode=String(hotel.country).toUpperCase();
+  const base={limit:200,language:"en",timeout:8};
+  const hasGeo=Number.isFinite(Number(hotel.lat))&&Number.isFinite(Number(hotel.lng));
+  const variants=nuiteeNameVariants(hotel);
+  const stages=[];
+  if(hasGeo){
+    stages.push({name:"full_name_geo",query:{...base,hotelName:variants[0],latitude:Number(hotel.lat),longitude:Number(hotel.lng),radius:15000}});
+    stages.push({name:"geo_only",query:{...base,latitude:Number(hotel.lat),longitude:Number(hotel.lng),radius:15000}});
   }
-  const r=await request(env,"/data/hotels",{query:q});
-  if(!r.ok)return r;
-  const match=matchNuiteeCandidate(hotel,candidates(r.data));
-  if(!match)return {ok:false,error:"nuitee_no_confident_hotel_match",candidate_count:candidates(r.data).length};
-  return {ok:true,match,environment:config(env).environment};
+  if(hotel.city){
+    stages.push({name:"city_name",query:{...base,hotelName:variants[0],cityName:String(hotel.city)}});
+  }
+  for(const variant of variants.slice(1,3)){
+    if(hasGeo)stages.push({name:"variant_geo",query:{...base,hotelName:variant,latitude:Number(hotel.lat),longitude:Number(hotel.lng),radius:20000}});
+    else if(hotel.city)stages.push({name:"variant_city",query:{...base,hotelName:variant,cityName:String(hotel.city)}});
+  }
+  stages.push({name:"name_only",query:{...base,hotelName:variants[0]}});
+
+  const seen=new Map();
+  const errors=[];
+  for(const stage of stages){
+    const r=await request(env,"/data/hotels",{query:stage.query,timeoutMs:18000,retries:2});
+    if(!r.ok){
+      errors.push(stage.name+":"+r.error);
+      if(r.status===401||r.status===403)return {...r,stage:stage.name};
+      continue;
+    }
+    for(const item of withStage(candidates(r.data),stage.name)){
+      const id=hotelId(item);if(id&&!seen.has(id))seen.set(id,item);
+    }
+    const ranked=rankNuiteeCandidates(hotel,[...seen.values()]);
+    const best=ranked[0]||null,match=matchNuiteeCandidate(hotel,[...seen.values()]);
+    if(match){
+      return {ok:true,match,environment:config(env).environment,candidate_count:seen.size,stages_tried:stages.slice(0,stages.indexOf(stage)+1).map(x=>x.name)};
+    }
+    if(best?.exact&&best.distance!=null&&best.distance>20)break;
+  }
+  const best=rankNuiteeCandidates(hotel,[...seen.values()])[0]||null;
+  return {
+    ok:false,
+    error:errors.length===stages.length?("nuitee_search_failed:"+errors.join("|")):"nuitee_no_confident_hotel_match",
+    candidate_count:seen.size,
+    candidate:best?{id:best.id,name:best.name,similarity:best.similarity,distance:best.distance,stage:best.stage,score:best.score}:null,
+    stages_tried:stages.map(x=>x.name)
+  };
 }
 
 function num(v){const n=Number(v);return Number.isFinite(n)&&n>0?n:null;}
@@ -158,7 +244,7 @@ export async function fetchNuiteeRates(env,hotelIdValue,window){
 }
 
 export async function fetchNuiteeReviews(env,hotelIdValue){
-  const r=await request(env,"/data/reviews",{query:{hotelId:String(hotelIdValue),limit:20,offset:0,timeout:6,getSentiment:true}});
+  const r=await request(env,"/data/reviews",{query:{hotelId:String(hotelIdValue),limit:20,offset:0,timeout:15,getSentiment:true},timeoutMs:25000,retries:2});
   if(!r.ok)return r;
   return {ok:true,data:r.data,environment:config(env).environment};
 }
@@ -197,7 +283,7 @@ export function summarizeNuiteeSentiment(payload,hotelIdValue){
 
 
 export async function fetchNuiteeHotelDetails(env,hotelIdValue){
-  const r=await request(env,"/data/hotel",{query:{hotelId:String(hotelIdValue),timeout:6,language:"en"}});
+  const r=await request(env,"/data/hotel",{query:{hotelId:String(hotelIdValue),timeout:10,language:"en"},timeoutMs:22000,retries:2});
   if(!r.ok)return r;
   return {ok:true,data:r.data?.data||r.data,environment:config(env).environment};
 }
