@@ -11,6 +11,7 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -41,6 +42,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          set -x
+          curl() { command curl --connect-timeout 3 --max-time 20 "$@"; }
           npx wrangler dev --local --config wrangler.ci.toml --port 8787 > /tmp/secretnests-worker.log 2>&1 &
           PID=$!
           trap 'kill $PID || true; cat /tmp/secretnests-worker.log' EXIT
