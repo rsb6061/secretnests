@@ -745,7 +745,7 @@ async function comparisonPage(pair,env){
   const aRate=Number(a.current_observed_rate??a.price_estimate_min),bRate=Number(b.current_observed_rate??b.price_estimate_min);
   const rateContext=Number.isFinite(aRate)&&Number.isFinite(bRate)?(aRate===bRate?"Their latest/estimated nightly prices are currently similar.":aRate<bRate?`${a.name} is currently the lower-priced option in the observed/estimated data by about ${money(Math.abs(bRate-aRate))} per night.`:`${b.name} is currently the lower-priced option in the observed/estimated data by about ${money(Math.abs(aRate-bRate))} per night.`):"Current comparable price data is incomplete.";
   const cityLinks=[a,b].filter(x=>x.city&&x.country).map(x=>({label:"More luxury hotels in "+x.city,url:"/destinations/"+slugify(x.country)+"/"+slugify(x.city)}));
-  const jsonLd={"@context":"https://schema.org","@type":"ComparisonPage","name":a.name+" vs. "+b.name,"url":ORIGIN+"/compare/"+pair,"about":[{"@type":"Hotel","name":a.name,"url":ORIGIN+"/hotel/"+a.slug},{"@type":"Hotel","name":b.name,"url":ORIGIN+"/hotel/"+b.slug}]};
+  const jsonLd={"@context":"https://schema.org","@type":"WebPage","name":a.name+" vs. "+b.name,"url":ORIGIN+"/compare/"+pair,"about":[{"@type":"Hotel","name":a.name,"url":ORIGIN+"/hotel/"+a.slug},{"@type":"Hotel","name":b.name,"url":ORIGIN+"/hotel/"+b.slug}]};
   return page(shell(`<section class="hero"><div class="eyebrow">Hotel comparison</div><h1>${esc(a.name)} vs. ${esc(b.name)}: price, reviews & value</h1><p>Side-by-side hotel data without declaring a universal winner. Use the price, first-party value sample, location and review evidence to decide which tradeoff fits your trip.</p></section>
   <div class="grid">${card(a)}${card(b)}</div>
   <section class="section"><h2>Price difference</h2><div class="notice"><p>${esc(rateContext)}</p><p class="kicker">Observed rates can refer to different future stay dates or room types. Check the date and room context before treating them as like-for-like.</p></div></section>
@@ -1271,33 +1271,42 @@ async function internalMarketPilot(request,env){
   return json({ok:true,mode:String(env.MARKET_INTELLIGENCE_MODE||"pilot"),rates,evidence});
 }
 async function sitemap(env){
-  const urls=[ORIGIN+"/",ORIGIN+"/destinations",ORIGIN+"/creators",ORIGIN+"/about",ORIGIN+"/value",ORIGIN+"/compare",ORIGIN+"/add-your-trip",ORIGIN+"/privacy",ORIGIN+"/terms",ORIGIN+"/disclosures"];
+  const urls=[ORIGIN+"/",ORIGIN+"/destinations",ORIGIN+"/brands",ORIGIN+"/creators",ORIGIN+"/about",ORIGIN+"/value",ORIGIN+"/compare",ORIGIN+"/contribute",ORIGIN+"/add-your-trip",ORIGIN+"/privacy",ORIGIN+"/terms",ORIGIN+"/disclosures"];
   try{
-    const hotels=(await env.DB.prepare("SELECT slug FROM hotels WHERE is_published=1 AND description IS NOT NULL AND length(description)>=80").all()).results||[];
+    const hotels=(await env.DB.prepare(`SELECT h.slug FROM hotels h LEFT JOIN hotel_enrichment_profiles p ON p.hotel_id=h.id
+      WHERE h.is_published=1 AND ((h.description IS NOT NULL AND length(h.description)>=80) OR p.cohort='priority_250')`).all()).results||[];
     const creators=(await env.DB.prepare("SELECT handle FROM creator_profiles WHERE is_public=1 AND COALESCE(is_demo,0)=0").all()).results||[];
     const lists=(await env.DB.prepare("SELECT cp.handle,l.slug FROM lists l JOIN creator_profiles cp ON cp.id=l.creator_id WHERE l.is_public=1 AND cp.is_public=1 AND COALESCE(cp.is_demo,0)=0").all()).results||[];
     const dests=(await env.DB.prepare("SELECT DISTINCT city,country FROM hotels WHERE is_published=1 AND city IS NOT NULL AND city<>'' AND country IS NOT NULL AND country<>''").all()).results||[];
     const countries=(await env.DB.prepare("SELECT DISTINCT country FROM hotels WHERE is_published=1 AND country IS NOT NULL AND country<>''").all()).results||[];
+    const brands=(await env.DB.prepare("SELECT brand_name,COUNT(*) n FROM hotels WHERE is_published=1 AND brand_name IS NOT NULL AND trim(brand_name)<>'' GROUP BY brand_name HAVING COUNT(*)>=2").all()).results||[];
+    const top=(await env.DB.prepare(`SELECT h.name,h.slug,h.city,h.country,p.priority_rank FROM hotel_enrichment_profiles p JOIN hotels h ON h.id=p.hotel_id
+      WHERE p.cohort='priority_250' AND h.is_published=1 ORDER BY p.priority_rank LIMIT 250`).all()).results||[];
+    const pairs=buildComparisonPairs(top,{maxPairs:120,perGroup:4});
     urls.push(
       ...hotels.map(x=>ORIGIN+"/hotel/"+encodeURIComponent(x.slug)),
       ...creators.map(x=>ORIGIN+"/@"+encodeURIComponent(x.handle)),
       ...lists.map(x=>ORIGIN+"/@"+encodeURIComponent(x.handle)+"/lists/"+encodeURIComponent(x.slug)),
       ...dests.map(x=>ORIGIN+"/destinations/"+slugify(x.country)+"/"+slugify(x.city)),
-      ...countries.map(x=>ORIGIN+"/value/country/"+slugify(x.country))
+      ...countries.map(x=>ORIGIN+"/value/country/"+slugify(x.country)),
+      ...brands.map(x=>ORIGIN+"/brands/"+brandSlug(x.brand_name)),
+      ...pairs.map(x=>ORIGIN+x.path)
     );
   }catch(e){console.error("sitemap_failed",safeLogError(e))}
   return new Response('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+[...new Set(urls)].map(u=>'<url><loc>'+esc(u)+'</loc></url>').join("")+'</urlset>',{headers:{"content-type":"application/xml; charset=utf-8","cache-control":"public,max-age=900"}});
 }
-
 async function route(request,env){
   const url=new URL(request.url);
   if(url.hostname==="www.secretnests.com") return Response.redirect(ORIGIN+url.pathname+url.search,301);
   if(request.method==="GET" && url.pathname==="/")return home(env);
   if(request.method==="GET" && url.pathname==="/search")return searchPage(request,env);
   if(request.method==="GET" && url.pathname==="/destinations")return destinationsPage(env);
+  if(request.method==="GET" && url.pathname==="/brands")return brandsPage(env);
+  const brand=url.pathname.match(/^\/brands\/([^/]+)$/); if(request.method==="GET"&&brand)return brandPage(decodeURIComponent(brand[1]),env);
   const cleanDest=url.pathname.match(/^\/destinations\/([^/]+)\/([^/]+)$/); if(request.method==="GET"&&cleanDest)return destinationPage(decodeURIComponent(cleanDest[1]),decodeURIComponent(cleanDest[2]),env);
   if(request.method==="GET" && /^\/destination\//.test(url.pathname))return legacyDestinationRedirect(request,env);
   if(request.method==="GET" && url.pathname==="/creators")return creatorsPage(env);
+  if(request.method==="GET" && url.pathname==="/contribute")return contributePage(request,env);
   if(request.method==="GET" && url.pathname==="/add-your-trip")return addTripPage(request,env);
   if(request.method==="POST" && url.pathname==="/add-your-trip")return submitTrip(request,env);
   if(request.method==="GET" && url.pathname==="/about")return aboutPage(env);
@@ -1327,6 +1336,7 @@ async function route(request,env){
   if(request.method==="GET" && url.pathname==="/api/admin/enrichment/next")return adminEnrichmentNext(request,env);
   if(request.method==="POST" && url.pathname==="/api/admin/enrichment/apply")return adminEnrichmentApply(request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/admin/enrichment")return adminEnrichmentPage(request,env);
+  if(request.method==="GET" && url.pathname==="/admin/contributions")return adminContributionsPage(request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/admin/nuitee")return adminNuiteePage(request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/admin/travelpayouts")return adminTravelpayoutsPage(request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/admin/rates")return adminRatesPage(request,env);
@@ -1340,7 +1350,7 @@ async function route(request,env){
   const list=url.pathname.match(/^\/@([^/]+)\/lists\/([^/]+)$/); if(request.method==="GET"&&list)return listPage(decodeURIComponent(list[1]),decodeURIComponent(list[2]),env);
   const creator=url.pathname.match(/^\/@([^/]+)$/); if(request.method==="GET"&&creator)return creatorPage(decodeURIComponent(creator[1]),env);
   if(request.method==="GET" && url.pathname==="/robots.txt")return new Response("User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /out/\nSitemap: https://secretnests.com/sitemap.xml\n",{headers:{"content-type":"text/plain; charset=utf-8","cache-control":"public,max-age=3600"}});
-  if(request.method==="GET" && url.pathname==="/llms.txt")return new Response("# SecretNests\n\nSecretNests is a traveler-led luxury hotel valuation and taste network. Core data includes actual paid prices, traveler willingness-to-pay, hotel value ranges, public creator lists and attributable booking outcomes.\n\nCanonical site: https://secretnests.com\nHotel pages: /hotel/{slug}\nDestinations: /destinations/{country}/{city}\nComparisons: /compare/{hotel-a}-vs-{hotel-b}\nValue discovery: /value\nCreators: /@{handle}\nLists: /@{handle}/lists/{slug}\n",{headers:{"content-type":"text/plain; charset=utf-8","cache-control":"public,max-age=3600"}});
+  if(request.method==="GET" && url.pathname==="/llms.txt")return new Response("# SecretNests\n\nSecretNests is a traveler-led luxury hotel valuation and taste network. Core data includes actual paid prices, traveler willingness-to-pay, hotel value ranges, public creator lists and attributable booking outcomes.\n\nCanonical site: https://secretnests.com\nHotel pages: /hotel/{slug}\nDestinations: /destinations/{country}/{city}\nBrands: /brands/{brand}\nComparisons: /compare/{hotel-a}-vs-{hotel-b}\nContribute: /contribute\nValue discovery: /value\nCreators: /@{handle}\nLists: /@{handle}/lists/{slug}\n",{headers:{"content-type":"text/plain; charset=utf-8","cache-control":"public,max-age=3600"}});
   return new Response("Not found",{status:404,headers:{"content-type":"text/plain; charset=utf-8"}});
 }
 
