@@ -542,11 +542,11 @@ const valueTone = (classification="") => String(classification).includes("below"
 const hotelCard = (h) => `<a class="card" href="/hotel/${encodeURIComponent(h.slug)}">
   <div class="eyebrow">${esc([h.city,h.country].filter(Boolean).join(", "))}</div>
   <h3>${esc(h.name)}</h3>
-  ${h.sample_size ? `<span class="value-badge ${valueTone(h.value_classification)}">${esc(h.value_classification||"traveler value available")}</span>` : '<span class="value-badge">price context available</span>'}
+  ${h.sample_size ? (!String(h.value_classification||"").toLowerCase().startsWith("insufficient") ? `<span class="value-badge ${valueTone(h.value_classification)}">${esc(h.value_classification||"traveler value available")}</span>` : "") : '<span class="value-badge">price context available</span>'}
   <p>${esc((h.description||"").slice(0,170))}</p>
   <div class="price-line"><div><div class="kicker">Estimated rate</div><strong>${money(h.price_estimate_min)}–${money(h.price_estimate_max)}</strong></div>
   <div style="text-align:right"><div class="kicker">Traveler value</div><strong>${h.sample_size?money(h.median_would_pay):"—"}</strong></div></div>
-  <p class="muted">${h.sample_size?`${h.sample_size} observation(s) · ${esc(h.confidence||"")} confidence`:"Fair-value sample building."}</p>
+  <p class="muted">${h.sample_size?`${h.sample_size} observation${Number(h.sample_size)===1?"":"s"}${h.confidence&&!String(h.confidence).toLowerCase().startsWith("insufficient")?` · ${esc(h.confidence)} confidence`:""}`:"Fair-value sample building."}</p>
 </a>`;
 
 
@@ -588,10 +588,10 @@ async function home(env){
   <div class="grid">${top.map(h=>`<a class="card" href="/hotel/${encodeURIComponent(h.slug)}">
     <div class="eyebrow">${esc([h.city,h.country].filter(Boolean).join(", "))}</div>
     <h3>${esc(h.name)}</h3>
-    <span class="value-badge ${valueClass(h)}">${esc(valueLabel(h))}</span>
+    ${!h.sample_size || !String(h.value_classification||"").toLowerCase().startsWith("insufficient") ? `<span class="value-badge ${valueClass(h)}">${esc(valueLabel(h))}</span>` : ""}
     <div class="price-line"><div><div class="kicker">Estimated rate</div><strong>${money(h.price_estimate_min)}–${money(h.price_estimate_max)}</strong></div>
     <div style="text-align:right"><div class="kicker">Traveler value</div><strong>${h.sample_size?money(h.median_would_pay):"—"}</strong></div></div>
-    <p class="muted">${h.sample_size?`${h.sample_size} value observation(s) · ${esc(h.confidence||"")} confidence`:"First-party fair-value sample building now."}</p>
+    <p class="muted">${h.sample_size?`${h.sample_size} value observation${Number(h.sample_size)===1?"":"s"}${h.confidence&&!String(h.confidence).toLowerCase().startsWith("insufficient")?` · ${esc(h.confidence)} confidence`:""}`:"First-party fair-value sample building now."}</p>
   </a>`).join("")}</div>
 </section>
 
