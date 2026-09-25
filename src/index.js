@@ -1,4 +1,4 @@
-import { handleBootstrap } from "./bootstrap.js";
+import { handleBootstrap, runAutomaticBootstrap } from "./bootstrap.js";
 import { recomputeHotelValuation } from "./value-engine.js";
 import { sameOrigin, bodyTooLarge, enforceRateLimit, adminEmail, safeLogError } from "./security.js";
 
@@ -523,6 +523,9 @@ async function route(request,env){
 }
 
 export default {
+  async scheduled(controller,env,ctx){
+    ctx.waitUntil(runAutomaticBootstrap(env).then(r=>console.log(JSON.stringify({type:"bootstrap",...r}))).catch(e=>console.error(JSON.stringify({type:"bootstrap_error",message:safeLogError(e)}))));
+  },
   async fetch(request,env,ctx){
     const requestId=crypto.randomUUID();
     const started=Date.now();
