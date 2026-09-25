@@ -52,7 +52,7 @@ function page(body, env, {
   const canonicalUrl = canonical.startsWith("http") ? canonical : ORIGIN + canonical;
   return new Response(`<!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel="icon" type="image/png" sizes="180x180" href="/favicon.png"><link rel="shortcut icon" href="/favicon.png"><link rel="apple-touch-icon" href="/favicon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=3"><link rel="icon" type="image/png" sizes="180x180" href="/favicon.png?v=3"><link rel="shortcut icon" href="/favicon.ico?v=3"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3">
 <title>${esc(title)}</title><meta name="description" content="${attr(description)}"><meta name="robots" content="${attr(robots)}">${env.GOOGLE_SITE_VERIFICATION ? `<meta name="google-site-verification" content="${attr(env.GOOGLE_SITE_VERIFICATION)}">` : ""}
 <link rel="canonical" href="${attr(canonicalUrl)}"><meta property="og:title" content="${attr(title)}"><meta property="og:description" content="${attr(description)}"><meta property="og:url" content="${attr(canonicalUrl)}"><meta property="og:type" content="website">
 ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd).replace(/</g,"\\u003c")}</script>` : ""}
