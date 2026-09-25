@@ -17,16 +17,16 @@ function absolutize(base,href){
 }
 
 function stripHtml(s=""){
-  return String(s).replace(/<script\\b[^>]*>[\\s\\S]*?<\\/script>/gi," ")
-    .replace(/<style\\b[^>]*>[\\s\\S]*?<\\/style>/gi," ")
+  return String(s).replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi," ")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi," ")
     .replace(/<[^>]+>/g," ")
     .replace(/&nbsp;/gi," ").replace(/&amp;/gi,"&").replace(/&quot;/gi,'"').replace(/&#39;/gi,"'")
-    .replace(/\\s+/g," ").trim();
+    .replace(/\s+/g," ").trim();
 }
 
 function extractJsonLd(html){
   const out=[];
-  const re=/<script[^>]+type=["']application\\/ld\\+json[#'][^>]*>([\\s\\S]*?)<\\/script>/gi;
+  const re=/<script[^>]+type=["\']application\/ld\+json["\'][^>]*>([\s\S]*?)<\/script>/gi;
   let m;
   while((m=re.exec(html))&&out.length<20){
     try{
@@ -48,15 +48,15 @@ function findHotelNode(nodes=[]){
 }
 
 function extractMeta(html,name){
-  const escaped=String(name).replace(/[.*+?^$()|[\\]\\\\]/g,"\\\\$&");
-  const a=new RegExp('<meta[^>]+(?:name|property)=["\\\']'+escaped+'["\\\'][^>]+content=["\\\']([^"\\\']+)["\\\']','i').exec(html);
-  const b=new RegExp('<meta[^>]+content=["\\\']([^"\\\']+)["\\\'][^>]+(?:name|property)=["\\\']'+escaped+'["\\\']','i').exec(html);
+  const escaped=String(name).replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+  const a=new RegExp(`<meta[^>]+(?:name|property)=["\']${escaped}["\'][^>]+content=["\']([^"\']+)["\']`,"i").exec(html);
+  const b=new RegExp(`<meta[^>]+content=["\']([^"\']+)["\'][^>]+(?:name|property)=["\']${escaped}["\']`,"i").exec(html);
   return (a?.[1]||b?.[1]||"").trim()||null;
 }
 
 function extractLinks(html,base){
   const out=[];
-  const re=/<a\\b[^>]*href=["']([^"'#]+)["'][^>]*>([\\s\\S]*?)<\\/a>/gi;
+  const re=/<a\b[^>]*href=["\']([^"\'#]+)["\'][^>]*>([\s\S]*?)<\/a>/gi;
   let m;
   while((m=re.exec(html))&&out.length<1000){
     const url=absolutize(base,m[1]); if(!url)continue;
@@ -103,8 +103,8 @@ function deriveOfficialFacts(html,url){
 function chooseBookingLink(links=[],baseUrl){
   const base=safeHttpUrl(baseUrl);
   const candidates=links.map(l=>({l,score:
-    (/\\b(book|booking|reserve|reservation|rooms|availability)\\b/i.test(l.text)?4:0)+
-    (/\\b(book|booking|reserve|reservation|availability)\\b/i.test(l.url)?5:0)+
+    (/\b(book|booking|reserve|reservation|rooms|availability)\b/i.test(l.text)?4:0)+
+    (/\b(book|booking|reserve|reservation|availability)\b/i.test(l.url)?5:0)+
     (base&&safeHttpUrl(l.url)?.hostname===base.hostname?2:0)
   })).filter(x=>x.score>=5).sort((a,b)=>b.score-a.score);
   return candidates[0]?.l?.url||null;
@@ -113,8 +113,8 @@ function chooseBookingLink(links=[],baseUrl){
 function choosePressPage(links=[],baseUrl){
   const base=safeHttpUrl(baseUrl);
   const candidates=links.map(l=>({l,score:
-    (/\\b(press|media|newsroom|media center|press room|brand assets|gallery)\\b/i.test(l.text)?5:0)+
-    (/\\b(press|media|newsroom|press-room|media-center|gallery)\\b/i.test(l.url)?5:0)+
+    (/\b(press|media|newsroom|media center|press room|brand assets|gallery)\b/i.test(l.text)?5:0)+
+    (/\b(press|media|newsroom|press-room|media-center|gallery)\b/i.test(l.url)?5:0)+
     (base&&safeHttpUrl(l.url)?.hostname===base.hostname?2:0)
   })).filter(x=>x.score>=5).sort((a,b)=>b.score-a.score);
   return candidates[0]?.l?.url||null;
