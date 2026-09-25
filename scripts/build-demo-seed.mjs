@@ -7,8 +7,8 @@ const find=(name)=>{const h=hotels.find(x=>x.name===name);if(!h)throw new Error(
 const q=(v)=>v==null?"NULL":"'"+String(v).replaceAll("'","''")+"'";
 const creatorId="demo-rebecca";
 const creator={
-  handle:"rebecca",
-  display_name:"Rebecca",
+  handle:"demo-rebecca",
+  display_name:"Rebecca (demo)",
   bio:"Demo profile — illustrative sample data showing how a SecretNests traveler portfolio will work. These are not claimed as real stays.",
   taste:["Boutique","design-heavy","quiet","food matters","value-conscious"]
 };
