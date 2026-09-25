@@ -286,7 +286,99 @@ async function rateCoverageBatch(env,limit){
   return {claimed:rows.length,windows:nuiteeCoverageWindows().length,observations,failures};
 }
 
-export async function runNuiteeTop250Enrichment(env,{mapLimit=24,reviewLimit=12,rateLimit=100}={}){
+
+function parseArray(value){
+  try{const x=JSON.parse(value||"[]");return Array.isArray(x)?x:[]}catch{return []}
+}
+
+async function saveCanonicalProvenance(db,hotelId,fieldName,sourceType,sourceUrl,confidence,value,providerHotelId,environment){
+  const now=nowIso();
+  await db.prepare(`INSERT INTO hotel_field_provenance
+    (id,hotel_id,field_name,source_type,source_url,source_label,confidence,observed_at,verified_at,metadata_json,created_at,updated_at)
+    VALUES (?,?,?,?,?,'Nuitee Connect',?,?,NULL,?,?,?)
+    ON CONFLICT(hotel_id,field_name,source_type,source_url) DO UPDATE SET
+      confidence=excluded.confidence,observed_at=excluded.observed_at,metadata_json=excluded.metadata_json,updated_at=excluded.updated_at`)
+    .bind(crypto.randomUUID(),hotelId,fieldName,sourceType,sourceUrl,confidence||"high",now,
+      JSON.stringify({value,provider_hotel_id:providerHotelId,environment,canonical_promotion:true}),now,now).run();
+}
+
+export async function promoteTrustedNuiteeMetadata(env,{limit=200}={}){
+  const rows=(await env.DB.prepare(`SELECT
+      h.id,h.city,h.country,h.address,h.formatted_address,h.lat,h.lng,h.hotel_category,h.description,h.amenities_json,
+      h.external_review_summary,h.external_review_sentiment,h.external_review_confidence,h.external_review_source,
+      a.provider_hotel_id,a.environment,a.mapping_confidence,p.priority_rank,
+      pm.star_rating provider_star_rating,pm.address provider_address,pm.city provider_city,pm.country provider_country,
+      pm.lat provider_lat,pm.lng provider_lng,pm.description provider_description,pm.amenities_json provider_amenities_json,
+      (SELECT he.provider FROM hotel_external_evidence he WHERE he.hotel_id=h.id AND he.provider LIKE 'nuitee_reviews%' ORDER BY he.observed_at DESC LIMIT 1) review_provider,
+      (SELECT he.summary FROM hotel_external_evidence he WHERE he.hotel_id=h.id AND he.provider LIKE 'nuitee_reviews%' ORDER BY he.observed_at DESC LIMIT 1) review_summary,
+      (SELECT he.sentiment FROM hotel_external_evidence he WHERE he.hotel_id=h.id AND he.provider LIKE 'nuitee_reviews%' ORDER BY he.observed_at DESC LIMIT 1) review_sentiment,
+      (SELECT he.confidence FROM hotel_external_evidence he WHERE he.hotel_id=h.id AND he.provider LIKE 'nuitee_reviews%' ORDER BY he.observed_at DESC LIMIT 1) review_confidence,
+      (SELECT he.source_url FROM hotel_external_evidence he WHERE he.hotel_id=h.id AND he.provider LIKE 'nuitee_reviews%' ORDER BY he.observed_at DESC LIMIT 1) review_source_url
+    FROM hotel_nuitee_audit a
+    JOIN hotel_enrichment_profiles p ON p.hotel_id=a.hotel_id
+    JOIN hotels h ON h.id=a.hotel_id
+    JOIN hotel_provider_metadata pm ON pm.hotel_id=h.id AND pm.provider='nuitee_connect'
+    WHERE p.cohort='priority_250'
+      AND a.mapping_status='mapped'
+      AND a.mapping_confidence='high'
+      AND a.metadata_status='complete'
+      AND COALESCE(a.canonical_status,'pending')<>'complete'
+    ORDER BY p.priority_rank
+    LIMIT ?`).bind(clamp(limit,1,250)).all()).results||[];
+
+  let hotelsUpdated=0,fieldsWritten=0,reviewSignals=0;
+  for(const row of rows){
+    const updates=[],values=[],provenance=[];
+    const detailsUrl="https://api.liteapi.travel/v3.0/data/hotel?hotelId="+encodeURIComponent(row.provider_hotel_id);
+    const sourceType=row.environment==="sandbox"?"nuitee_sandbox":"nuitee_connect";
+    const add=(column,value)=>{
+      if(value==null||value==="")return;
+      updates.push(column+"=?");values.push(value);
+      provenance.push({field:column,value,sourceType,url:detailsUrl,confidence:"high"});
+    };
+
+    if(!row.city&&row.provider_city)add("city",row.provider_city);
+    if(!row.country&&row.provider_country)add("country",row.provider_country);
+    if(!row.address&&row.provider_address)add("address",row.provider_address);
+    if(!row.formatted_address&&row.provider_address)add("formatted_address",row.provider_address);
+    if(row.lat==null&&row.provider_lat!=null)add("lat",row.provider_lat);
+    if(row.lng==null&&row.provider_lng!=null)add("lng",row.provider_lng);
+    if(!row.hotel_category&&row.provider_star_rating)add("hotel_category",Number(row.provider_star_rating).toFixed(0)+"-star hotel");
+    if(!String(row.description||"").trim()&&String(row.provider_description||"").trim())add("description",String(row.provider_description).trim().slice(0,4000));
+
+    const existingAmenities=parseArray(row.amenities_json);
+    const providerAmenities=parseArray(row.provider_amenities_json).map(x=>String(x).trim()).filter(Boolean).slice(0,120);
+    if(!existingAmenities.length&&providerAmenities.length)add("amenities_json",JSON.stringify(providerAmenities));
+
+    if(!row.external_review_summary&&row.review_summary){
+      add("external_review_summary",String(row.review_summary).slice(0,1200));
+      updates.push("external_review_sentiment=?");values.push(row.review_sentiment||null);
+      updates.push("external_review_confidence=?");values.push(row.review_confidence||null);
+      updates.push("external_review_source=?");values.push(row.review_provider||null);
+      updates.push("external_review_updated_at=?");values.push(nowIso());
+      provenance.push({
+        field:"external_review_summary",value:String(row.review_summary).slice(0,1200),
+        sourceType:row.review_provider||"nuitee_reviews",url:row.review_source_url||detailsUrl,
+        confidence:row.review_confidence||"medium"
+      });
+      reviewSignals++;
+    }
+
+    if(updates.length){
+      values.push(nowIso(),row.id);
+      await env.DB.prepare("UPDATE hotels SET "+updates.join(",")+",updated_at=? WHERE id=?").bind(...values).run();
+      hotelsUpdated++;fieldsWritten+=updates.length;
+      for(const p of provenance){
+        await saveCanonicalProvenance(env.DB,row.id,p.field,p.sourceType,p.url,p.confidence,p.value,row.provider_hotel_id,row.environment);
+      }
+    }
+    await env.DB.prepare("UPDATE hotel_nuitee_audit SET canonical_status='complete',canonical_fields=?,canonical_at=?,updated_at=? WHERE hotel_id=?")
+      .bind(updates.length,nowIso(),nowIso(),row.id).run();
+  }
+  return {claimed:rows.length,hotels_updated:hotelsUpdated,fields_written:fieldsWritten,review_signals_promoted:reviewSignals};
+}
+
+export async function runNuiteeTop250Enrichment(env,{mapLimit=24,reviewLimit=12,rateLimit=100,canonicalLimit=200}={}){
   const environment=nuiteeEnvironment(env);
   if(environment==="unknown")return {ok:false,skipped:true,reason:"nuitee_not_configured"};
   const runId=crypto.randomUUID(),started=nowIso();
@@ -296,12 +388,13 @@ export async function runNuiteeTop250Enrichment(env,{mapLimit=24,reviewLimit=12,
     const mapping=await mappingBatch(env,mapLimit);
     const reviews=await reviewBatch(env,reviewLimit);
     const rates=await rateCoverageBatch(env,rateLimit);
+    const canonical=await promoteTrustedNuiteeMetadata(env,{limit:canonicalLimit});
     const failures=mapping.failures+reviews.failures+rates.failures;
     await env.DB.prepare(`UPDATE hotel_nuitee_batch_runs SET status='success',hotels_claimed=?,hotels_mapped=?,metadata_written=?,
       reviews_written=?,rate_windows_tested=?,rate_observations_written=?,failures=?,finished_at=? WHERE id=?`)
       .bind(mapping.claimed,mapping.mapped,mapping.metadata,reviews.written,rates.claimed*rates.windows,rates.observations,failures,nowIso(),runId).run();
     const summary=await getNuiteeTop250Summary(env.DB);
-    return {ok:true,environment,mapping,reviews,rates,summary};
+    return {ok:true,environment,mapping,reviews,rates,canonical,summary};
   }catch(e){
     await env.DB.prepare("UPDATE hotel_nuitee_batch_runs SET status='failed',note=?,finished_at=? WHERE id=?")
       .bind(String(e?.message||e).slice(0,1000),nowIso(),runId).run();
@@ -320,6 +413,8 @@ export async function getNuiteeTop250Summary(db){
     SUM(CASE WHEN a.review_status='complete' THEN 1 ELSE 0 END) reviews_available,
     SUM(CASE WHEN a.review_status='unavailable' THEN 1 ELSE 0 END) reviews_unavailable,
     SUM(CASE WHEN a.rate_audited_at IS NOT NULL THEN 1 ELSE 0 END) rate_audited,
+    SUM(CASE WHEN a.canonical_status='complete' THEN 1 ELSE 0 END) canonical_complete,
+    SUM(CASE WHEN a.canonical_status='complete' AND a.canonical_fields>0 THEN 1 ELSE 0 END) canonical_updated,
     ROUND(AVG(CASE WHEN a.rate_audited_at IS NOT NULL THEN a.rate_coverage_pct END),1) avg_rate_coverage
     FROM hotel_enrichment_profiles p
     JOIN hotels h ON h.id=p.hotel_id
