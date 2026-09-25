@@ -59,6 +59,8 @@ jobs:
           curl -fsS 'http://127.0.0.1:8787/search?q=hotel' >/dev/null
           curl -fsS 'http://127.0.0.1:8787/search?q=%27%20OR%201%3D1--' >/dev/null
           curl -fsS http://127.0.0.1:8787/destinations >/dev/null
+          curl -fsS http://127.0.0.1:8787/brands >/dev/null
+          curl -fsS http://127.0.0.1:8787/contribute >/dev/null
           curl -fsS http://127.0.0.1:8787/creators >/dev/null
           curl -fsS http://127.0.0.1:8787/@rebecca >/dev/null
           curl -fsS http://127.0.0.1:8787/@rebecca/lists/hotels-id-pay-500-for-again >/dev/null
@@ -77,6 +79,8 @@ jobs:
           test "$SLUG" != "null"
           HOTEL_HTML="$(curl -fsS "http://127.0.0.1:8787/hotel/$SLUG")"
           echo "$HOTEL_HTML" | grep -q '"@type":"Hotel"'
+          echo "$HOTEL_HTML" | grep -q '"@type":"FAQPage"'
+          echo "$HOTEL_HTML" | grep -q 'Is .* worth it?'
           echo "$HOTEL_HTML" | grep -q '<link rel="canonical"'
           curl -fsS http://127.0.0.1:8787/compare/fairmont-banff-springs-vs-bawah-reserve >/dev/null
 
@@ -86,5 +90,5 @@ jobs:
           curl -fsS -X POST http://127.0.0.1:8787/api/events             -H 'content-type: application/json'             --data '{"name":"page_view","path":"/ci"}'             | jq -e '.ok == true'
 
           curl -fsS 'http://127.0.0.1:8787/api/hotel-suggest?q=Fairmont' | jq -e '.ok == true and (.hotels|length) > 0'
-          test "$(curl -sS -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8787/add-your-trip             -F 'hotel_name=Fairmont Banff Springs'             -F 'paid_nightly_rate=700'             -F 'would_pay_again=650'             -F 'would_return=1')" = "200"
+          test "$(curl -sS -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8787/add-your-trip             -F 'hotel_name=Fairmont Banff Springs'             -F 'paid_nightly_rate=700'             -F 'would_pay_again=650'             -F 'would_return=1' -F 'contribution_source=ci' -F 'contribution_campaign=founder-network')" = "200"
           test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:8787/api/admin/submissions)" = "404"
