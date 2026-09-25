@@ -49,11 +49,6 @@ for(const d of demo){
     ") ON CONFLICT(id) DO UPDATE SET would_pay_again=excluded.would_pay_again;"
   );
   sql.push(
-    "INSERT INTO hotel_value_snapshots (id,hotel_id,traveler_low,traveler_high,median_would_pay,sample_size,current_price,value_classification,currency,calculated_at,confidence,p25_would_pay,p75_would_pay,methodology_version) VALUES ("+
-    [q("demo-snapshot-"+d.i),q(d.hotel.id),d.wouldPay,d.wouldPay,d.wouldPay,"1","NULL",q("insufficient data"),q("USD"),"CURRENT_TIMESTAMP",q("insufficient"),d.wouldPay,d.wouldPay,q("sn-value-v1")].join(",")+
-    ") ON CONFLICT(id) DO UPDATE SET median_would_pay=excluded.median_would_pay,traveler_low=excluded.traveler_low,traveler_high=excluded.traveler_high,sample_size=1,calculated_at=CURRENT_TIMESTAMP;"
-  );
-  sql.push(
     "INSERT INTO trip_reports (id,stay_id,creator_id,hotel_id,title,review_text,verdict,would_return,standout_json,disappointments_json,status,published_at,created_at,updated_at) VALUES ("+
     [q(reportId),q(stayId),q(creatorId),q(d.hotel.id),q("Demo: "+d.hotel.name),q("Illustrative demo report used to show the SecretNests creator experience. Not a claimed real stay."),q("demo"),d.wouldReturn,q("[]"),q("[]"),q("published"),"CURRENT_TIMESTAMP","CURRENT_TIMESTAMP","CURRENT_TIMESTAMP"].join(",")+
     ") ON CONFLICT(id) DO NOTHING;"
