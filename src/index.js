@@ -57,6 +57,17 @@ ${analytics(env)}
 const json = (data,status=200) => new Response(JSON.stringify(data),{status,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store"}});
 
 const shell = (content) => `<header class="wrap"><a class="brand" href="/">SecretNests</a><nav><a href="/value">Value</a><a href="/destinations">Destinations</a><a href="/compare">Compare</a><a href="/creators">Travelers</a><a href="/add-your-trip">Add Your Trip</a></nav></header><main class="wrap">${content}</main>`;
+const valueTone = (classification="") => String(classification).includes("below") ? "good" : String(classification).includes("above") ? "high" : "";
+const hotelCard = (h) => `<a class="card" href="/hotel/${encodeURIComponent(h.slug)}">
+  <div class="eyebrow">${esc([h.city,h.country].filter(Boolean).join(", "))}</div>
+  <h3>${esc(h.name)}</h3>
+  ${h.sample_size ? `<span class="value-badge ${valueTone(h.value_classification)}">${esc(h.value_classification||"traveler value available")}</span>` : '<span class="value-badge">price context available</span>'}
+  <p>${esc((h.description||"").slice(0,170))}</p>
+  <div class="price-line"><div><div class="kicker">Estimated rate</div><strong>${money(h.price_estimate_min)}–${money(h.price_estimate_max)}</strong></div>
+  <div style="text-align:right"><div class="kicker">Traveler value</div><strong>${h.sample_size?money(h.median_would_pay):"—"}</strong></div></div>
+  <p class="muted">${h.sample_size?`${h.sample_size} observation(s) · ${esc(h.confidence||"")} confidence`:"Fair-value sample building."}</p>
+</a>`;
+
 
 async function home(env){
   const hotelCount=Number((await env.DB.prepare("SELECT COUNT(*) AS n FROM hotels WHERE is_published=1").first())?.n||0);
@@ -127,16 +138,19 @@ async function searchPage(request,env){
     if(tokens.length){
       const tokenClause=tokens.map(()=>"(lower(name) LIKE ? OR lower(COALESCE(city,'')) LIKE ? OR lower(COALESCE(country,'')) LIKE ? OR lower(COALESCE(description,'')) LIKE ? OR lower(COALESCE(highlights_json,'')) LIKE ? OR lower(COALESCE(best_for_json,'')) LIKE ?)").join(" AND ");
       const params=tokens.flatMap(t=>Array(6).fill("%"+t+"%"));
-      rows=(await env.DB.prepare(`SELECT name,slug,city,country,description,price_estimate_min,price_estimate_max,google_rating,reddit_mention_count
-        FROM hotels WHERE is_published=1 AND ${tokenClause}
-        ORDER BY CASE WHEN lower(name)=lower(?) THEN 0 WHEN lower(name) LIKE lower(?) THEN 1 ELSE 2 END,
-        reddit_mention_count DESC,google_rating DESC LIMIT 60`)
+      rows=(await env.DB.prepare(`SELECT h.name,h.slug,h.city,h.country,h.description,h.price_estimate_min,h.price_estimate_max,h.google_rating,h.reddit_mention_count,
+        v.median_would_pay,v.traveler_low,v.traveler_high,v.sample_size,v.confidence,v.value_classification
+        FROM hotels h
+        LEFT JOIN hotel_value_snapshots v ON v.id=(SELECT id FROM hotel_value_snapshots WHERE hotel_id=h.id ORDER BY calculated_at DESC LIMIT 1)
+        WHERE h.is_published=1 AND ${tokenClause.replaceAll("name","h.name").replaceAll("city","h.city").replaceAll("country","h.country").replaceAll("description","h.description").replaceAll("highlights_json","h.highlights_json").replaceAll("best_for_json","h.best_for_json")}
+        ORDER BY CASE WHEN lower(h.name)=lower(?) THEN 0 WHEN lower(h.name) LIKE lower(?) THEN 1 ELSE 2 END,
+        CASE WHEN COALESCE(v.sample_size,0)>0 THEN 0 ELSE 1 END,COALESCE(v.sample_size,0) DESC,h.reddit_mention_count DESC,h.google_rating DESC LIMIT 60`)
         .bind(...params,q,"%"+q+"%").all()).results||[];
     }
   }
   if(q && rows.length===0){ try{ await env.DB.prepare("INSERT INTO zero_result_searches (id,query,path,created_at) VALUES (?,?,?,?)").bind(crypto.randomUUID(),q,"/search",nowIso()).run(); }catch{} }
   return page(shell(`<section class="hero" style="padding-bottom:24px"><div class="eyebrow">Hotel search</div><h1>${q?esc(q):"Find a hotel worth the rate"}</h1><form class="search" action="/search"><input name="q" value="${attr(q)}" placeholder="Hotel, city, country, or style"><button data-event="search">Search</button></form></section>
-<section><p class="muted">${q ? rows.length+" matches" : "Search by hotel, city, country, or phrases such as quiet design hotel or Maldives food."}</p><ul class="list">${rows.map(h=>`<li class="hotel-row"><div><a href="/hotel/${encodeURIComponent(h.slug)}"><strong>${esc(h.name)}</strong></a><div class="kicker">${esc([h.city,h.country].filter(Boolean).join(", "))}</div><p>${esc((h.description||"").slice(0,220))}</p></div><div>${money(h.price_estimate_min)}–${money(h.price_estimate_max)}</div></li>`).join("")|| (q?'<li class="muted">No matching hotels yet.</li>':"")}</ul></section>`),env,{title:q?`${q} hotel search | SecretNests`:"Hotel search | SecretNests",canonical:"/search"+(q?"?q="+encodeURIComponent(q):""),robots:"noindex,follow"});
+<section><p class="muted">${q ? rows.length+" matches" : "Search by hotel, city, country, or phrases such as quiet design hotel or Maldives food."}</p><div class="grid">${rows.map(h=>hotelCard(h)).join("")|| (q?'<div class="notice">No matching hotels yet. Try a broader destination, hotel brand, or style.</div>':"")}</div></section>`),env,{title:q?`${q} hotel search | SecretNests`:"Hotel search | SecretNests",canonical:"/search"+(q?"?q="+encodeURIComponent(q):""),robots:"noindex,follow"});
 }
 
 async function destinationsPage(env){
@@ -148,9 +162,13 @@ async function destinationPage(countrySlug,citySlug,env){
   const places=(await env.DB.prepare("SELECT DISTINCT city,country FROM hotels WHERE is_published=1 AND city IS NOT NULL AND city<>''").all()).results||[];
   const place=places.find(x=>slugify(x.country)===countrySlug&&slugify(x.city)===citySlug);
   if(!place)return new Response("Destination not found",{status:404});
-  const rows=(await env.DB.prepare("SELECT name,slug,city,country,description,price_estimate_min,price_estimate_max,google_rating,reddit_mention_count FROM hotels WHERE is_published=1 AND lower(city)=lower(?) AND lower(country)=lower(?) ORDER BY reddit_mention_count DESC,google_rating DESC,name").bind(place.city,place.country).all()).results||[];
+  const rows=(await env.DB.prepare(`SELECT h.name,h.slug,h.city,h.country,h.description,h.price_estimate_min,h.price_estimate_max,h.google_rating,h.reddit_mention_count,
+    v.median_would_pay,v.traveler_low,v.traveler_high,v.sample_size,v.confidence,v.value_classification
+    FROM hotels h LEFT JOIN hotel_value_snapshots v ON v.id=(SELECT id FROM hotel_value_snapshots WHERE hotel_id=h.id ORDER BY calculated_at DESC LIMIT 1)
+    WHERE h.is_published=1 AND lower(h.city)=lower(?) AND lower(h.country)=lower(?)
+    ORDER BY CASE WHEN COALESCE(v.sample_size,0)>0 THEN 0 ELSE 1 END,COALESCE(v.sample_size,0) DESC,h.reddit_mention_count DESC,h.google_rating DESC,h.name`).bind(place.city,place.country).all()).results||[];
   const canonical="/destinations/"+slugify(place.country)+"/"+slugify(place.city);
-  return page(shell(`<section class="hero" style="padding-bottom:24px"><div class="eyebrow">${esc(place.country)}</div><h1>Luxury hotels in ${esc(place.city)}</h1><p>Compare price context and traveler value signals before you book.</p></section><div class="grid">${rows.map(h=>`<a class="card" href="/hotel/${encodeURIComponent(h.slug)}"><h3>${esc(h.name)}</h3><p class="muted">${money(h.price_estimate_min)}–${money(h.price_estimate_max)} estimated nightly range</p><p>${esc((h.description||"").slice(0,180))}</p></a>`).join("")}</div>`),env,{title:`Best-value luxury hotels in ${place.city} | SecretNests`,description:`Luxury hotels in ${place.city}, ${place.country}: traveler value context, price ranges, and hotel comparisons.`,canonical});
+  return page(shell(`<section class="hero" style="padding-bottom:24px"><div class="eyebrow">${esc(place.country)}</div><h1>Luxury hotels in ${esc(place.city)}</h1><p>Compare estimated nightly rates with traveler-assessed value where first-party observations exist.</p><div class="hero-actions"><a class="btn secondary" href="/compare">Compare hotels</a><a class="btn secondary" href="/add-your-trip">Add a stay</a></div></section><div class="grid">${rows.map(h=>hotelCard(h)).join("")}</div>`),env,{title:`Best-value luxury hotels in ${place.city} | SecretNests`,description:`Luxury hotels in ${place.city}, ${place.country}: traveler value context, price ranges, and hotel comparisons.`,canonical});
 }
 
 async function legacyDestinationRedirect(request,env){
@@ -519,7 +537,7 @@ async function recomputeValues(request,env){
 }
 
 async function sitemap(env){
-  const urls=[ORIGIN+"/",ORIGIN+"/destinations",ORIGIN+"/creators",ORIGIN+"/about",ORIGIN+"/value",ORIGIN+"/privacy",ORIGIN+"/terms",ORIGIN+"/disclosures"];
+  const urls=[ORIGIN+"/",ORIGIN+"/destinations",ORIGIN+"/creators",ORIGIN+"/about",ORIGIN+"/value",ORIGIN+"/compare",ORIGIN+"/add-your-trip",ORIGIN+"/privacy",ORIGIN+"/terms",ORIGIN+"/disclosures"];
   try{
     const hotels=(await env.DB.prepare("SELECT slug FROM hotels WHERE is_published=1 AND description IS NOT NULL AND length(description)>=80").all()).results||[];
     const creators=(await env.DB.prepare("SELECT handle FROM creator_profiles WHERE is_public=1 AND COALESCE(is_demo,0)=0").all()).results||[];
