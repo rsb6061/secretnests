@@ -330,6 +330,8 @@ export async function resetNuiteeAuditHotel(db,hotelId){
   await db.prepare(`INSERT INTO hotel_nuitee_audit (hotel_id,mapping_status,metadata_status,review_status,updated_at)
     VALUES (?,'pending','pending','pending',?)
     ON CONFLICT(hotel_id) DO UPDATE SET mapping_status='pending',metadata_status='pending',review_status='pending',
-      rate_audited_at=NULL,last_error=NULL,updated_at=excluded.updated_at`).bind(hotelId,nowIso()).run();
+      rate_audited_at=NULL,last_error=NULL,mapping_error=NULL,metadata_error=NULL,review_error=NULL,
+      candidate_provider_hotel_id=NULL,candidate_name=NULL,candidate_similarity=NULL,candidate_distance_km=NULL,mapping_stage=NULL,
+      updated_at=excluded.updated_at`).bind(hotelId,nowIso()).run();
   return {ok:true,hotel_id:hotelId};
 }
