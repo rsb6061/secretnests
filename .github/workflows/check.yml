@@ -89,7 +89,7 @@ jobs:
           test "$SLUG" != "null"
           HOTEL_HTML="$(curl -fsS "http://127.0.0.1:8787/hotel/$SLUG")"
           echo "$HOTEL_HTML" | grep -q '"@type":"Hotel"'
-          echo "$HOTEL_HTML" | grep -q '"@type":"FAQPage"'
+          echo "$HOTEL_HTML" | grep -q '"@type":"WebPage"'
           echo "$HOTEL_HTML" | grep -q 'Is .* worth it?'
           echo "$HOTEL_HTML" | grep -q '<link rel="canonical"'
           curl -fsS http://127.0.0.1:8787/compare/fairmont-banff-springs-vs-bawah-reserve >/dev/null
