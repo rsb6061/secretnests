@@ -22,10 +22,29 @@ function field(form,name,fallback=null){
   const raw=form.get(name);
   return raw==null||String(raw).trim()===""?fallback:String(raw).trim();
 }
+function hotelMatchKey(v=""){
+  return String(v).normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLowerCase()
+    .replace(/\b(the|hotel|resort|spa|an|by|ihg)\b/g," ")
+    .replace(/[^a-z0-9]+/g," ").trim().replace(/\s+/g," ");
+}
 async function exactHotel(db,name,city=""){
   if(!name)return null;
-  return db.prepare("SELECT id,name,slug,city,country FROM hotels WHERE is_published=1 AND lower(name)=lower(?) ORDER BY CASE WHEN lower(COALESCE(city,''))=lower(?) THEN 0 ELSE 1 END LIMIT 1")
+  const exact=await db.prepare("SELECT id,name,slug,city,country FROM hotels WHERE is_published=1 AND lower(name)=lower(?) ORDER BY CASE WHEN lower(COALESCE(city,''))=lower(?) THEN 0 ELSE 1 END LIMIT 1")
     .bind(name,city||"").first();
+  if(exact)return exact;
+  const tokens=hotelMatchKey(name).split(" ").filter(x=>x.length>=4);
+  if(!tokens.length)return null;
+  const rows=(await db.prepare("SELECT id,name,slug,city,country FROM hotels WHERE is_published=1 AND lower(name) LIKE ? LIMIT 40")
+    .bind("%"+tokens[0]+"%").all()).results||[];
+  const wanted=hotelMatchKey(name);
+  const cityKey=String(city||"").toLowerCase();
+  const candidates=rows.filter(h=>{
+    const key=hotelMatchKey(h.name);
+    const nameMatch=key===wanted||key.includes(wanted)||wanted.includes(key);
+    const cityMatch=!cityKey||String(h.city||"").toLowerCase()===cityKey;
+    return nameMatch&&cityMatch;
+  });
+  return candidates.length===1?candidates[0]:null;
 }
 function formatMoney(v,money){
   return v==null?"Not captured":money(v);
