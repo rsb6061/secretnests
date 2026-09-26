@@ -1855,8 +1855,12 @@ async function internalNuiteeStaticWarmup(request,env){
   const expected=String(env.PRODUCTION_ACTIVATION_TOKEN||"");
   const auth=String(request.headers.get("authorization")||"");
   if(!expected||auth!=="Bearer "+expected)return new Response("Not found",{status:404});
-  const result=await runNuiteeStaticWarmup(env,{priorityLimit:16,catalogLimit:8,canonicalLimit:120});
-  return json(result,{status:result.ok||result.skipped?200:500});
+  try{
+    const result=await runNuiteeStaticWarmup(env,{priorityLimit:16,catalogLimit:8,canonicalLimit:120});
+    return json(result);
+  }catch(e){
+    return json({ok:false,error:safeLogError(e)});
+  }
 }
 
 async function internalMarketPilot(request,env){
