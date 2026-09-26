@@ -44,17 +44,17 @@ function analytics(env){
 
 function page(body, env, {
   title="SecretNests",
-  description="Real travelers share what they paid, what they'd pay again, and which luxury hotels are actually worth the splurge.",
+  description="SecretNests is a luxury hotel review and value database showing what travelers paid, whether they would return, and what they would happily pay again.",
   canonical="/",
   jsonLd=null,
-  robots="index,follow"
+  robots="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"
 }={}) {
   const canonicalUrl = canonical.startsWith("http") ? canonical : ORIGIN + canonical;
   return new Response(`<!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=4"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=4"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=4">
 <title>${esc(title)}</title><meta name="description" content="${attr(description)}"><meta name="robots" content="${attr(robots)}">${env.GOOGLE_SITE_VERIFICATION ? `<meta name="google-site-verification" content="${attr(env.GOOGLE_SITE_VERIFICATION)}">` : ""}
-<link rel="canonical" href="${attr(canonicalUrl)}"><meta property="og:title" content="${attr(title)}"><meta property="og:description" content="${attr(description)}"><meta property="og:url" content="${attr(canonicalUrl)}"><meta property="og:type" content="website">
+<link rel="canonical" href="${attr(canonicalUrl)}"><meta property="og:site_name" content="SecretNests"><meta property="og:title" content="${attr(title)}"><meta property="og:description" content="${attr(description)}"><meta property="og:url" content="${attr(canonicalUrl)}"><meta property="og:type" content="website"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="${attr(title)}"><meta name="twitter:description" content="${attr(description)}">
 ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd).replace(/</g,"\\u003c")}</script>` : ""}
 ${analytics(env)}
 <style>
@@ -591,11 +591,15 @@ async function home(env){
     h.value_classification||"traveler value available"
   ):"price context available";
   const valueClass=(h)=>String(h.value_classification||"").includes("below")?"good":String(h.value_classification||"").includes("above")?"high":"";
+  const homeJsonLd={"@context":"https://schema.org","@graph":[
+    {"@type":"WebSite","@id":ORIGIN+"/#website","url":ORIGIN+"/","name":"SecretNests","alternateName":"Secret Nests","description":"Luxury hotel reviews, price context and traveler-assessed value.","publisher":{"@id":ORIGIN+"/#organization"}},
+    {"@type":"Organization","@id":ORIGIN+"/#organization","name":"SecretNests","url":ORIGIN+"/","description":"An independent luxury hotel review and value database built around first-party traveler stays and clearly separated price context.","logo":{"@type":"ImageObject","url":ORIGIN+"/apple-touch-icon.png"}}
+  ]};
   return page(shell(`
 <section class="hero">
-  <div class="eyebrow">Luxury hotel value intelligence</div>
-  <h1>Know what a luxury hotel is actually worth.</h1>
-  <p>Search a hotel or destination. SecretNests separates <em>good hotel</em> from <em>good value</em> using what travelers paid, what they would pay again, and the alternatives available at the same budget.</p>
+  <div class="eyebrow">Luxury hotel reviews + value intelligence</div>
+  <h1>Luxury hotel reviews, prices, and what they're actually worth.</h1>
+  <p><strong>SecretNests is a luxury hotel review and value database.</strong> We combine first-party stays—what travelers paid, whether they'd return, and what they'd happily pay again—with current price context, hotel facts, and comparable alternatives.</p>
   <form class="search" action="/search" method="get"><input name="q" placeholder="Try “Aman Tokyo”, “Mallorca”, or “quiet design hotel”" aria-label="Search hotels"><button data-event="search">Search hotels</button></form>
   <div class="hero-actions"><a class="btn secondary" href="/value">Browse by value</a><a class="btn secondary" href="/compare">Compare two hotels</a></div>
 </section>
@@ -605,6 +609,15 @@ async function home(env){
   <div><strong>${destinations.toLocaleString()}</strong><span class="muted">destinations</span></div>
   <div><strong>${evidenceCount.toLocaleString()}</strong><span class="muted">structured traveler signals</span></div>
   <div><strong>Paid vs. worth</strong><span class="muted">the metric that matters</span></div>
+</section>
+
+<section class="section">
+  <div class="section-head"><div><div class="eyebrow">What SecretNests measures</div><h2>Reviews and prices without mixing the data together.</h2></div></div>
+  <div class="grid">
+    <div class="card"><h3>First-party traveler stays</h3><p>Traveler reviews, what they paid, whether they would return, and—when provided—the price they would happily pay again.</p></div>
+    <div class="card"><h3>Hotel price context</h3><p>Observed or estimated nightly rates are labeled separately from traveler opinions so a market price is never presented as a review.</p></div>
+    <div class="card"><h3>External evidence stays external</h3><p>Provider facts and external review signals can add context, but they do not become SecretNests first-party traveler value data.</p></div>
+  </div>
 </section>
 
 <section class="section">
@@ -632,7 +645,7 @@ async function home(env){
     <div class="card"><div class="eyebrow">3 · Publish taste</div><h3>Build lists people can trust</h3><p>Your stays become a travel portfolio: where you splurge, where you don't, and what you would book again.</p></div>
   </div>
 </section>
-<section class="section"><div class="contribution-bottom"><div><div class="eyebrow">First 300 stays</div><h2>Already stayed at a great—or wildly overpriced—hotel?</h2><p class="muted">Add the price you paid and what you'd pay again. It takes about two minutes and directly improves the hotel value pages.</p></div><a class="btn" href="/contribute?src=homepage&campaign=guest-referrals">Contribute a stay →</a></div></section>`),env,{title:"SecretNests | What is this luxury hotel actually worth?",description:"Compare luxury hotel prices with traveler-assessed value: what guests paid, what they would pay again, and which alternatives offer better value.",canonical:"/"});
+<section class="section"><div class="contribution-bottom"><div><div class="eyebrow">First 300 stays</div><h2>Already stayed at a great—or wildly overpriced—hotel?</h2><p class="muted">Add the price you paid and what you'd pay again. It takes about two minutes and directly improves the hotel value pages.</p></div><a class="btn" href="/contribute?src=homepage&campaign=guest-referrals">Contribute a stay →</a></div></section>`),env,{title:"Luxury Hotel Reviews, Prices & Value | SecretNests",description:"SecretNests is a luxury hotel review and value database showing what travelers paid, whether they would return, and what they would happily pay again.",canonical:"/",jsonLd:homeJsonLd});
 }
 
 async function searchPage(request,env){
@@ -695,9 +708,20 @@ async function legacyDestinationRedirect(request,env){
   if(!city||!country)return new Response("Destination not found",{status:404});
   return Response.redirect(ORIGIN+"/destinations/"+slugify(country)+"/"+slugify(city),301);
 }
+async function legacyHotelCategoryRedirect(pathname,env){
+  const match=pathname.match(/^\/(?:boutique-hotels|romantic-hotels|luxury-hotels|honeymoon-hotels|beach-hotels|design-hotels)(?:\/([^/]+))?\/?$/);
+  if(!match)return null;
+  const citySlug=match[1]||"";
+  if(citySlug){
+    const places=(await env.DB.prepare("SELECT DISTINCT city,country FROM hotels WHERE is_published=1 AND city IS NOT NULL AND city<>'' AND country IS NOT NULL AND country<>''").all()).results||[];
+    const candidates=places.filter(x=>slugify(x.city)===citySlug);
+    if(candidates.length===1)return Response.redirect(ORIGIN+"/destinations/"+slugify(candidates[0].country)+"/"+slugify(candidates[0].city),301);
+  }
+  return Response.redirect(ORIGIN+"/destinations",301);
+}
 
 async function creatorsPage(env){
-  const rows=(await env.DB.prepare(`SELECT cp.handle,cp.display_name,cp.bio,(SELECT COUNT(*) FROM stays s WHERE s.creator_id=cp.id) stay_count,(SELECT COUNT(*) FROM lists l WHERE l.creator_id=cp.id AND l.is_public=1) list_count FROM creator_profiles cp WHERE cp.is_public=1 ORDER BY stay_count DESC,cp.display_name LIMIT 100`).all()).results||[];
+  const rows=(await env.DB.prepare(`SELECT cp.handle,cp.display_name,cp.bio,(SELECT COUNT(*) FROM stays s WHERE s.creator_id=cp.id) stay_count,(SELECT COUNT(*) FROM lists l WHERE l.creator_id=cp.id AND l.is_public=1) list_count FROM creator_profiles cp WHERE cp.is_public=1 AND COALESCE(cp.is_demo,0)=0 ORDER BY stay_count DESC,cp.display_name LIMIT 100`).all()).results||[];
   return page(shell(`<section class="hero" style="padding-bottom:24px"><div class="eyebrow">Travelers</div><h1>Follow people whose hotel taste you trust.</h1></section><div class="grid">${rows.map(c=>`<a class="card" href="/@${encodeURIComponent(c.handle)}"><h3>${esc(c.display_name)}</h3><div class="kicker">@${esc(c.handle)} · ${c.stay_count||0} stays · ${c.list_count||0} lists</div><p>${esc(c.bio||"")}</p></a>`).join("")||'<div class="notice">Creator profiles will appear as travelers begin publishing stays and lists.</div>'}</div>`),env,{title:"Hotel travelers & creators | SecretNests",canonical:"/creators"});
 }
 
@@ -741,6 +765,7 @@ async function hotelPage(slug, env){
   const comps=(await env.DB.prepare(`SELECT name,slug,city,country,brand_name,price_estimate_min,price_estimate_max FROM hotels WHERE is_published=1 AND id<>? AND ((city IS NOT NULL AND city=?) OR (country IS NOT NULL AND country=?)) ORDER BY CASE WHEN city=? THEN 0 ELSE 1 END,ABS(COALESCE(price_estimate_min,0)-COALESCE(?,0)),reddit_mention_count DESC LIMIT 4`).bind(h.id,h.city||"",h.country||"",h.city||"",h.price_estimate_min||0).all()).results||[];
   const highlights=safeJson(h.highlights_json,[]), bestFor=safeJson(h.best_for_json,[]), amenities=safeJson(h.amenities_json,[]);
   const location=[h.city,h.country].filter(Boolean).join(", ");
+  const hotelIntro=String(h.description||"").trim()||(`${h.name} is a hotel${location?" in "+location:""}. SecretNests tracks hotel facts and price context separately from first-party traveler reviews, return intent and traveler-assessed value.`);
   const seo=hotelSeoCopy(h,{travelerMedian:v?.median_would_pay,sampleSize:v?.sample_size||0,currentRate:latestRate?.nightly_rate??v?.current_price});
   const cityUrl=h.city&&h.country?"/destinations/"+slugify(h.country)+"/"+slugify(h.city):null;
   const brandUrl=h.brand_name?"/brands/"+brandSlug(h.brand_name):null;
@@ -770,16 +795,21 @@ async function hotelPage(slug, env){
   const valueBlock=v?`<section><h2>What travelers think it's worth</h2><div class="value"><div><div class="eyebrow">Traveler range</div><strong>${money(v.traveler_low)}–${money(v.traveler_high)}</strong></div><div><div class="eyebrow">Median would pay</div><strong>${money(v.median_would_pay)}</strong></div><div><div class="eyebrow">Current observed rate</div><strong>${money(latestRate?.nightly_rate??v.current_price)}</strong></div><div><div class="eyebrow">Sample</div><strong>${esc(v.sample_size)}</strong> stays</div></div>${valueMeta.length?`<p><strong>Value:</strong> ${valueMeta.map(esc).join(" · ")}</p>`:""}</section>`:`<section><h2>What travelers think it's worth</h2><p class="muted">Not enough first-party stay data yet. Add your stay to help establish the fair-value range.</p></section>`;
   const firstPartyBlock=firstParty.length?`<section class="section"><h2>What SecretNests travelers say</h2><ul class="list">${firstParty.map(x=>{const publicCreator=Number(x.is_public||0)===1&&x.handle!=="community-intake";const who=publicCreator?`<a href="/@${encodeURIComponent(x.handle)}"><strong>@${esc(x.handle)}</strong></a>`:"SecretNests traveler";const inclusions=safeJson(x.inclusions_json,[]);const context=[x.trip_context?esc(x.trip_context):"",x.stay_month?"Stayed "+esc(x.stay_month):"",x.promotion?esc(x.promotion):"",inclusions.length?"Included: "+inclusions.slice(0,2).map(esc).join(", "):"",x.paid_nightly_rate!=null?"paid "+money(x.paid_nightly_rate):"",x.would_pay_again!=null?"would pay again "+money(x.would_pay_again):"",x.would_return==null?"":x.would_return?"would return":"would not return",x.verified?"verified rate":""].filter(Boolean).join(" · ");return `<li>${who}${context?`<br><span class="kicker">${context}</span>`:""}${x.review_text?`<p>${esc(x.review_text)}</p>`:""}</li>`}).join("")}</ul></section>`:"";
   const externalEvidenceBlock=evidence.length?`<section><h2>External traveler evidence</h2><ul class="list">${evidence.map(e=>`<li>${e.price_mentioned?`<strong>${money(e.price_mentioned)}</strong> · `:""}${esc(e.summary||e.trip_context||e.sentiment||"Traveler mention")} ${e.source_url?`<a href="${attr(e.source_url)}" rel="nofollow noopener">source</a>`:""}</li>`).join("")}</ul></section>`:"";
+  const schemaReviews=firstParty.filter(x=>x.review_text).slice(0,5).map(x=>({
+    "@type":"Review",
+    "reviewBody":String(x.review_text),
+    "datePublished":x.published_at||undefined,
+    "author":{"@type":"Person","name":x.display_name||x.handle||"SecretNests traveler","url":x.is_public&&x.handle?ORIGIN+"/@"+x.handle:undefined}
+  }));
   const jsonLd={"@context":"https://schema.org","@graph":[
-    {"@type":"Hotel","name":h.name,"description":h.description||undefined,"url":ORIGIN+"/hotel/"+h.slug,"image":mediaUrl?(mediaUrl.startsWith("http")?mediaUrl:ORIGIN+mediaUrl):undefined,"address":h.formatted_address||h.address||undefined,"telephone":h.phone||undefined,"brand":h.brand_name?{"@type":"Brand","name":h.brand_name}:undefined,"sameAs":h.website?[h.website]:undefined,"aggregateRating":h.google_rating?{"@type":"AggregateRating","ratingValue":h.google_rating,"reviewCount":h.google_review_count||undefined}:undefined},
+    {"@type":"Hotel","name":h.name,"description":hotelIntro,"url":ORIGIN+"/hotel/"+h.slug,"image":mediaUrl?(mediaUrl.startsWith("http")?mediaUrl:ORIGIN+mediaUrl):undefined,"address":h.formatted_address||h.address||undefined,"telephone":h.phone||undefined,"brand":h.brand_name?{"@type":"Brand","name":h.brand_name}:undefined,"sameAs":h.website?[h.website]:undefined,"review":schemaReviews.length?schemaReviews:undefined},
     {"@type":"BreadcrumbList","itemListElement":[
       {"@type":"ListItem","position":1,"name":"Destinations","item":ORIGIN+"/destinations"},
       ...(cityUrl?[{"@type":"ListItem","position":2,"name":location,"item":ORIGIN+cityUrl}]:[]),
       {"@type":"ListItem","position":cityUrl?3:2,"name":h.name,"item":ORIGIN+"/hotel/"+h.slug}
-    ]},
-    {"@type":"FAQPage","mainEntity":faq.map(x=>({"@type":"Question","name":x.q,"acceptedAnswer":{"@type":"Answer","text":x.a}}))}
+    ]}
   ]};
-  return page(shell(`<div class="hotel-shell"><div class="hotel-main"><section class="hero" data-autoevent="hotel_view" data-hotel-id="${attr(h.id)}" style="padding-bottom:28px"><div class="eyebrow">${esc(location)}</div><h1>${esc(h.name)}: prices, traveler reviews & what it’s worth</h1>${mediaUrl?`<img class="hero-media" src="${attr(mediaUrl)}" alt="${attr(h.name)}">${media.attribution_text?`<div class="kicker">${esc(media.attribution_text)}</div>`:""}`:""}<p>${esc(h.description||"")}</p><div class="seo-links">${cityUrl?`<a class="pill" href="${attr(cityUrl)}">Luxury hotels in ${esc(h.city)}</a>`:""}${brandUrl?`<a class="pill" href="${attr(brandUrl)}">${esc(h.brand_name)} hotels</a>`:""}</div><div class="filters hotel-highlights">${highlights.slice(0,4).map(x=>`<span class="pill">${esc(x)}</span>`).join("")}</div></section>
+  return page(shell(`<div class="hotel-shell"><div class="hotel-main"><section class="hero" data-autoevent="hotel_view" data-hotel-id="${attr(h.id)}" style="padding-bottom:28px"><div class="eyebrow">${esc(location)}</div><h1>${esc(h.name)}: prices, traveler reviews & what it’s worth</h1>${mediaUrl?`<img class="hero-media" src="${attr(mediaUrl)}" alt="${attr(h.name)}">${media.attribution_text?`<div class="kicker">${esc(media.attribution_text)}</div>`:""}`:""}<p>${esc(hotelIntro)}</p><p class="kicker">SecretNests keeps first-party traveler reviews and value opinions separate from provider facts and external review signals.</p><div class="seo-links">${cityUrl?`<a class="pill" href="${attr(cityUrl)}">Luxury hotels in ${esc(h.city)}</a>`:""}${brandUrl?`<a class="pill" href="${attr(brandUrl)}">${esc(h.brand_name)} hotels</a>`:""}</div><div class="filters hotel-highlights">${highlights.slice(0,4).map(x=>`<span class="pill">${esc(x)}</span>`).join("")}</div></section>
 ${valueBlock}<div class="contribution-inline-mobile">${contributionCard("mobile")}</div>
 <section class="section"><h2>Is ${esc(h.name)} worth it?</h2><p>${esc(seo.worthAnswer)}</p></section>
 <section><h2>${esc(h.name)} at a glance</h2><table class="fact-table"><tbody>${factRows.map(([k,val])=>`<tr><th>${esc(k)}</th><td>${esc(val)}</td></tr>`).join("")}</tbody></table></section>
@@ -964,7 +994,7 @@ async function submitTrip(request,env){
 }
 
 async function aboutPage(env){
-  return page(shell(`<section class="hero"><div class="eyebrow">How it works</div><h1>A hotel can be excellent and still not be worth the rate.</h1><p>SecretNests separates quality from value. Travelers record actual paid prices and the price they would happily pay again; those observations can be aggregated into a traveler-assessed fair-value range.</p></section><div class="grid"><div class="card"><h3>1. Stay</h3><p>Log the hotel, date, room context, booking channel and what you paid.</p></div><div class="card"><h3>2. Value it</h3><p>Say what you would pay again and when the hotel becomes hard to justify.</p></div><div class="card"><h3>3. Publish taste</h3><p>Build lists and a public travel portfolio other travelers can follow.</p></div></div>`),env,{title:"How SecretNests works",canonical:"/about"});
+  return page(shell(`<section class="hero"><div class="eyebrow">About SecretNests</div><h1>A hotel can be excellent and still not be worth the rate.</h1><p><strong>SecretNests is an independent luxury hotel review and value database.</strong> Travelers publish what a stay was actually like, what they paid, whether they would return, and—when they choose—the nightly price they would happily pay again.</p></section><div class="grid"><div class="card"><h3>1. Stay</h3><p>Log the hotel, date, room context, booking channel and what you paid.</p></div><div class="card"><h3>2. Value it</h3><p>Say what you would pay again and when the hotel becomes hard to justify.</p></div><div class="card"><h3>3. Publish taste</h3><p>Build lists and a public travel portfolio other travelers can follow.</p></div></div>`),env,{title:"About SecretNests: Luxury Hotel Reviews & Value",description:"SecretNests is an independent luxury hotel review and value database built around first-party stays, price context and traveler willingness-to-pay.",canonical:"/about"});
 }
 
 async function hotelSuggest(request,env){
@@ -1796,29 +1826,35 @@ async function internalMarketPilot(request,env){
   return json({ok:true,mode:String(env.MARKET_INTELLIGENCE_MODE||"pilot"),rates,evidence});
 }
 async function sitemap(env){
-  const urls=[ORIGIN+"/",ORIGIN+"/destinations",ORIGIN+"/brands",ORIGIN+"/creators",ORIGIN+"/about",ORIGIN+"/value",ORIGIN+"/compare",ORIGIN+"/contribute",ORIGIN+"/add-your-trip",ORIGIN+"/privacy",ORIGIN+"/terms",ORIGIN+"/disclosures"];
+  const entries=[
+    {url:ORIGIN+"/"},{url:ORIGIN+"/destinations"},{url:ORIGIN+"/brands"},{url:ORIGIN+"/creators"},
+    {url:ORIGIN+"/about"},{url:ORIGIN+"/value"},{url:ORIGIN+"/value/under-500"},{url:ORIGIN+"/value/around-1000"},
+    {url:ORIGIN+"/value/regrets-over-800"},{url:ORIGIN+"/value/where-500-buys-most"},{url:ORIGIN+"/compare"},
+    {url:ORIGIN+"/contribute"},{url:ORIGIN+"/privacy"},{url:ORIGIN+"/terms"},{url:ORIGIN+"/disclosures"}
+  ];
   try{
-    const hotels=(await env.DB.prepare(`SELECT h.slug FROM hotels h LEFT JOIN hotel_enrichment_profiles p ON p.hotel_id=h.id
-      WHERE h.is_published=1 AND ((h.description IS NOT NULL AND length(h.description)>=80) OR p.cohort='priority_250')`).all()).results||[];
-    const creators=(await env.DB.prepare("SELECT handle FROM creator_profiles WHERE is_public=1 AND COALESCE(is_demo,0)=0").all()).results||[];
-    const lists=(await env.DB.prepare("SELECT cp.handle,l.slug FROM lists l JOIN creator_profiles cp ON cp.id=l.creator_id WHERE l.is_public=1 AND cp.is_public=1 AND COALESCE(cp.is_demo,0)=0").all()).results||[];
+    const hotels=(await env.DB.prepare("SELECT slug,updated_at,published_at FROM hotels WHERE is_published=1 ORDER BY slug").all()).results||[];
+    const creators=(await env.DB.prepare("SELECT handle,updated_at FROM creator_profiles WHERE is_public=1 AND COALESCE(is_demo,0)=0").all()).results||[];
+    const lists=(await env.DB.prepare("SELECT cp.handle,l.slug,l.updated_at FROM lists l JOIN creator_profiles cp ON cp.id=l.creator_id WHERE l.is_public=1 AND cp.is_public=1 AND COALESCE(cp.is_demo,0)=0").all()).results||[];
     const dests=(await env.DB.prepare("SELECT DISTINCT city,country FROM hotels WHERE is_published=1 AND city IS NOT NULL AND city<>'' AND country IS NOT NULL AND country<>''").all()).results||[];
     const countries=(await env.DB.prepare("SELECT DISTINCT country FROM hotels WHERE is_published=1 AND country IS NOT NULL AND country<>''").all()).results||[];
     const brands=(await env.DB.prepare("SELECT brand_name,COUNT(*) n FROM hotels WHERE is_published=1 AND brand_name IS NOT NULL AND trim(brand_name)<>'' GROUP BY brand_name HAVING COUNT(*)>=2").all()).results||[];
-    const top=(await env.DB.prepare(`SELECT h.name,h.slug,h.city,h.country,p.priority_rank FROM hotel_enrichment_profiles p JOIN hotels h ON h.id=p.hotel_id
-      WHERE p.cohort='priority_250' AND h.is_published=1 ORDER BY p.priority_rank LIMIT 250`).all()).results||[];
+    const top=(await env.DB.prepare("SELECT h.name,h.slug,h.city,h.country,p.priority_rank FROM hotel_enrichment_profiles p JOIN hotels h ON h.id=p.hotel_id WHERE p.cohort='priority_250' AND h.is_published=1 ORDER BY p.priority_rank LIMIT 250").all()).results||[];
     const pairs=buildComparisonPairs(top,{maxPairs:120,perGroup:4});
-    urls.push(
-      ...hotels.map(x=>ORIGIN+"/hotel/"+encodeURIComponent(x.slug)),
-      ...creators.map(x=>ORIGIN+"/@"+encodeURIComponent(x.handle)),
-      ...lists.map(x=>ORIGIN+"/@"+encodeURIComponent(x.handle)+"/lists/"+encodeURIComponent(x.slug)),
-      ...dests.map(x=>ORIGIN+"/destinations/"+slugify(x.country)+"/"+slugify(x.city)),
-      ...countries.map(x=>ORIGIN+"/value/country/"+slugify(x.country)),
-      ...brands.map(x=>ORIGIN+"/brands/"+brandSlug(x.brand_name)),
-      ...pairs.map(x=>ORIGIN+x.path)
+    entries.push(
+      ...hotels.map(x=>({url:ORIGIN+"/hotel/"+encodeURIComponent(x.slug),lastmod:x.updated_at||x.published_at||null})),
+      ...creators.map(x=>({url:ORIGIN+"/@"+encodeURIComponent(x.handle),lastmod:x.updated_at||null})),
+      ...lists.map(x=>({url:ORIGIN+"/@"+encodeURIComponent(x.handle)+"/lists/"+encodeURIComponent(x.slug),lastmod:x.updated_at||null})),
+      ...dests.map(x=>({url:ORIGIN+"/destinations/"+slugify(x.country)+"/"+slugify(x.city)})),
+      ...countries.map(x=>({url:ORIGIN+"/value/country/"+slugify(x.country)})),
+      ...brands.map(x=>({url:ORIGIN+"/brands/"+brandSlug(x.brand_name)})),
+      ...pairs.map(x=>({url:ORIGIN+x.path}))
     );
   }catch(e){console.error("sitemap_failed",safeLogError(e))}
-  return new Response('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+[...new Set(urls)].map(u=>'<url><loc>'+esc(u)+'</loc></url>').join("")+'</urlset>',{headers:{"content-type":"application/xml; charset=utf-8","cache-control":"public,max-age=900"}});
+  const unique=new Map();
+  for(const entry of entries)if(entry?.url&&!unique.has(entry.url))unique.set(entry.url,entry);
+  const xml=[...unique.values()].map(entry=>'<url><loc>'+esc(entry.url)+'</loc>'+(entry.lastmod?'<lastmod>'+esc(String(entry.lastmod).slice(0,10))+'</lastmod>':'')+'</url>').join("");
+  return new Response('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+xml+'</urlset>',{headers:{"content-type":"application/xml; charset=utf-8","cache-control":"public,max-age=900"}});
 }
 async function route(request,env){
   const url=new URL(request.url);
@@ -1833,7 +1869,7 @@ async function route(request,env){
   if(request.method==="GET" && url.pathname==="/brands")return brandsPage(env);
   const brand=url.pathname.match(/^\/brands\/([^/]+)$/); if(request.method==="GET"&&brand)return brandPage(decodeURIComponent(brand[1]),env);
   const cleanDest=url.pathname.match(/^\/destinations\/([^/]+)\/([^/]+)$/); if(request.method==="GET"&&cleanDest)return destinationPage(decodeURIComponent(cleanDest[1]),decodeURIComponent(cleanDest[2]),env);
-  if(request.method==="GET" && /^\/destination\//.test(url.pathname))return legacyDestinationRedirect(request,env);
+  if(request.method==="GET" && /^\/destination\//.test(url.pathname))return legacyDestinationRedirect(request,env);\n  if(request.method==="GET"){const legacy=await legacyHotelCategoryRedirect(url.pathname,env);if(legacy)return legacy;}
   if(request.method==="GET" && url.pathname==="/creators")return creatorsPage(env);
   if(request.method==="GET" && url.pathname==="/contribute")return contributePage(request,env);
   if(request.method==="GET" && url.pathname==="/login")return beginAuth(request,env,ORIGIN);
@@ -1883,8 +1919,8 @@ async function route(request,env){
   const hotel=url.pathname.match(/^\/hotel\/([^/]+)$/); if(request.method==="GET"&&hotel)return hotelPage(decodeURIComponent(hotel[1]),env);
   const list=url.pathname.match(/^\/@([^/]+)\/lists\/([^/]+)$/); if(request.method==="GET"&&list)return listPage(decodeURIComponent(list[1]),decodeURIComponent(list[2]),env);
   const creator=url.pathname.match(/^\/@([^/]+)$/); if(request.method==="GET"&&creator)return creatorPage(decodeURIComponent(creator[1]),env);
-  if(request.method==="GET" && url.pathname==="/robots.txt")return new Response("User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /out/\nSitemap: https://secretnests.com/sitemap.xml\n",{headers:{"content-type":"text/plain; charset=utf-8","cache-control":"public,max-age=3600"}});
-  if(request.method==="GET" && url.pathname==="/llms.txt")return new Response("# SecretNests\n\nSecretNests is a traveler-led luxury hotel valuation and taste network. Core data includes actual paid prices, traveler willingness-to-pay, hotel value ranges, public creator lists and attributable booking outcomes.\n\nCanonical site: https://secretnests.com\nHotel pages: /hotel/{slug}\nDestinations: /destinations/{country}/{city}\nBrands: /brands/{brand}\nComparisons: /compare/{hotel-a}-vs-{hotel-b}\nContribute: /contribute\nValue discovery: /value\nCreators: /@{handle}\nLists: /@{handle}/lists/{slug}\n",{headers:{"content-type":"text/plain; charset=utf-8","cache-control":"public,max-age=3600"}});
+  if(request.method==="GET" && url.pathname==="/robots.txt")return new Response("User-agent: OAI-SearchBot\nAllow: /\nDisallow: /admin/\nDisallow: /api/\nDisallow: /out/\nDisallow: /auth/\nDisallow: /login\nDisallow: /logout\n\nUser-agent: GPTBot\nAllow: /\nDisallow: /admin/\nDisallow: /api/\nDisallow: /out/\nDisallow: /auth/\nDisallow: /login\nDisallow: /logout\n\nUser-agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /api/\nDisallow: /out/\nDisallow: /auth/\nDisallow: /login\nDisallow: /logout\n\nSitemap: https://secretnests.com/sitemap.xml\n",{headers:{"content-type":"text/plain; charset=utf-8","cache-control":"public,max-age=3600"}});
+  if(request.method==="GET" && url.pathname==="/llms.txt")return new Response("# SecretNests\n\nSecretNests is an independent luxury hotel review and value database. It helps travelers understand not only whether a hotel is good, but what the stay is worth at a given nightly rate.\n\n## Core first-party data\n- Traveler-written hotel stay reviews\n- Actual nightly price when the traveler provides it\n- Would-return intent\n- The nightly price the traveler would happily pay again, when provided\n- Trip context, booking method, inclusions and rights-confirmed traveler photos\n\n## Data provenance\nFirst-party traveler reviews and value opinions are kept separate from provider-sourced hotel facts, observed or estimated prices, affiliate booking data and external review signals. SecretNests does not convert external review ratings into first-party traveler value.\n\n## Canonical public pages\nCanonical site: https://secretnests.com/\nSitemap: https://secretnests.com/sitemap.xml\nHotel reviews and price/value pages: https://secretnests.com/hotel/{slug}\nDestinations: https://secretnests.com/destinations/{country}/{city}\nBrands: https://secretnests.com/brands/{brand}\nHotel comparisons: https://secretnests.com/compare/{hotel-a}-vs-{hotel-b}\nValue discovery: https://secretnests.com/value\nTraveler profiles: https://secretnests.com/@{handle}\nPublic hotel lists: https://secretnests.com/@{handle}/lists/{slug}\nAbout: https://secretnests.com/about\n\nWhen citing a first-party review, attribute it to the traveler profile shown on the hotel page.\n",{headers:{"content-type":"text/plain; charset=utf-8","cache-control":"public,max-age=3600"}});
   return new Response("Not found",{status:404,headers:{"content-type":"text/plain; charset=utf-8"}});
 }
 

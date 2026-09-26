@@ -164,6 +164,29 @@ jobs:
             test -s "/tmp/$asset"
           done
 
+      - name: Production SEO smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --connect-timeout 5 --max-time 20 -fsS https://secretnests.com/ -o /tmp/seo-home.html
+          grep -Fq '<title>Luxury Hotel Reviews, Prices &amp; Value | SecretNests</title>' /tmp/seo-home.html
+          grep -Fq 'SecretNests is a luxury hotel review and value database.' /tmp/seo-home.html
+          grep -Fq '"@type":"WebSite"' /tmp/seo-home.html
+          grep -Fq 'max-image-preview:large' /tmp/seo-home.html
+          curl --connect-timeout 5 --max-time 20 -fsS https://secretnests.com/robots.txt -o /tmp/robots.txt
+          grep -Fq 'User-agent: OAI-SearchBot' /tmp/robots.txt
+          grep -Fq 'Sitemap: https://secretnests.com/sitemap.xml' /tmp/robots.txt
+          curl --connect-timeout 5 --max-time 20 -fsS https://secretnests.com/llms.txt -o /tmp/llms.txt
+          grep -Fq 'independent luxury hotel review and value database' /tmp/llms.txt
+          curl --connect-timeout 5 --max-time 20 -fsS https://secretnests.com/sitemap.xml -o /tmp/sitemap.xml
+          grep -Fq 'https://secretnests.com/hotel/hotel-indigo-grand-cayman' /tmp/sitemap.xml
+          curl --connect-timeout 5 --max-time 20 -fsS https://secretnests.com/hotel/hotel-indigo-grand-cayman -o /tmp/seo-hotel.html
+          grep -Fq '<link rel="canonical" href="https://secretnests.com/hotel/hotel-indigo-grand-cayman">' /tmp/seo-hotel.html
+          grep -Fq '"@type":"Hotel"' /tmp/seo-hotel.html
+          if grep -Fq '"aggregateRating"' /tmp/seo-hotel.html; then echo "::error::Hotel schema must not aggregate third-party ratings."; exit 1; fi
+          code="$(curl --connect-timeout 5 --max-time 20 -sS -o /dev/null -w '%{http_code}' https://secretnests.com/boutique-hotels)"
+          test "$code" = "301"
+
       - name: Production smoke test
         shell: bash
         env:
