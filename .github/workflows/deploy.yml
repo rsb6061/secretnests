@@ -170,12 +170,16 @@ jobs:
         run: npx wrangler secret list || true
 
       - name: Start production Nuitee hotel enrichment
-        if: ${{ startsWith(secrets.NUITEE_API_KEY, 'prod_') }}
         shell: bash
         env:
           WARMUP_TOKEN: ${{ steps.pilot.outputs.token }}
+          NUITEE_API_KEY: ${{ secrets.NUITEE_API_KEY }}
         run: |
           set -euo pipefail
+          case "$NUITEE_API_KEY" in
+            prod_*) ;;
+            *) echo "Production Nuitee key not configured; skipping production warmup."; exit 0 ;;
+          esac
           HTTP_CODE=""
           for attempt in 1 2 3 4 5 6; do
             HTTP_CODE="$(curl --connect-timeout 5 --max-time 150 -sS -o /tmp/nuitee-warmup.json -w '%{http_code}' -X POST               -H "Authorization: Bearer $WARMUP_TOKEN"               https://secretnests.com/api/internal/nuitee/static-warmup || true)"
@@ -188,7 +192,6 @@ jobs:
           jq -e '.ok == true' /tmp/nuitee-warmup.json
 
       - name: Post-enrichment content snapshot
-        if: ${{ startsWith(secrets.NUITEE_API_KEY, 'prod_') }}
         shell: bash
         run: |
           set -euo pipefail
