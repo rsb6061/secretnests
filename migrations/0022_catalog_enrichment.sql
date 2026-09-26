@@ -1,3 +1,4 @@
+-- Catalog enrichment retry marker
 PRAGMA foreign_keys = ON;
 
 -- Commodity facts are valuable on every published hotel, not just the top 250.
