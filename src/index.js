@@ -2,7 +2,7 @@ import { drainOfficialHotelQueue } from "./enrichment-worker.js";
 import { drainCurrentRateQueue } from "./rate-worker.js";
 import { drainExternalEvidenceQueue } from "./external-evidence-worker.js";
 import { refreshHotelEnrichment } from "./enrichment.js";
-import { runNuiteeTop250Enrichment, resetNuiteeAuditHotel, approveNuiteeAuditHotel } from "./nuitee-top250-worker.js";
+import { runNuiteeTop250Enrichment, runNuiteeCatalogEnrichment, resetNuiteeAuditHotel, approveNuiteeAuditHotel } from "./nuitee-top250-worker.js";
 import { nuiteeAdminBody } from "./nuitee-admin.js";
 import { recomputeHotelValuation } from "./value-engine.js";
 import { sameOrigin, bodyTooLarge, enforceRateLimit, adminEmail, safeLogError } from "./security.js";
@@ -1973,14 +1973,24 @@ async function route(request,env){
 export default {
   async scheduled(controller,env,ctx){
     if(controller.cron==="23 5 * * *"){
-      ctx.waitUntil(runEnrichmentAutomation(env).then(result=>console.log(JSON.stringify({type:"enrichment_automation",...result}))).catch(e=>console.error(JSON.stringify({type:"enrichment_automation_error",message:safeLogError(e)}))));
+      ctx.waitUntil((async()=>{
+        const results=[];
+        results.push(await runEnrichmentAutomation(env));
+        if(String(env.NUITEE_CATALOG_ENRICHMENT_ENABLED||"false").toLowerCase()==="true"&&String(env.NUITEE_API_KEY||"").trim()){
+          results.push(await runNuiteeCatalogEnrichment(env,{mapLimit:40,rateLimit:200,canonicalLimit:300}));
+        }
+        console.log(JSON.stringify({type:"daily_content_enrichment",results}));
+      })().catch(e=>console.error(JSON.stringify({type:"daily_content_enrichment_error",message:safeLogError(e)}))));
       return;
     }
     if(controller.cron==="7,22,37,52 * * * *"){
       const jobs=[
-        drainOfficialHotelQueue(env,{limit:8}),
+        drainOfficialHotelQueue(env,{limit:12}),
         runExternalEvidenceAutomation(env)
       ];
+      if(String(env.NUITEE_CATALOG_ENRICHMENT_ENABLED||"false").toLowerCase()==="true"&&String(env.NUITEE_API_KEY||"").trim()){
+        jobs.push(runNuiteeCatalogEnrichment(env,{mapLimit:8,rateLimit:0,canonicalLimit:80}));
+      }
       if(String(env.NUITEE_TOP250_AUDIT_ENABLED||"false").toLowerCase()==="true"&&String(env.NUITEE_API_KEY||"").trim()){
         jobs.push(runNuiteeTop250Enrichment(env,{mapLimit:24,reviewLimit:12,rateLimit:100}));
       }

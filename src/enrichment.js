@@ -83,29 +83,30 @@ export async function refreshHotelEnrichment(db){
         media_score=excluded.media_score,evidence_score=excluded.evidence_score,first_party_score=excluded.first_party_score,missing_json=excluded.missing_json,computed_at=excluded.computed_at`)
         .bind(x.h.id,x.priority,rank,cohort,x.complete.total,x.complete.facts,x.complete.booking,x.complete.rate,x.complete.media,x.complete.evidence,x.complete.firstParty,JSON.stringify(x.complete.missing),computed));
 
-      if(rank<=250){
-        const taskHints={
-          facts_core:"official_hotel_site",
-          city_review:"manual_geography_review",
-          booking_link:"travelpayouts_or_direct",
-          current_rate:"rate_provider",
-          licensed_hero:"hotel_press_or_licensed_api",
-          external_evidence:"structured_public_evidence",
-          first_party_value:"traveler_contribution"
-        };
-        for(const taskType of Object.keys(taskHints)){
-          const missing=x.complete.missing.includes(taskType);
-          const taskWeight={facts_core:0,city_review:5,booking_link:10,licensed_hero:20,current_rate:30,external_evidence:40,first_party_value:50}[taskType]??60;
-          const priority=Math.max(1,rank+taskWeight);
-          queueStatements.push(db.prepare(`INSERT INTO hotel_enrichment_queue
-            (id,hotel_id,task_type,status,priority,source_hint,created_at,updated_at)
-            VALUES (?,?,?,?,?,?,?,?)
-            ON CONFLICT(hotel_id,task_type) DO UPDATE SET
-              status=CASE WHEN excluded.status='complete' THEN 'complete' WHEN hotel_enrichment_queue.status='working' THEN 'working' ELSE 'queued' END,
-              priority=excluded.priority,source_hint=excluded.source_hint,updated_at=excluded.updated_at`)
-            .bind(crypto.randomUUID(),x.h.id,taskType,missing?"queued":"complete",priority,taskHints[taskType],computed,computed));
-          if(missing)queuedTypes.add(x.h.id+"|"+taskType);
-        }
+      const commodityTasks={
+        facts_core:"official_hotel_site",
+        city_review:"official_hotel_site",
+        booking_link:"official_hotel_site"
+      };
+      const deepTasks=rank<=250?{
+        licensed_hero:"hotel_press_or_licensed_api",
+        current_rate:"rate_provider",
+        external_evidence:"structured_public_evidence",
+        first_party_value:"traveler_contribution"
+      }:{};
+      const taskHints={...commodityTasks,...deepTasks};
+      for(const taskType of Object.keys(taskHints)){
+        const missing=x.complete.missing.includes(taskType);
+        const taskWeight={facts_core:0,city_review:5,booking_link:10,licensed_hero:20,current_rate:30,external_evidence:40,first_party_value:50}[taskType]??60;
+        const priority=Math.max(1,rank+taskWeight);
+        queueStatements.push(db.prepare(`INSERT INTO hotel_enrichment_queue
+          (id,hotel_id,task_type,status,priority,source_hint,created_at,updated_at)
+          VALUES (?,?,?,?,?,?,?,?)
+          ON CONFLICT(hotel_id,task_type) DO UPDATE SET
+            status=CASE WHEN excluded.status='complete' THEN 'complete' WHEN hotel_enrichment_queue.status='working' THEN 'working' ELSE 'queued' END,
+            priority=excluded.priority,source_hint=excluded.source_hint,updated_at=excluded.updated_at`)
+          .bind(crypto.randomUUID(),x.h.id,taskType,missing?"queued":"complete",priority,taskHints[taskType],computed,computed));
+        if(missing)queuedTypes.add(x.h.id+"|"+taskType);
       }
     });
 

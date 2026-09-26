@@ -201,17 +201,17 @@ async function processMappingHotel(env,row){
   }
 }
 
-async function mappingBatch(env,limit){
+async function mappingBatch(env,limit,cohort="priority_250"){
   const rows=(await env.DB.prepare(`SELECT h.*,p.priority_rank
     FROM hotel_enrichment_profiles p
     JOIN hotels h ON h.id=p.hotel_id
     LEFT JOIN hotel_nuitee_audit a ON a.hotel_id=h.id
-    WHERE p.cohort='priority_250' AND (
+    WHERE p.cohort=? AND (
       a.hotel_id IS NULL
       OR a.mapping_status='pending'
       OR (a.mapping_status IN ('mapped','review') AND a.metadata_status='pending')
     )
-    ORDER BY p.priority_rank LIMIT ?`).bind(clamp(limit,1,40)).all()).results||[];
+    ORDER BY p.priority_rank LIMIT ?`).bind(cohort,clamp(limit,1,40)).all()).results||[];
   const results=await chunks(rows,2,row=>processMappingHotel(env,row));
   return {
     claimed:rows.length,
@@ -260,12 +260,12 @@ async function reviewBatch(env,limit){
   return {claimed:rows.length,written:results.reduce((n,x)=>n+x.written,0),failures:results.reduce((n,x)=>n+x.failed,0)};
 }
 
-async function rateCoverageBatch(env,limit){
+async function rateCoverageBatch(env,limit,cohort="priority_250"){
   const environment=nuiteeEnvironment(env),provider=environment==="sandbox"?"nuitee_sandbox":"nuitee_connect";
   const rows=(await env.DB.prepare(`SELECT a.hotel_id,a.provider_hotel_id,p.priority_rank
     FROM hotel_nuitee_audit a JOIN hotel_enrichment_profiles p ON p.hotel_id=a.hotel_id
-    WHERE p.cohort='priority_250' AND a.mapping_status='mapped' AND a.rate_audited_at IS NULL
-    ORDER BY p.priority_rank LIMIT ?`).bind(clamp(limit,1,200)).all()).results||[];
+    WHERE p.cohort=? AND a.mapping_status='mapped' AND a.mapping_confidence='high' AND a.rate_audited_at IS NULL
+    ORDER BY p.priority_rank LIMIT ?`).bind(cohort,clamp(limit,1,200)).all()).results||[];
   if(!rows.length)return {claimed:0,windows:0,observations:0,failures:0};
   const byProvider=new Map(rows.map(r=>[String(r.provider_hotel_id),r]));
   const counts=new Map(rows.map(r=>[r.hotel_id,{tested:0,withRate:0}]));
@@ -313,7 +313,7 @@ async function saveCanonicalProvenance(db,hotelId,fieldName,sourceType,sourceUrl
       JSON.stringify({value,provider_hotel_id:providerHotelId,environment,canonical_promotion:true}),now,now).run();
 }
 
-export async function promoteTrustedNuiteeMetadata(env,{limit=200}={}){
+export async function promoteTrustedNuiteeMetadata(env,{limit=200,cohort="priority_250",includeReviews=true}={}){
   const rows=(await env.DB.prepare(`SELECT
       h.id,h.city,h.country,h.address,h.formatted_address,h.lat,h.lng,h.hotel_category,h.brand_name,h.description,h.amenities_json,
       h.external_review_summary,h.external_review_sentiment,h.external_review_confidence,h.external_review_source,
@@ -330,13 +330,15 @@ export async function promoteTrustedNuiteeMetadata(env,{limit=200}={}){
     JOIN hotel_enrichment_profiles p ON p.hotel_id=a.hotel_id
     JOIN hotels h ON h.id=a.hotel_id
     JOIN hotel_provider_metadata pm ON pm.hotel_id=h.id AND pm.provider='nuitee_connect'
-    WHERE p.cohort='priority_250'
+    WHERE p.cohort=?
+      AND a.environment='production'
+      AND pm.environment='production'
       AND a.mapping_status='mapped'
       AND a.mapping_confidence='high'
       AND a.metadata_status='complete'
       AND COALESCE(a.canonical_status,'pending')<>'complete'
     ORDER BY p.priority_rank
-    LIMIT ?`).bind(clamp(limit,1,250)).all()).results||[];
+    LIMIT ?`).bind(cohort,clamp(limit,1,500)).all()).results||[];
 
   let hotelsUpdated=0,fieldsWritten=0,reviewSignals=0;
   for(const row of rows){
@@ -363,7 +365,7 @@ export async function promoteTrustedNuiteeMetadata(env,{limit=200}={}){
     const providerAmenities=parseArray(row.provider_amenities_json).map(x=>String(x).trim()).filter(Boolean).slice(0,120);
     if(!existingAmenities.length&&providerAmenities.length)add("amenities_json",JSON.stringify(providerAmenities));
 
-    if(!row.external_review_summary&&row.review_summary){
+    if(includeReviews&&!row.external_review_summary&&row.review_summary){
       const reviewSummary=String(row.review_summary).slice(0,1200);
       updates.push("external_review_summary=?");values.push(reviewSummary);
       updates.push("external_review_sentiment=?");values.push(row.review_sentiment||null);
@@ -407,6 +409,53 @@ export async function promoteTrustedNuiteeMetadata(env,{limit=200}={}){
   return {claimed:rows.length,hotels_updated:hotelsUpdated,fields_written:fieldsWritten,review_signals_promoted:reviewSignals};
 }
 
+export async function runNuiteeCatalogEnrichment(env,{mapLimit=8,rateLimit=0,canonicalLimit=80}={}){
+  const environment=nuiteeEnvironment(env);
+  if(environment!=="production")return {ok:false,skipped:true,reason:environment==="unknown"?"nuitee_not_configured":"production_key_required"};
+  const runId=crypto.randomUUID(),started=nowIso();
+  await env.DB.prepare("INSERT INTO hotel_nuitee_batch_runs (id,run_type,environment,status,started_at) VALUES (?,'catalog_enrichment',?,'running',?)")
+    .bind(runId,environment,started).run();
+  try{
+    const mapping=await mappingBatch(env,mapLimit,"long_tail");
+    const rates=Number(rateLimit)>0?await rateCoverageBatch(env,rateLimit,"long_tail"):{claimed:0,windows:0,observations:0,failures:0};
+    const canonical=await promoteTrustedNuiteeMetadata(env,{limit:canonicalLimit,cohort:"long_tail",includeReviews:false});
+    const failures=mapping.failures+rates.failures;
+    await env.DB.prepare(`UPDATE hotel_nuitee_batch_runs SET status='success',hotels_claimed=?,hotels_mapped=?,metadata_written=?,
+      reviews_written=0,rate_windows_tested=?,rate_observations_written=?,failures=?,finished_at=? WHERE id=?`)
+      .bind(mapping.claimed,mapping.mapped,mapping.metadata,rates.claimed*rates.windows,rates.observations,failures,nowIso(),runId).run();
+    const summary=await getNuiteeCatalogSummary(env.DB);
+    return {ok:true,environment,mapping,rates,canonical,summary};
+  }catch(e){
+    await env.DB.prepare("UPDATE hotel_nuitee_batch_runs SET status='failed',note=?,finished_at=? WHERE id=?")
+      .bind(String(e?.message||e).slice(0,1000),nowIso(),runId).run();
+    throw e;
+  }
+}
+
+export async function getNuiteeCatalogSummary(db){
+  const row=await db.prepare(`SELECT
+    COUNT(*) published_total,
+    SUM(CASE WHEN p.cohort='priority_250' THEN 1 ELSE 0 END) priority_total,
+    SUM(CASE WHEN p.cohort='long_tail' THEN 1 ELSE 0 END) long_tail_total,
+    SUM(CASE WHEN a.mapping_status='mapped' AND a.mapping_confidence='high' THEN 1 ELSE 0 END) high_confidence_mapped,
+    SUM(CASE WHEN a.metadata_status='complete' AND a.environment='production' THEN 1 ELSE 0 END) production_metadata_complete,
+    SUM(CASE WHEN a.rate_audited_at IS NOT NULL THEN 1 ELSE 0 END) rate_audited,
+    SUM(CASE WHEN h.city IS NULL OR trim(h.city)='' THEN 1 ELSE 0 END) missing_city,
+    SUM(CASE WHEN h.formatted_address IS NULL OR trim(h.formatted_address)='' THEN 1 ELSE 0 END) missing_address,
+    SUM(CASE WHEN h.website IS NULL OR trim(h.website)='' THEN 1 ELSE 0 END) missing_website,
+    SUM(CASE WHEN h.description IS NULL OR length(trim(h.description))<80 THEN 1 ELSE 0 END) missing_description,
+    SUM(CASE WHEN h.amenities_json IS NULL OR h.amenities_json='[]' THEN 1 ELSE 0 END) missing_amenities,
+    SUM(CASE WHEN NOT EXISTS (
+      SELECT 1 FROM media_assets ma WHERE ma.hotel_id=h.id
+      AND ma.rights_status IN ('owned_user_upload','hotel_authorized','licensed_api','licensed_public')
+    ) THEN 1 ELSE 0 END) missing_publishable_media
+    FROM hotels h
+    JOIN hotel_enrichment_profiles p ON p.hotel_id=h.id
+    LEFT JOIN hotel_nuitee_audit a ON a.hotel_id=h.id
+    WHERE h.is_published=1`).first();
+  return row||{};
+}
+
 export async function runNuiteeTop250Enrichment(env,{mapLimit=24,reviewLimit=12,rateLimit=100,canonicalLimit=200}={}){
   const environment=nuiteeEnvironment(env);
   if(environment==="unknown")return {ok:false,skipped:true,reason:"nuitee_not_configured"};
@@ -414,10 +463,10 @@ export async function runNuiteeTop250Enrichment(env,{mapLimit=24,reviewLimit=12,
   await env.DB.prepare("INSERT INTO hotel_nuitee_batch_runs (id,run_type,environment,status,started_at) VALUES (?,'top250_enrichment',?,'running',?)")
     .bind(runId,environment,started).run();
   try{
-    const mapping=await mappingBatch(env,mapLimit);
+    const mapping=await mappingBatch(env,mapLimit,"priority_250");
     const reviews=await reviewBatch(env,reviewLimit);
-    const rates=await rateCoverageBatch(env,rateLimit);
-    const canonical=await promoteTrustedNuiteeMetadata(env,{limit:canonicalLimit});
+    const rates=await rateCoverageBatch(env,rateLimit,"priority_250");
+    const canonical=await promoteTrustedNuiteeMetadata(env,{limit:canonicalLimit,cohort:"priority_250",includeReviews:true});
     const failures=mapping.failures+reviews.failures+rates.failures;
     await env.DB.prepare(`UPDATE hotel_nuitee_batch_runs SET status='success',hotels_claimed=?,hotels_mapped=?,metadata_written=?,
       reviews_written=?,rate_windows_tested=?,rate_observations_written=?,failures=?,finished_at=? WHERE id=?`)
