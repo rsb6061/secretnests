@@ -2,7 +2,7 @@ import { drainOfficialHotelQueue } from "./enrichment-worker.js";
 import { drainCurrentRateQueue } from "./rate-worker.js";
 import { drainExternalEvidenceQueue } from "./external-evidence-worker.js";
 import { refreshHotelEnrichment } from "./enrichment.js";
-import { runNuiteeTop250Enrichment, runNuiteeCatalogEnrichment, resetNuiteeAuditHotel, approveNuiteeAuditHotel } from "./nuitee-top250-worker.js";
+import { runNuiteeTop250Enrichment, runNuiteeCatalogEnrichment, runNuiteeStaticWarmup, resetNuiteeAuditHotel, approveNuiteeAuditHotel } from "./nuitee-top250-worker.js";
 import { nuiteeAdminBody } from "./nuitee-admin.js";
 import { recomputeHotelValuation } from "./value-engine.js";
 import { sameOrigin, bodyTooLarge, enforceRateLimit, adminEmail, safeLogError } from "./security.js";
@@ -1851,6 +1851,14 @@ async function runTravelpayoutsAutomation(env){
   return {ok:Boolean(links.ok&&stats.ok),links,stats};
 }
 
+async function internalNuiteeStaticWarmup(request,env){
+  const expected=String(env.PRODUCTION_ACTIVATION_TOKEN||"");
+  const auth=String(request.headers.get("authorization")||"");
+  if(!expected||auth!=="Bearer "+expected)return new Response("Not found",{status:404});
+  const result=await runNuiteeStaticWarmup(env,{priorityLimit:16,catalogLimit:8,canonicalLimit:120});
+  return json(result,{status:result.ok||result.skipped?200:500});
+}
+
 async function internalMarketPilot(request,env){
   const expected=String(env.PRODUCTION_ACTIVATION_TOKEN||"");
   const auth=String(request.headers.get("authorization")||"");
@@ -1938,6 +1946,7 @@ async function route(request,env){
   if(request.method==="GET" && url.pathname==="/api/hotels")return apiHotels(request,env);
   if(request.method==="POST" && url.pathname==="/api/events")return recordEvent(request,env);
   if(request.method==="POST" && url.pathname==="/api/internal/market-intelligence/pilot")return internalMarketPilot(request,env);
+  if(request.method==="POST" && url.pathname==="/api/internal/nuitee/static-warmup")return internalNuiteeStaticWarmup(request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/admin/submissions")return adminSubmissionsPage(request,env);
   const verificationFile=url.pathname.match(/^\/admin\/submission-verification\/([^/]+)$/); if(request.method==="GET"&&verificationFile)return submissionVerificationFile(decodeURIComponent(verificationFile[1]),request,env);
   if((request.method==="GET"||request.method==="POST") && url.pathname==="/api/admin/submissions")return adminSubmissions(request,env);

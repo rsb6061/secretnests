@@ -196,7 +196,20 @@ async function processMappingHotel(env,row){
         mapping_stage:meta.mapping_stage??null
       });
     }
-    const details=await fetchNuiteeHotelDetails(env,providerId);
+    let details=await fetchNuiteeHotelDetails(env,providerId);
+    if(!details.ok&&previousAudit?.environment&&previousAudit.environment!==environment){
+      const rematch=await findNuiteeHotel(env,row);
+      if(rematch.ok){
+        await saveMapping(env.DB,row.id,rematch.match,environment);
+        providerId=rematch.match.id;
+        confidence=rematch.match.confidence;
+        await upsertAudit(env.DB,row.id,{
+          provider_hotel_id:providerId,environment,mapping_status:confidence==="high"?"mapped":"review",
+          mapping_confidence:confidence,mapping_error:null,last_error:null,mapped_at:nowIso()
+        });
+        details=await fetchNuiteeHotelDetails(env,providerId);
+      }
+    }
     if(!details.ok){
       await upsertAudit(env.DB,row.id,{metadata_status:"failed",metadata_error:details.error,last_error:details.error});
       return {mapped:1,metadata:0,failed:1};
@@ -418,6 +431,30 @@ export async function promoteTrustedNuiteeMetadata(env,{limit=200,cohort="priori
       .bind(updates.length,nowIso(),nowIso(),row.id).run();
   }
   return {claimed:rows.length,hotels_updated:hotelsUpdated,fields_written:fieldsWritten,review_signals_promoted:reviewSignals};
+}
+
+export async function runNuiteeStaticWarmup(env,{priorityLimit=16,catalogLimit=8,canonicalLimit=120}={}){
+  const environment=nuiteeEnvironment(env);
+  if(environment!=="production")return {ok:false,skipped:true,reason:environment==="unknown"?"nuitee_not_configured":"production_key_required"};
+  const runId=crypto.randomUUID(),started=nowIso();
+  await env.DB.prepare("INSERT INTO hotel_nuitee_batch_runs (id,run_type,environment,status,started_at) VALUES (?,'production_static_warmup',?,'running',?)")
+    .bind(runId,environment,started).run();
+  try{
+    const priority=await mappingBatch(env,priorityLimit,"priority_250");
+    const catalog=await mappingBatch(env,catalogLimit,"long_tail");
+    const promotedPriority=await promoteTrustedNuiteeMetadata(env,{limit:canonicalLimit,cohort:"priority_250",includeReviews:false});
+    const promotedCatalog=await promoteTrustedNuiteeMetadata(env,{limit:canonicalLimit,cohort:"long_tail",includeReviews:false});
+    const failures=priority.failures+catalog.failures;
+    await env.DB.prepare(`UPDATE hotel_nuitee_batch_runs SET status='success',hotels_claimed=?,hotels_mapped=?,metadata_written=?,
+      reviews_written=0,rate_windows_tested=0,rate_observations_written=0,failures=?,finished_at=? WHERE id=?`)
+      .bind(priority.claimed+catalog.claimed,priority.mapped+catalog.mapped,priority.metadata+catalog.metadata,failures,nowIso(),runId).run();
+    const summary=await getNuiteeCatalogSummary(env.DB);
+    return {ok:true,environment,priority,catalog,promoted_priority:promotedPriority,promoted_catalog:promotedCatalog,summary};
+  }catch(e){
+    await env.DB.prepare("UPDATE hotel_nuitee_batch_runs SET status='failed',note=?,finished_at=? WHERE id=?")
+      .bind(String(e?.message||e).slice(0,1000),nowIso(),runId).run();
+    throw e;
+  }
 }
 
 export async function runNuiteeCatalogEnrichment(env,{mapLimit=8,rateLimit=0,canonicalLimit=80}={}){

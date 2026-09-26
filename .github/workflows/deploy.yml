@@ -154,6 +154,13 @@ jobs:
           [ -n "$AUTH0_DOMAIN" ] && configured=$((configured+1)) || true
           [ -n "$AUTH0_CLIENT_ID" ] && configured=$((configured+1)) || true
           [ -n "$AUTH0_CLIENT_SECRET" ] && configured=$((configured+1)) || true
+          if [ -n "$NUITEE_API_KEY" ]; then
+            case "$NUITEE_API_KEY" in
+              prod_*) echo "Nuitee production key detected." ;;
+              sand_*) echo "Nuitee sandbox key detected." ;;
+              *) echo "::error::NUITEE_API_KEY has an unrecognized prefix."; exit 1 ;;
+            esac
+          fi
           echo "Prepared activation token plus $configured configured optional provider secret(s) for one atomic deploy."
 
       - name: Deploy Worker with secrets
@@ -161,6 +168,31 @@ jobs:
 
       - name: Verify deployed secret names
         run: npx wrangler secret list || true
+
+      - name: Start production Nuitee hotel enrichment
+        if: ${{ startsWith(secrets.NUITEE_API_KEY, 'prod_') }}
+        shell: bash
+        env:
+          WARMUP_TOKEN: ${{ steps.pilot.outputs.token }}
+        run: |
+          set -euo pipefail
+          HTTP_CODE=""
+          for attempt in 1 2 3 4 5 6; do
+            HTTP_CODE="$(curl --connect-timeout 5 --max-time 150 -sS -o /tmp/nuitee-warmup.json -w '%{http_code}' -X POST               -H "Authorization: Bearer $WARMUP_TOKEN"               https://secretnests.com/api/internal/nuitee/static-warmup || true)"
+            if [ "$HTTP_CODE" = "200" ]; then break; fi
+            echo "Nuitee warmup returned HTTP $HTTP_CODE; waiting for Worker propagation (attempt $attempt/6)."
+            sleep 3
+          done
+          test "$HTTP_CODE" = "200"
+          jq . /tmp/nuitee-warmup.json
+          jq -e '.ok == true' /tmp/nuitee-warmup.json
+
+      - name: Post-enrichment content snapshot
+        if: ${{ startsWith(secrets.NUITEE_API_KEY, 'prod_') }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx wrangler d1 execute secretnests --remote --command="SELECT COUNT(*) published_hotels, SUM(CASE WHEN city IS NULL OR trim(city)='' THEN 1 ELSE 0 END) missing_city, SUM(CASE WHEN formatted_address IS NULL OR trim(formatted_address)='' THEN 1 ELSE 0 END) missing_address, SUM(CASE WHEN amenities_json IS NULL OR amenities_json='[]' THEN 1 ELSE 0 END) missing_amenities, SUM(CASE WHEN brand_name IS NULL OR trim(brand_name)='' THEN 1 ELSE 0 END) missing_brand FROM hotels WHERE is_published=1; SELECT COUNT(DISTINCT hotel_id) hotels_with_publishable_media FROM media_assets WHERE rights_status IN ('owned_user_upload','hotel_authorized','licensed_api','licensed_public'); SELECT COUNT(*) production_metadata_complete FROM hotel_nuitee_audit WHERE metadata_status='complete' AND environment='production';" --yes
 
       - name: Verify favicon assets
         shell: bash
