@@ -103,7 +103,12 @@ export async function refreshHotelEnrichment(db){
           (id,hotel_id,task_type,status,priority,source_hint,created_at,updated_at)
           VALUES (?,?,?,?,?,?,?,?)
           ON CONFLICT(hotel_id,task_type) DO UPDATE SET
-            status=CASE WHEN excluded.status='complete' THEN 'complete' WHEN hotel_enrichment_queue.status='working' THEN 'working' ELSE 'queued' END,
+            status=CASE
+              WHEN excluded.status='complete' THEN 'complete'
+              WHEN hotel_enrichment_queue.status='working' THEN 'working'
+              WHEN hotel_enrichment_queue.status='failed' AND hotel_enrichment_queue.attempts>=3 THEN 'failed'
+              ELSE 'queued'
+            END,
             priority=excluded.priority,source_hint=excluded.source_hint,updated_at=excluded.updated_at`)
           .bind(crypto.randomUUID(),x.h.id,taskType,missing?"queued":"complete",priority,taskHints[taskType],computed,computed));
         if(missing)queuedTypes.add(x.h.id+"|"+taskType);

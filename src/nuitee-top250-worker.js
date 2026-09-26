@@ -164,6 +164,15 @@ async function saveMetadata(db,hotel,providerId,metadata,environment,confidence)
 async function processMappingHotel(env,row){
   const environment=nuiteeEnvironment(env);
   try{
+    const previousAudit=await env.DB.prepare("SELECT environment FROM hotel_nuitee_audit WHERE hotel_id=?").bind(row.id).first();
+    if(previousAudit?.environment&&previousAudit.environment!==environment){
+      await env.DB.prepare(`UPDATE hotel_nuitee_audit
+        SET environment=?,metadata_status='pending',review_status='pending',rate_windows_tested=0,
+            rate_windows_with_inventory=0,rate_coverage_pct=NULL,rate_audited_at=NULL,
+            canonical_status='pending',canonical_fields=0,canonical_at=NULL,
+            metadata_error=NULL,review_error=NULL,last_error=NULL,updated_at=?
+        WHERE hotel_id=?`).bind(environment,nowIso(),row.id).run();
+    }
     let mapping=await env.DB.prepare("SELECT * FROM hotel_provider_mappings WHERE hotel_id=? AND provider='nuitee_connect' AND status='active'").bind(row.id).first();
     let confidence=mapping?.confidence||null,providerId=mapping?.provider_hotel_id||null;
     if(!providerId){
@@ -209,9 +218,11 @@ async function mappingBatch(env,limit,cohort="priority_250"){
     WHERE p.cohort=? AND (
       a.hotel_id IS NULL
       OR a.mapping_status='pending'
+      OR a.environment IS NULL
+      OR a.environment<>?
       OR (a.mapping_status IN ('mapped','review') AND a.metadata_status='pending')
     )
-    ORDER BY p.priority_rank LIMIT ?`).bind(cohort,clamp(limit,1,40)).all()).results||[];
+    ORDER BY p.priority_rank LIMIT ?`).bind(cohort,nuiteeEnvironment(env),clamp(limit,1,40)).all()).results||[];
   const results=await chunks(rows,2,row=>processMappingHotel(env,row));
   return {
     claimed:rows.length,

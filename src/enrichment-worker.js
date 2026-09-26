@@ -77,6 +77,7 @@ function deriveOfficialFacts(html,url){
   const fields={};
   const city=address.addressLocality||null;
   if(city)fields.city=String(city).slice(0,120);
+  if(address.streetAddress)fields.address=String(address.streetAddress).slice(0,300);
   if(address.addressRegion)fields.region=String(address.addressRegion).slice(0,120);
   if(address.addressCountry){
     const country=typeof address.addressCountry==="object"?(address.addressCountry.name||address.addressCountry["@id"]):address.addressCountry;
@@ -93,6 +94,12 @@ function deriveOfficialFacts(html,url){
   if(Number.isFinite(lng)&&lng>=-180&&lng<=180)fields.lng=lng;
   const description=hotel?.description||extractMeta(html,"description")||extractMeta(html,"og:description");
   if(description&&stripHtml(description).length>=40)fields.description=stripHtml(description).slice(0,1200);
+  const brand=typeof hotel?.brand==="string"?hotel.brand:(hotel?.brand?.name||hotel?.brand?.legalName||null);
+  if(brand)fields.brand_name=stripHtml(brand).slice(0,160);
+  const amenities=(Array.isArray(hotel?.amenityFeature)?hotel.amenityFeature:[])
+    .map(x=>typeof x==="string"?x:(x?.name||x?.value||""))
+    .map(stripHtml).filter(Boolean).slice(0,120);
+  if(amenities.length)fields.amenities_json=JSON.stringify([...new Set(amenities)]);
   const t=hotel?.["@type"];
   const types=Array.isArray(t)?t:[t];
   if(types.some(x=>String(x)==="Resort"))fields.hotel_category="resort";
