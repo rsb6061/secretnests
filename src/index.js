@@ -47,6 +47,7 @@ function page(body, env, {
   description="SecretNests is a luxury hotel review and value database showing what travelers paid, whether they would return, and what they would happily pay again.",
   canonical="/",
   jsonLd=null,
+  image=null,
   robots="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"
 }={}) {
   const canonicalUrl = canonical.startsWith("http") ? canonical : ORIGIN + canonical;
@@ -54,7 +55,7 @@ function page(body, env, {
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=4"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=4"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=4">
 <title>${esc(title)}</title><meta name="description" content="${attr(description)}"><meta name="robots" content="${attr(robots)}">${env.GOOGLE_SITE_VERIFICATION ? `<meta name="google-site-verification" content="${attr(env.GOOGLE_SITE_VERIFICATION)}">` : ""}
-<link rel="canonical" href="${attr(canonicalUrl)}"><meta property="og:site_name" content="SecretNests"><meta property="og:title" content="${attr(title)}"><meta property="og:description" content="${attr(description)}"><meta property="og:url" content="${attr(canonicalUrl)}"><meta property="og:type" content="website"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="${attr(title)}"><meta name="twitter:description" content="${attr(description)}">
+<link rel="canonical" href="${attr(canonicalUrl)}"><meta property="og:site_name" content="SecretNests"><meta property="og:title" content="${attr(title)}"><meta property="og:description" content="${attr(description)}"><meta property="og:url" content="${attr(canonicalUrl)}"><meta property="og:type" content="website">${image ? `<meta property="og:image" content="${attr(image.startsWith("http")?image:ORIGIN+image)}"><meta property="og:image:alt" content="${attr(title)}">` : ""}<meta name="twitter:card" content="${image?"summary_large_image":"summary"}"><meta name="twitter:title" content="${attr(title)}"><meta name="twitter:description" content="${attr(description)}">${image ? `<meta name="twitter:image" content="${attr(image.startsWith("http")?image:ORIGIN+image)}">` : ""}
 ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd).replace(/</g,"\\u003c")}</script>` : ""}
 ${analytics(env)}
 <style>
