@@ -42,7 +42,7 @@ export function hotelSeoCopy(h,{travelerMedian=null,sampleSize=0,currentRate=nul
   let title=name+" Review, Prices & Value | SecretNests";
   if(city&&title.length<=54)title=name+" Review & Prices — "+city+" | SecretNests";
   if(title.length>66)title=name+" Review & Prices | SecretNests";
-  if(title.length>66)title=clip(name,42)+" | SecretNests";
+  if(title.length>66)title=clip(name,50)+" | SecretNests";
 
   const description=Number(sampleSize)>0&&median
     ? clip(name+(place?" in "+place:"")+": hotel review, "+(current?"latest observed rate "+current:priceRange?"estimated rates "+priceRange:"price context")+", traveler would-pay median "+median+", return intent and comparable alternatives.",160)
