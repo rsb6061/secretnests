@@ -39,15 +39,14 @@ export function hotelSeoCopy(h,{travelerMedian=null,sampleSize=0,currentRate=nul
   const priceRange=estimatedLow&&estimatedHigh?estimatedLow+"–"+estimatedHigh:estimatedLow||estimatedHigh||null;
   const clip=(value,max)=>{const s=String(value||"").replace(/\s+/g," ").trim();return s.length<=max?s:s.slice(0,max-1).replace(/\s+\S*$/,"")+"…"};
 
-  let title=name+" Review: Prices & What It's Worth | SecretNests";
+  let title=name+" Review, Prices & Value | SecretNests";
+  if(city&&title.length<=54)title=name+" Review & Prices — "+city+" | SecretNests";
   if(title.length>66)title=name+" Review & Prices | SecretNests";
   if(title.length>66)title=clip(name,42)+" | SecretNests";
 
-  const description=clip([
-    "Read "+name+(place?" reviews and price context in "+place:" reviews and price context"),
-    current?"latest observed rate "+current:priceRange?"estimated rates "+priceRange:"",
-    Number(sampleSize)>0&&median?"traveler would-pay median "+median:"first-party traveler value data as it builds"
-  ].filter(Boolean).join(". ")+".",160);
+  const description=Number(sampleSize)>0&&median
+    ? clip(name+(place?" in "+place:"")+": hotel review, "+(current?"latest observed rate "+current:priceRange?"estimated rates "+priceRange:"price context")+", traveler would-pay median "+median+", return intent and comparable alternatives.",160)
+    : clip(name+(place?" in "+place:"")+": hotel review and "+(current?"latest observed rate "+current:priceRange?"estimated rates "+priceRange:"price context")+", hotel facts, traveler evidence and comparable alternatives. First-party value data builds as stays are added.",160);
 
   const priceAnswer=current
     ? "The latest observed bookable rate on SecretNests is "+current+" per night. "+(priceRange?"The broader estimated price band is "+priceRange+".":"")
@@ -55,8 +54,8 @@ export function hotelSeoCopy(h,{travelerMedian=null,sampleSize=0,currentRate=nul
       ? "SecretNests currently estimates a typical nightly price band of "+priceRange+"."
       : "SecretNests does not yet have enough reliable price data to publish a nightly range.";
   const worthAnswer=Number(sampleSize)>0&&median
-    ? "The current SecretNests first-party sample has a median would-pay-again value of "+median+" per night across "+Number(sampleSize)+" published stay"+(Number(sampleSize)===1?"":"s")+". That is a traveler price signal, not a universal verdict."
-    : "SecretNests does not yet have enough first-party stays to publish a traveler fair-value verdict for this hotel. The page shows price context and external evidence separately while the first-party sample builds.";
+    ? "The current SecretNests first-party sample has a median would-pay-again value of "+median+" per night across "+Number(sampleSize)+" published stay"+(Number(sampleSize)===1?"":"s")+". That is an early traveler price signal, not a universal verdict."
+    : "SecretNests does not yet have enough first-party stays to publish a traveler fair-value verdict for this hotel. The page shows price context, hotel facts and external traveler evidence separately while the first-party sample builds.";
   return {title,description,priceAnswer,worthAnswer};
 }
 
