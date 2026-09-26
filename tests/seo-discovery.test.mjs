@@ -20,7 +20,7 @@ test("hotel SEO copy separates price context from first-party value",()=>{
     {name:"Example Hotel",city:"Paris",country:"France",price_estimate_min:700,price_estimate_max:1100},
     {currentRate:950,travelerMedian:null,sampleSize:0}
   );
-  assert.match(copy.title,/review, prices & value/);
+  assert.match(copy.title,/Review: Prices & What It's Worth/);
   assert.match(copy.priceAnswer,/\$950/);
   assert.match(copy.worthAnswer,/does not yet have enough first-party stays/);
   assert.ok(copy.description.length<=165);
