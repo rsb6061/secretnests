@@ -88,6 +88,14 @@ jobs:
         run: |
           npx wrangler d1 execute secretnests --remote --command="SELECT COUNT(*) AS mappings FROM hotel_provider_mappings; SELECT COUNT(*) AS evidence FROM hotel_external_evidence; SELECT COUNT(*) AS rate_runs FROM hotel_rate_sync_runs; SELECT COUNT(*) AS evidence_runs FROM hotel_evidence_sync_runs; SELECT COUNT(*) AS nuitee_audits FROM hotel_nuitee_audit; SELECT COUNT(*) AS provider_metadata FROM hotel_provider_metadata;" --yes
 
+      - name: Content quality summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx wrangler d1 execute secretnests --remote --command="SELECT COUNT(*) AS published_hotels, SUM(CASE WHEN city IS NULL OR trim(city)='' THEN 1 ELSE 0 END) AS missing_city FROM hotels WHERE is_published=1;" --yes
+          npx wrangler d1 execute secretnests --remote --command="SELECT COUNT(DISTINCT hotel_id) AS hotels_with_publishable_media FROM media_assets WHERE rights_status IN ('owned_user_upload','hotel_authorized','licensed_api','licensed_public');" --yes
+          npx wrangler d1 execute secretnests --remote --command="SELECT COUNT(*) AS published_first_party_reviews FROM trip_reports tr JOIN stays s ON s.id=tr.stay_id WHERE tr.status='published' AND COALESCE(s.verification_method,'')<>'demo';" --yes
+
       - name: Dry-run Worker
         run: npx wrangler deploy --dry-run --outdir .wrangler-dry
 

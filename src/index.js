@@ -588,6 +588,16 @@ async function home(env){
     LIMIT 6`).all()).results||[];
   const popular=(await env.DB.prepare(`SELECT city,country,COUNT(*) n FROM hotels
     WHERE is_published=1 AND city IS NOT NULL AND city<>'' GROUP BY city,country ORDER BY n DESC LIMIT 8`).all()).results||[];
+  const recentReviews=(await env.DB.prepare(`SELECT tr.review_text,tr.would_return,tr.published_at,
+      h.name hotel_name,h.slug hotel_slug,h.city,h.country,
+      cp.handle,cp.display_name
+    FROM trip_reports tr
+    JOIN hotels h ON h.id=tr.hotel_id AND h.is_published=1
+    JOIN stays s ON s.id=tr.stay_id
+    JOIN creator_profiles cp ON cp.id=tr.creator_id
+    WHERE tr.status='published' AND COALESCE(s.verification_method,'')<>'demo' AND COALESCE(cp.is_demo,0)=0
+      AND tr.review_text IS NOT NULL AND trim(tr.review_text)<>''
+    ORDER BY tr.published_at DESC,tr.created_at DESC LIMIT 6`).all()).results||[];
   const valueLabel=(h)=>h.sample_size?(
     h.value_classification||"traveler value available"
   ):"price context available";
@@ -631,6 +641,11 @@ async function home(env){
     <div style="text-align:right"><div class="kicker">Traveler value</div><strong>${h.sample_size?money(h.median_would_pay):"—"}</strong></div></div>
     <p class="muted">${h.sample_size?`${h.sample_size} value observation${Number(h.sample_size)===1?"":"s"}${h.confidence&&!String(h.confidence).toLowerCase().startsWith("insufficient")?` · ${esc(h.confidence)} confidence`:""}`:"First-party fair-value sample building now."}</p>
   </a>`).join("")}</div>
+</section>
+
+<section class="section">
+  <div class="section-head"><div><div class="eyebrow">Recent traveler stays</div><h2>What travelers are saying now</h2></div><a href="/creators">Traveler profiles →</a></div>
+  <div class="grid">${recentReviews.map(r=>`<a class="card" href="/hotel/${encodeURIComponent(r.hotel_slug)}"><div class="eyebrow">${esc([r.city,r.country].filter(Boolean).join(", "))}</div><h3>${esc(r.hotel_name)}</h3><p>${esc(String(r.review_text).slice(0,320))}${String(r.review_text).length>320?"…":""}</p><div class="kicker">${r.handle?"@"+esc(r.handle):esc(r.display_name||"SecretNests traveler")}${r.would_return==null?"":r.would_return?" · would return":" · would not return"}</div></a>`).join("")||'<div class="notice">First-party traveler reviews are beginning to publish now.</div>'}</div>
 </section>
 
 <section class="section">
@@ -844,10 +859,10 @@ async function contributePage(request,env){
     ORDER BY p.priority_rank LIMIT 12`).all()).results||[];
   const qs=[source?"src="+encodeURIComponent(source):"",campaign?"campaign="+encodeURIComponent(campaign):""].filter(Boolean).join("&");
   const suffix=qs?"&"+qs:"";
-  return page(shell(`<section class="hero" data-autoevent="contribution_landing_view"><div class="eyebrow">Build the traveler value map</div><h1>Tell us what your hotel stay was actually worth.</h1><p>SecretNests is building its first 300 real stay observations. Share the nightly price you paid, what you'd happily pay again, and whether you'd return. Positive and negative takes are equally useful.</p><div class="hero-actions"><a class="btn" href="/add-your-trip${qs?"?"+qs:""}">Add any stay</a></div></section>
-  <section class="section"><div class="section-head"><div><div class="eyebrow">Why contribute</div><h2>Two numbers are more useful than another star rating.</h2></div></div><div class="acquisition-grid"><div class="card"><h3>What you paid</h3><p>The real nightly rate, with room and booking context.</p></div><div class="card"><h3>What you'd pay again</h3><p>Your own price threshold for repeating the stay.</p></div><div class="card"><h3>Would you return?</h3><p>A clean repeat-intent signal, independent of affiliate economics.</p></div></div></section>
+  return page(shell(`<section class="hero" data-autoevent="contribution_landing_view"><div class="eyebrow">Build the traveler review map</div><h1>Tell travelers what the stay was actually like.</h1><p>SecretNests is building its first 300 real traveler stays. Write the review in your own words; price, value and return-intent details are optional but especially useful when you remember them.</p><div class="hero-actions"><a class="btn" href="/add-your-trip${qs?"?"+qs:""}">Add any stay</a></div></section>
+  <section class="section"><div class="section-head"><div><div class="eyebrow">Why contribute</div><h2>One real stay is more useful than another anonymous score.</h2></div></div><div class="acquisition-grid"><div class="card"><h3>Your actual experience</h3><p>What stood out, what disappointed, and who the hotel is best for—in your own words.</p></div><div class="card"><h3>Price context, when you have it</h3><p>Add what you paid or what you'd happily pay again. Points stays and reviews without a cash price are still useful.</p></div><div class="card"><h3>Would you return?</h3><p>A simple repeat-intent signal that stays attached to your traveler profile and the hotel page.</p></div></div></section>
   <section class="section" id="priority-hotels"><div class="section-head"><div><div class="eyebrow">Priority data gaps</div><h2>Stayed at one of these?</h2></div><span class="muted">These are high-priority SecretNests hotels without a published first-party value sample yet.</span></div><div class="grid">${targets.map(h=>`<a class="card" data-event="contribution_hotel_select" data-hotel-id="${attr(h.id)}" href="/add-your-trip?hotel=${encodeURIComponent(h.slug)}${suffix}"><div class="eyebrow">Priority #${h.priority_rank}</div><h3>${esc(h.name)}</h3><p class="muted">${esc([h.city,h.country].filter(Boolean).join(", "))} · ${Number(h.submission_count||0)} pending/submitted</p><strong>Add your stay →</strong></a>`).join("")||'<div class="notice">The current priority cohort already has first-party coverage.</div>'}</div></section>
-  <section class="section"><div class="notice"><strong>No pay-for-positive-review system.</strong><p>Contributions can be favorable, mixed, or negative. Affiliate revenue and creator economics are kept separate from review sentiment and value opinions.</p></div></section>`),env,{title:"Contribute a hotel stay | SecretNests",description:"Share what you paid for a hotel, what you would pay again, and whether you would return. Help build SecretNests traveler-assessed hotel value data.",canonical:"/contribute"});
+  <section class="section"><div class="notice"><strong>No pay-for-positive-review system.</strong><p>Contributions can be favorable, mixed, or negative. Affiliate revenue and creator economics are kept separate from review sentiment and value opinions.</p></div></section>`),env,{title:"Contribute a hotel stay | SecretNests",description:"Share a first-party hotel review in your own words, plus optional price, value and return-intent details. Help build SecretNests traveler hotel data.",canonical:"/contribute"});
 }
 
 async function adminContributionsPage(request,env){

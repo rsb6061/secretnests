@@ -132,6 +132,17 @@ async function saveMetadata(db,hotel,providerId,metadata,environment,confidence)
     await db.prepare("UPDATE hotels SET "+updates.join(",")+",updated_at=? WHERE id=?").bind(...values).run();
   }
 
+  if(environment==="production"&&confidence==="high"&&metadata.main_photo_url){
+    await db.prepare(`INSERT INTO media_assets
+      (id,hotel_id,creator_id,source_type,source_url,source_provider,attribution_text,rights_status,permission_reference,original_url,created_at)
+      SELECT ?,?,NULL,'provider_api',?,'nuitee_connect','Hotel image via Nuitee Connect','licensed_api','nuitee_connect_api',?,?
+      WHERE NOT EXISTS (
+        SELECT 1 FROM media_assets
+        WHERE hotel_id=? AND rights_status IN ('owned_user_upload','hotel_authorized','licensed_api','licensed_public')
+      )`)
+      .bind("nuitee-hero-"+hotel.id,hotel.id,metadata.main_photo_url,metadata.main_photo_url,now,hotel.id).run();
+  }
+
   const provenanceFields=[
     ["provider_mapping",providerId],
     ["provider_metadata",metadataFieldCount(metadata)]
