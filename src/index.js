@@ -1856,7 +1856,13 @@ async function sitemap(env){
     {url:ORIGIN+"/contribute"},{url:ORIGIN+"/privacy"},{url:ORIGIN+"/terms"},{url:ORIGIN+"/disclosures"}
   ];
   try{
-    const hotels=(await env.DB.prepare("SELECT slug,updated_at,published_at FROM hotels WHERE is_published=1 ORDER BY slug").all()).results||[];
+    const hotels=(await env.DB.prepare(`SELECT h.slug,h.updated_at,h.published_at,
+      (SELECT CASE WHEN m.r2_key IS NOT NULL AND m.r2_key<>'' THEN '/media/'||m.id ELSE m.source_url END
+       FROM media_assets m
+       WHERE m.hotel_id=h.id AND m.rights_status IN ('owned_user_upload','hotel_authorized','licensed_api','licensed_public')
+       ORDER BY CASE m.rights_status WHEN 'owned_user_upload' THEN 0 WHEN 'hotel_authorized' THEN 1 ELSE 2 END,m.created_at
+       LIMIT 1) image_url
+      FROM hotels h WHERE h.is_published=1 ORDER BY h.slug`).all()).results||[];
     const creators=(await env.DB.prepare("SELECT handle,updated_at FROM creator_profiles WHERE is_public=1 AND COALESCE(is_demo,0)=0").all()).results||[];
     const lists=(await env.DB.prepare("SELECT cp.handle,l.slug,l.updated_at FROM lists l JOIN creator_profiles cp ON cp.id=l.creator_id WHERE l.is_public=1 AND cp.is_public=1 AND COALESCE(cp.is_demo,0)=0").all()).results||[];
     const dests=(await env.DB.prepare("SELECT DISTINCT city,country FROM hotels WHERE is_published=1 AND city IS NOT NULL AND city<>'' AND country IS NOT NULL AND country<>''").all()).results||[];
@@ -1865,7 +1871,7 @@ async function sitemap(env){
     const top=(await env.DB.prepare("SELECT h.name,h.slug,h.city,h.country,p.priority_rank FROM hotel_enrichment_profiles p JOIN hotels h ON h.id=p.hotel_id WHERE p.cohort='priority_250' AND h.is_published=1 ORDER BY p.priority_rank LIMIT 250").all()).results||[];
     const pairs=buildComparisonPairs(top,{maxPairs:120,perGroup:4});
     entries.push(
-      ...hotels.map(x=>({url:ORIGIN+"/hotel/"+encodeURIComponent(x.slug),lastmod:x.updated_at||x.published_at||null})),
+      ...hotels.map(x=>({url:ORIGIN+"/hotel/"+encodeURIComponent(x.slug),lastmod:x.updated_at||x.published_at||null,image:x.image_url?(String(x.image_url).startsWith("http")?String(x.image_url):ORIGIN+String(x.image_url)):null})),
       ...creators.map(x=>({url:ORIGIN+"/@"+encodeURIComponent(x.handle),lastmod:x.updated_at||null})),
       ...lists.map(x=>({url:ORIGIN+"/@"+encodeURIComponent(x.handle)+"/lists/"+encodeURIComponent(x.slug),lastmod:x.updated_at||null})),
       ...dests.map(x=>({url:ORIGIN+"/destinations/"+slugify(x.country)+"/"+slugify(x.city)})),
@@ -1876,8 +1882,8 @@ async function sitemap(env){
   }catch(e){console.error("sitemap_failed",safeLogError(e))}
   const unique=new Map();
   for(const entry of entries)if(entry?.url&&!unique.has(entry.url))unique.set(entry.url,entry);
-  const xml=[...unique.values()].map(entry=>'<url><loc>'+esc(entry.url)+'</loc>'+(entry.lastmod?'<lastmod>'+esc(String(entry.lastmod).slice(0,10))+'</lastmod>':'')+'</url>').join("");
-  return new Response('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+xml+'</urlset>',{headers:{"content-type":"application/xml; charset=utf-8","cache-control":"public,max-age=900"}});
+  const xml=[...unique.values()].map(entry=>'<url><loc>'+esc(entry.url)+'</loc>'+(entry.lastmod?'<lastmod>'+esc(String(entry.lastmod).slice(0,10))+'</lastmod>':'')+(entry.image?'<image:image><image:loc>'+esc(entry.image)+'</image:loc></image:image>':'')+'</url>').join("");
+  return new Response('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">'+xml+'</urlset>',{headers:{"content-type":"application/xml; charset=utf-8","cache-control":"public,max-age=900"}});
 }
 async function route(request,env){
   const url=new URL(request.url);
