@@ -1869,7 +1869,8 @@ async function route(request,env){
   if(request.method==="GET" && url.pathname==="/brands")return brandsPage(env);
   const brand=url.pathname.match(/^\/brands\/([^/]+)$/); if(request.method==="GET"&&brand)return brandPage(decodeURIComponent(brand[1]),env);
   const cleanDest=url.pathname.match(/^\/destinations\/([^/]+)\/([^/]+)$/); if(request.method==="GET"&&cleanDest)return destinationPage(decodeURIComponent(cleanDest[1]),decodeURIComponent(cleanDest[2]),env);
-  if(request.method==="GET" && /^\/destination\//.test(url.pathname))return legacyDestinationRedirect(request,env);\n  if(request.method==="GET"){const legacy=await legacyHotelCategoryRedirect(url.pathname,env);if(legacy)return legacy;}
+  if(request.method==="GET" && /^\/destination\//.test(url.pathname))return legacyDestinationRedirect(request,env);
+  if(request.method==="GET"){const legacy=await legacyHotelCategoryRedirect(url.pathname,env);if(legacy)return legacy;}
   if(request.method==="GET" && url.pathname==="/creators")return creatorsPage(env);
   if(request.method==="GET" && url.pathname==="/contribute")return contributePage(request,env);
   if(request.method==="GET" && url.pathname==="/login")return beginAuth(request,env,ORIGIN);
