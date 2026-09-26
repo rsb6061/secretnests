@@ -154,6 +154,16 @@ jobs:
       - name: Verify deployed secret names
         run: npx wrangler secret list || true
 
+      - name: Verify favicon assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          for asset in favicon.png favicon.ico apple-touch-icon.png; do
+            code="$(curl --connect-timeout 3 --max-time 10 -sS -o "/tmp/$asset" -w '%{http_code}' "https://secretnests.com/$asset?v=4")"
+            test "$code" = "200"
+            test -s "/tmp/$asset"
+          done
+
       - name: Production smoke test
         shell: bash
         env:
