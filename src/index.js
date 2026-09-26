@@ -19,6 +19,20 @@ const safeJson = (v, fallback=[]) => { try { return JSON.parse(v ?? "") } catch 
 const nowIso = () => new Date().toISOString();
 const metaText = (v="", max=160) => { const s=String(v||"").replace(/\s+/g," ").trim(); return s.length<=max?s:s.slice(0,max-1).replace(/\s+\S*$/,"")+"…"; };
 const hotelTitle = (name) => metaText(String(name)+" | SecretNests hotel value", 66);
+const compactHighlight = (value="") => {
+  const raw=String(value||"").replace(/\s+/g," ").trim();
+  if(!raw)return "";
+  const lower=raw.toLowerCase();
+  if(lower.includes("overwater suites")&&lower.includes("lagoon villas"))return "Private lagoon villas";
+  if(lower.includes("vernacular architecture")||lower.includes("grown from the landscape"))return "Landscape-integrated design";
+  if(lower.includes("white-sand beachfront")&&lower.includes("mangroves"))return "Beachfront + mangroves";
+  if(lower.includes("cenote")&&lower.includes("communal meals"))return "Cenote excursions + communal meals";
+  let short=raw.split(/\s+[—–]\s+|;|\.|\?|!|\s+that\s+|\s+which\s+|\s+where\s+|\s+rather than\s+/i)[0].trim();
+  short=short.replace(/\s+and\s+/gi," + ");
+  const words=short.split(/\s+/).filter(Boolean);
+  if(words.length>6) short=words.slice(0,6).join(" ").replace(/\s+(and|or|to|of|for|with|in|on|at|by|from)$/i,"").trim()+"…";
+  return short;
+};
 const slugify = (v="") => String(v).normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/&/g," and ").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").replace(/-{2,}/g,"-");
 
 function headers(extra={}) {
@@ -332,15 +346,12 @@ input:focus,select:focus,textarea:focus{
   margin:18px 0;
 }
 .value>div{
-  border:1px solid var(--lavender);
-  border-radius:22px;
-  padding:18px;
-  background:rgba(255,255,255,.78);
+  border:0;
+  border-radius:0;
+  padding:12px 18px;
+  background:transparent;
 }
-.value>div:nth-child(1){background:#f7fbff}
-.value>div:nth-child(2){background:#f7fcf8}
-.value>div:nth-child(3){background:#fbf9ff}
-.value>div:nth-child(4){background:#fff8f2}
+.value>div+div{border-left:1px solid var(--lavender)}
 .value strong{
   display:block;
   font-family:var(--display);
@@ -400,9 +411,14 @@ input:focus,select:focus,textarea:focus{
 .hotel-rail{min-width:0}
 .hotel-rail-inner{position:sticky;top:106px;display:grid;gap:16px}
 .hotel-highlights .pill{
-  max-width:min(360px,100%);
-  white-space:normal;
-  line-height:1.35;
+  max-width:100%;
+  white-space:nowrap;
+  line-height:1.2;
+}
+.media-credit{
+  margin:26px 0 0;
+  text-align:center;
+  color:var(--muted);
 }
 .fit-list{
   margin:6px 0 0;
@@ -531,6 +547,9 @@ form.card{background:rgba(255,255,255,.82)}
   .hero h1{font-size:44px}
   .section-head{align-items:flex-start;flex-direction:column}
   .value{grid-template-columns:1fr 1fr}
+  .value>div+div{border-left:0}
+  .value>div:nth-child(even){border-left:1px solid var(--lavender)}
+  .value>div:nth-child(n+3){border-top:1px solid var(--lavender)}
   .two,.hotel-shell{grid-template-columns:1fr}
   .hotel-rail .contribution-card{display:none}
   .hotel-rail-inner{position:static}
@@ -828,7 +847,7 @@ async function hotelPage(slug, env){
       {"@type":"ListItem","position":cityUrl?3:2,"name":h.name,"item":ORIGIN+"/hotel/"+h.slug}
     ]}
   ]};
-  return page(shell(`<div class="hotel-shell"><div class="hotel-main"><section class="hero" data-autoevent="hotel_view" data-hotel-id="${attr(h.id)}" style="padding-bottom:28px"><div class="eyebrow">${esc(location)}</div><h1>${esc(h.name)}: prices, traveler reviews & what it’s worth</h1>${mediaUrl?`<img class="hero-media" src="${attr(mediaUrl)}" alt="${attr(h.name)}">${media.attribution_text?`<div class="kicker">${esc(media.attribution_text)}</div>`:""}`:""}<p>${esc(hotelIntro)}</p><p class="kicker">SecretNests keeps first-party traveler reviews and value opinions separate from provider facts and external review signals.</p><div class="seo-links">${cityUrl?`<a class="pill" href="${attr(cityUrl)}">Luxury hotels in ${esc(h.city)}</a>`:""}${brandUrl?`<a class="pill" href="${attr(brandUrl)}">${esc(h.brand_name)} hotels</a>`:""}</div><div class="filters hotel-highlights">${highlights.slice(0,4).map(x=>`<span class="pill">${esc(x)}</span>`).join("")}</div></section>
+  return page(shell(`<div class="hotel-shell"><div class="hotel-main"><section class="hero" data-autoevent="hotel_view" data-hotel-id="${attr(h.id)}" style="padding-bottom:28px"><div class="eyebrow">${esc(location)}</div><h1>${esc(h.name)}: prices, traveler reviews & what it’s worth</h1>${mediaUrl?`<img class="hero-media" src="${attr(mediaUrl)}" alt="${attr(h.name)}">`:""}<p>${esc(hotelIntro)}</p><p class="kicker">SecretNests keeps first-party traveler reviews and value opinions separate from provider facts and external review signals.</p><div class="seo-links">${cityUrl?`<a class="pill" href="${attr(cityUrl)}">Luxury hotels in ${esc(h.city)}</a>`:""}${brandUrl?`<a class="pill" href="${attr(brandUrl)}">${esc(h.brand_name)} hotels</a>`:""}</div><div class="filters hotel-highlights">${highlights.slice(0,4).map(x=>`<span class="pill" title="${attr(x)}">${esc(compactHighlight(x))}</span>`).join("")}</div></section>
 ${valueBlock}<div class="contribution-inline-mobile">${contributionCard("mobile")}</div>
 <section class="section"><div class="take-card"><div class="eyebrow">SecretNests answer</div><h2>Is ${esc(h.name)} worth it?</h2><p>${esc(seo.worthAnswer)}</p><p class="kicker">SecretNests keeps first-party traveler value, observed/estimated prices and external review evidence as separate signals.</p></div></section>
 <section><h2>${esc(h.name)} at a glance</h2><table class="fact-table"><tbody>${factRows.map(([k,val])=>`<tr><th>${esc(k)}</th><td>${esc(val)}</td></tr>`).join("")}</tbody></table></section>
@@ -838,7 +857,7 @@ ${(latestRate?.booking_url||h.booking_url)?`<p><a class="btn" data-event="outbou
 <aside class="hotel-rail"><div class="hotel-rail-inner">${contributionCard("rail")}${bestFor.length?`<div class="card"><div class="eyebrow">Good fit for</div><h3>Best for</h3><ul class="fit-list">${bestFor.slice(0,3).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}</div></aside></div>
 <section class="section"><h2>Nearby / comparable alternatives</h2><div class="grid">${comps.map(c=>`<a class="card" href="/hotel/${encodeURIComponent(c.slug)}"><strong>${esc(c.name)}</strong><br><span class="muted">${esc([c.city,c.country].filter(Boolean).join(", "))} · ${money(c.price_estimate_min)}–${money(c.price_estimate_max)}</span></a>`).join("")}</div>${compareLinks.length?`<div class="seo-links" style="margin-top:14px">${compareLinks.map(x=>`<a class="pill" href="${attr(x.url)}">Compare with ${esc(x.name)}</a>`).join("")}</div>`:""}
 <section class="section faq"><h2>${esc(h.name)} FAQ</h2>${faq.map(x=>`<details><summary>${esc(x.q)}</summary><p>${esc(x.a)}</p></details>`).join("")}</section>
-<div class="contribution-bottom" data-autoevent="contribution_seen" data-hotel-id="${attr(h.id)}"><div><div class="eyebrow">Add one useful data point</div><h2>Stayed at ${esc(h.name)}?</h2><p class="muted">Share the stay in your own words. Price and value details are optional, but useful when you have them.</p></div><a class="btn" data-event="contribution_cta_click" data-hotel-id="${attr(h.id)}" href="${attr(contributionUrl)}">Add your stay →</a></div></section>`),env,{title:seo.title,description:seo.description,canonical:"/hotel/"+encodeURIComponent(h.slug),jsonLd,image:mediaUrl});
+<div class="contribution-bottom" data-autoevent="contribution_seen" data-hotel-id="${attr(h.id)}"><div><div class="eyebrow">Add one useful data point</div><h2>Stayed at ${esc(h.name)}?</h2><p class="muted">Share the stay in your own words. Price and value details are optional, but useful when you have them.</p></div><a class="btn" data-event="contribution_cta_click" data-hotel-id="${attr(h.id)}" href="${attr(contributionUrl)}">Add your stay →</a></div>${media?.attribution_text?`<p class="media-credit kicker">${esc(media.attribution_text)}</p>`:""}</section>`),env,{title:seo.title,description:seo.description,canonical:"/hotel/"+encodeURIComponent(h.slug),jsonLd,image:mediaUrl});
 }
 
 async function listPage(handle, slug, env){
