@@ -55,9 +55,9 @@ Production publishes and internally links:
 - brand guides at `/brands/{brand}`
 - comparison pages at `/compare/{hotel-a}-vs-{hotel-b}`
 - value collections
-- Hotel + BreadcrumbList + FAQPage JSON-LD on hotel pages
+- Hotel + WebPage + BreadcrumbList JSON-LD on hotel pages; visible FAQ content is retained for users, but Google no longer shows FAQ rich results
 - CollectionPage JSON-LD on city and brand guides
-- `/sitemap.xml`, `/robots.txt`, and `/llms.txt`
+- `/sitemap.xml`, `/robots.txt`, and `/llms.txt` (the llms file is for non-Google systems; Google says it does not affect Search visibility)
 
 The sitemap includes the top-250 hotel cohort even when the legacy editorial description is thin because those pages now contain structured price, facts, traveler-evidence and FAQ sections. Comparison URLs are generated from geographically coherent top-250 hotel clusters.
 
